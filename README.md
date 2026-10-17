@@ -10,3 +10,5 @@ Gym-Tracker als PWA: Trainings mit Zielen nach Progressive Overload, Ränge pro 
 ## Daten
 Auf Vercel speichert die App im Browser (localStorage) – pro Gerät, ohne Synchronisierung.
 Nächster Schritt für geräteübergreifende Daten: Supabase.
+
+Deployment: https://iron-ladder.vercel.app
