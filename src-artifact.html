@@ -16,7 +16,9 @@
   --map-off:#dcdce3; --fig:#2c2c34; --tabbar:rgba(249,249,251,.82);
   --f-display:-apple-system,BlinkMacSystemFont,"SF Pro Display","Inter","Segoe UI",Roboto,sans-serif;
   --f-body:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Segoe UI",Roboto,sans-serif;
-  --r:18px; --r-sm:12px; --ease:cubic-bezier(.2,.7,.2,1); --tap:44px;
+  --r:18px; --r-sm:12px; --ease:cubic-bezier(.32,.72,0,1); --tap:44px;
+  --ease-ios:cubic-bezier(.32,.72,0,1); --ease-out:cubic-bezier(.22,1,.36,1);
+  --spring:linear(0,.009,.035 2.1%,.141 4.4%,.723 12.9%,.938 16.7%,1.017 20.2%,1.043 23.1%,1.044 26.4%,1.031 30%,1.008 37.6%,.998 44.2%,1.001 63.5%,1);
   --shadow:0 1px 2px rgba(15,15,25,.04),0 4px 16px rgba(15,15,25,.05);
 }
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
@@ -273,7 +275,7 @@ tr.done .check svg{opacity:1}
 .overlay{position:fixed;inset:0;z-index:50;background:rgba(5,8,12,.55);display:flex;align-items:center;justify-content:center;padding:20px}
 .sheet{background:var(--bg);border-radius:20px;width:100%;max-width:620px;max-height:88vh;overflow:auto;padding:22px;display:flex;flex-direction:column;gap:14px}
 @media (max-width:620px){.overlay{align-items:flex-end;padding:0}.sheet{border-radius:22px 22px 0 0;max-height:92vh;padding:18px max(16px, env(safe-area-inset-right, 0px)) calc(20px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px))}}
-.toast{position:fixed;z-index:60;top:calc(14px + env(safe-area-inset-top, 0px));left:50%;transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:11px 16px;border-radius:var(--r);font-weight:600;max-width:calc(100% - 32px);box-shadow:0 10px 30px rgba(0,0,0,.3)} /* taste-skill-ignore: schwebt */
+.toast{position:fixed;z-index:60;top:calc(10px + env(safe-area-inset-top, 0px));left:50%;transform:translateX(-50%);background:#000;color:#fff;padding:12px 20px;border-radius:999px;font-weight:600;max-width:calc(100% - 32px);box-shadow:0 10px 30px rgba(0,0,0,.3)} /* taste-skill-ignore: schwebt */
 .banner{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:var(--surface);box-shadow:var(--shadow);border-radius:var(--r);padding:12px 16px;font-size:1rem}
 .chart-box{overflow-x:auto}
 .chart-box svg{width:100%;min-width:320px;height:auto;display:block}
@@ -292,27 +294,67 @@ tr.done .check svg{opacity:1}
 .fig-big svg{width:100%;height:auto;max-height:220px}
 .recent-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--r-sm);background:var(--row);flex-wrap:nowrap}
 
-/* Bewegung: ein orchestrierter Moment je Ansicht statt Einblenden überall.
-   Heute: Der Trainingsname wird wie eine Scheibe auf die Stange geschoben, die Ziele folgen.
-   Ränge: Die Abzeichen klettern nacheinander. Sonst nur Bewegung als Antwort auf eine Aktion. */
-@keyframes load{from{transform:translateY(10px);opacity:.1}to{transform:none;opacity:1}}
-@keyframes rise{from{opacity:.1;transform:translateY(14px)}to{opacity:1;transform:none}}
+/* Bewegung im Apple-Stil: Federkurven, kurze Wege, nur Transform und Opacity.
+   Tabwechsel: Inhalte erscheinen gestaffelt. Sheets gleiten hoch, die Seite dahinter tritt zurück.
+   Große Titel weichen beim Scrollen einer kompakten Leiste. Reduzierte Bewegung schaltet alles ab. */
+@supports not (animation-timing-function:linear(0,1)){:root{--spring:cubic-bezier(.34,1.36,.64,1)}}
+@keyframes appear{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:none}}
 @keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
-@keyframes climb{0%{transform:translateY(16px) scale(.85);opacity:.15}70%{transform:translateY(-3px) scale(1.05)}100%{transform:none;opacity:1}}
-@keyframes pop{0%{transform:scale(.6);opacity:.2}60%{transform:scale(1.12)}100%{transform:scale(1);opacity:1}}
-@keyframes fill{from{background:var(--surface-2)}}
-.wrap.enter .big{animation:load .6s var(--ease) both}
-.wrap.enter .goal-list li{animation:rise .45s var(--ease) both}
-.wrap.enter .goal-list li:nth-child(1){animation-delay:.18s}.wrap.enter .goal-list li:nth-child(2){animation-delay:.24s}.wrap.enter .goal-list li:nth-child(3){animation-delay:.3s}.wrap.enter .goal-list li:nth-child(4){animation-delay:.36s}.wrap.enter .goal-list li:nth-child(5){animation-delay:.42s}
-.wrap.enter .rank-grid>.card .emb,.wrap.enter .overall .emb{animation:climb .7s var(--ease) both}
-.wrap.enter .rank-grid>.card:nth-child(2) .emb{animation-delay:.04s}.wrap.enter .rank-grid>.card:nth-child(3) .emb{animation-delay:.08s}.wrap.enter .rank-grid>.card:nth-child(4) .emb{animation-delay:.12s}.wrap.enter .rank-grid>.card:nth-child(5) .emb{animation-delay:.16s}.wrap.enter .rank-grid>.card:nth-child(6) .emb{animation-delay:.2s}.wrap.enter .rank-grid>.card:nth-child(7) .emb{animation-delay:.24s}.wrap.enter .rank-grid>.card:nth-child(n+8) .emb{animation-delay:.28s}
-.sets tr.done td{animation:fill .25s ease-out}
-.rankup .emb{animation:pop .7s ease-out both}
-.sheet{animation:rise .24s var(--ease) both}
+@keyframes ringIn{from{stroke-dashoffset:var(--C)}}
+@keyframes popIn{0%{transform:scale(.4);opacity:0}100%{transform:scale(1);opacity:1}}
+@keyframes climb{0%{transform:translateY(16px) scale(.85);opacity:0}100%{transform:none;opacity:1}}
+@keyframes tabPop{0%{transform:scale(1)}30%{transform:scale(.78)}100%{transform:scale(1)}}
+@keyframes checkPop{0%{transform:scale(.3);opacity:.2}100%{transform:scale(1);opacity:1}}
+@keyframes rowFlash{from{background:var(--accent-soft)}}
+@keyframes sheetUp{from{transform:translateY(100%)}to{transform:none}}
+@keyframes sheetIn{from{opacity:0;transform:translateY(24px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes fadeIn{from{opacity:0}}
+@keyframes island{0%{opacity:0;transform:translateX(-50%) translateY(-6px) scale(.55,.7)}100%{opacity:1;transform:translateX(-50%)}}
+@keyframes sheen{from{transform:translateX(-120%) skewX(-18deg)}to{transform:translateX(320%) skewX(-18deg)}}
+.wrap.enter>*{animation:appear .55s var(--ease-out) both;animation-delay:calc(var(--i,0)*45ms)}
+.wrap.enter .grid>*,.wrap.enter .goal-list li,.wrap.enter .rank-grid>.card,.wrap.enter .lib>*{animation:appear .5s var(--ease-out) both;animation-delay:calc(120ms + var(--j,0)*40ms)}
+.wrap.enter .bar>i,.wrap.enter .vol .fill{animation:grow 1s var(--ease-ios) .2s both}
+.ring-arc{transition:stroke-dashoffset .8s var(--ease-ios)}
+.wrap.enter .ring-arc{animation:ringIn 1.2s var(--ease-ios) .15s both}
+.wrap.enter .week span i{animation:popIn .5s var(--spring) both}
+.wrap.enter .week span:nth-child(1) i{animation-delay:.25s}.wrap.enter .week span:nth-child(2) i{animation-delay:.29s}.wrap.enter .week span:nth-child(3) i{animation-delay:.33s}.wrap.enter .week span:nth-child(4) i{animation-delay:.37s}.wrap.enter .week span:nth-child(5) i{animation-delay:.41s}.wrap.enter .week span:nth-child(6) i{animation-delay:.45s}.wrap.enter .week span:nth-child(7) i{animation-delay:.49s}
+.wrap.enter .rank-grid>.card .emb,.wrap.enter .overall .emb{animation:climb .7s var(--spring) both;animation-delay:calc(180ms + var(--j,0)*40ms)}
+.wrap.enter .hero-map ellipse,.wrap.enter .hero-map rect,.wrap.enter .hero-map path{animation:fadeIn .8s var(--ease-ios) .3s both}
+.nav.bump button[aria-current="page"] svg{animation:tabPop .45s var(--spring)}
+/* Druck-Feedback wie bei iOS: kurz eindrücken, federnd zurück */
+.btn,.chip,.linkcard,.opt,.lib-item,.check,.icon-btn,.daypick button,.food-res button,.nav button{transition:transform .35s var(--spring),background-color .2s,opacity .2s,box-shadow .2s}
+.btn:active,.chip:active,.linkcard:active,.opt:active,.lib-item:active,.daypick button:active,.food-res button:active{transform:scale(.96);transition-duration:.1s}
+.check:active,.icon-btn:active{transform:scale(.88);transition-duration:.1s}
+.nav button:active{transform:scale(.92);transition-duration:.1s}
+tr.done .check svg{animation:checkPop .5s var(--spring)}
+.sets tr.done td{animation:rowFlash .6s var(--ease-ios)}
+/* Sheets */
+.overlay{animation:fadeIn .3s var(--ease-ios) both}
+.sheet{animation:sheetIn .45s var(--ease-ios) both}
+@media (max-width:620px){.sheet{animation:sheetUp .5s var(--ease-ios) both}}
+.overlay.closing{animation:fadeIn .26s cubic-bezier(.4,0,1,1) reverse both}
+.overlay.closing .sheet{animation:sheetIn .26s cubic-bezier(.4,0,1,1) reverse both}
+@media (max-width:620px){.overlay.closing .sheet{animation:sheetUp .3s cubic-bezier(.4,0,1,1) reverse both}}
+@media (max-width:620px){
+  .main{transition:transform .5s var(--ease-ios),border-radius .5s var(--ease-ios),filter .5s var(--ease-ios);transform-origin:50% var(--sheet-origin,50vh)}
+  body.sheet-open .main{transform:scale(.93);border-radius:16px;filter:brightness(.92);overflow:hidden}
+}
+/* Kompakte Titelleiste beim Scrollen */
+.topbar{position:fixed;top:0;left:0;right:0;z-index:25;padding:calc(env(safe-area-inset-top,0px) + 10px) 16px 10px;text-align:center;font-weight:600;font-size:1.0625rem;letter-spacing:-.01em;background:var(--tabbar);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);box-shadow:0 .5px 0 var(--line);opacity:0;transform:translateY(-6px);pointer-events:none;transition:opacity .25s var(--ease-ios),transform .35s var(--ease-ios)}
+body.scrolled .topbar{opacity:1;transform:none}
+.head h1{transition:opacity .25s var(--ease-ios),transform .35s var(--ease-ios);transform-origin:left center}
+body.scrolled .head h1{opacity:0;transform:scale(.92)}
+@media (min-width:861px){.topbar{left:232px}}
+/* Meldung wie die Dynamic Island */
+.toast{animation:island .55s var(--spring) both}
+.toast.out{animation:island .3s cubic-bezier(.4,0,1,1) reverse both}
+/* Rang-Aufstieg: Glanzlicht */
+.rankup{position:relative;overflow:hidden}
+.rankup::after{content:"";position:absolute;top:0;bottom:0;left:0;width:35%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent);animation:sheen 1.3s var(--ease-ios) .5s both;pointer-events:none}
+.rankup .emb{animation:popIn .8s var(--spring) .15s both}
 @media (prefers-reduced-motion: reduce){
-  .wrap.enter *,.sheet,.rankup .emb,.sets tr.done td{animation:none!important}
-  .spin{animation-duration:2.4s}
-  .btn,.chip,.nav button,.opt,.lib-item,.check,.linkcard{transition:none}
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  body.sheet-open .main{transform:none;filter:none}
 }
 </style>
 
@@ -875,6 +917,25 @@ function planIds(key){ const d=DAYS[key]; let names=[...d.ex]; const g=S.profile
 
 /* ============ Rendering ============ */
 let LAST_TAB=null;
+const TAB_TITLES={home:'Heute',train:'Training',food:'Ernährung',ranks:'Ränge',prog:'Fortschritt'};
+const REDUCED=(()=>{try{return matchMedia('(prefers-reduced-motion: reduce)').matches}catch(e){return false}})();
+function haptic(ms=8){ try{navigator.vibrate&&navigator.vibrate(ms)}catch(e){} }
+function countUp(root){
+ if(REDUCED) return;
+ root.querySelectorAll('[data-count]').forEach(el=>{
+  const to=+el.dataset.count, pre=el.dataset.prefix||'', suf=el.dataset.suffix||''; if(!isFinite(to)||to===0) return;
+  const t0=performance.now(), dur=Math.min(1100,500+String(Math.round(to)).length*120);
+  const step=t=>{const k=Math.min(1,(t-t0)/dur), e=1-Math.pow(1-k,4); el.textContent=pre+fmt(to*e)+suf; if(k<1) requestAnimationFrame(step)};
+  el.textContent=pre+'0'+suf; requestAnimationFrame(step);
+ });
+}
+function animateEnter(root){
+ root.querySelectorAll('.wrap.enter > *').forEach((el,i)=>el.style.setProperty('--i',Math.min(i,8)));
+ root.querySelectorAll('.wrap.enter .grid, .wrap.enter .goal-list, .wrap.enter .rank-grid, .wrap.enter .lib').forEach(g=>[...g.children].forEach((c,j)=>c.style.setProperty('--j',Math.min(j,10))));
+ countUp(root);
+}
+function onScroll(){ document.body.classList.toggle('scrolled', window.scrollY>56 && !!document.querySelector('.topbar')); }
+window.addEventListener('scroll',onScroll,{passive:true});
 function render(){
  const app=$('#app');
  if(!S.profile){ LAST_TAB=null; app.innerHTML=renderOnboarding(); return; }
@@ -884,11 +945,14 @@ function render(){
  const enter=V.tab!==LAST_TAB; LAST_TAB=V.tab;
  app.innerHTML=`<div class="app">
  <aside class="side"><div class="brand">${LOGO}<b>Iron Ladder</b></div>
- <nav class="nav" aria-label="Hauptnavigation">${tabs.map(t=>`<button data-act="tab" data-v="${t[0]}" ${V.tab===t[0]?'aria-current="page"':''}>${t[2]}<span>${t[1]}</span></button>`).join('')}</nav>
+ <nav class="nav${enter?' bump':''}" aria-label="Hauptnavigation">${tabs.map(t=>`<button data-act="tab" data-v="${t[0]}" ${V.tab===t[0]?'aria-current="page"':''}>${t[2]}<span>${t[1]}</span></button>`).join('')}</nav>
  <div class="foot"><button class="btn sm ghost" data-act="settings">${I.gear} Profil & Ziele</button><div class="sync"><span class="dot ${V.sync==='cloud'?'on':''}"></span>${S.demo?'Demo – nichts wird gespeichert':V.sync==='cloud'?'Synchron auf allen Geräten':'Nur auf diesem Gerät'}</div></div></aside>
+ ${V.tab==='train'&&S.draft?'':`<div class="topbar" aria-hidden="true">${TAB_TITLES[V.tab]}</div>`}
  <main class="main"><div class="wrap${enter?' enter':''}">${S.demo?`<div class="banner"><span><b>Demo-Modus.</b> Beispieldaten eines fiktiven Athleten, nichts wird gespeichert.</span><button class="btn sm" data-act="exitDemo">Eigenes Profil anlegen</button></div>`:''}${body}</div></main></div>
  ${S.draft&&V.tab!=='train'?`<button class="rest" data-act="tab" data-v="train" style="cursor:pointer"><span>Training läuft</span><span class="t" data-elapsed>--:--</span></button>`:''}`;
  if(V.tab==='train'&&S.draft) window.scrollTo(0,scroll);
+ if(enter) animateEnter(app);
+ onScroll();
  tick();
 }
 
@@ -938,7 +1002,7 @@ function heroFacts(ids){
  const mins=Math.round(ids.reduce((a,id)=>{const e=EX[id];return a+(e.kind==='c'?20*60:setCount(e)*(45+restSec(e)))},0)/60/5)*5;
  const map=muscleMap(m=>prim.has(m)?{c:'var(--accent)'}:sec.has(m)?{c:'var(--accent)',o:.4}:{c:'var(--hero-off)'});
  return `<div class="hero-facts"><div class="hero-map" role="img" aria-label="Trainierte Muskeln: ${[...prim].map(m=>MUSCLES[m]).join(', ')}">${map}</div>
-  <dl><div><dt>Arbeitssätze</dt><dd class="num">${sets}</dd></div><div><dt>Dauer, geschätzt</dt><dd class="num">${mins} min</dd></div><div><dt>Fokus</dt><dd>${[...prim].slice(0,3).map(m=>MUSCLES[m]).join(', ')}</dd></div></dl></div>`;
+  <dl><div><dt>Arbeitssätze</dt><dd class="num" data-count="${sets}">${sets}</dd></div><div><dt>Dauer, geschätzt</dt><dd class="num" data-count="${mins}" data-suffix=" min">${mins} min</dd></div><div><dt>Fokus</dt><dd>${[...prim].slice(0,3).map(m=>MUSCLES[m]).join(', ')}</dd></div></dl></div>`;
 }
 function greeting(){ const h=new Date().getHours(); return h<5?'Noch wach':h<11?'Guten Morgen':h<18?'Hallo':'Guten Abend'; }
 function renderHome(){
@@ -1069,7 +1133,7 @@ const MEALS=[['b','Frühstück'],['l','Mittagessen'],['d','Abendessen'],['s','Sn
 function dayTotals(date){ return (S.food[date]||[]).reduce((a,e)=>({k:a.k+e.k,p:a.p+e.p,c:a.c+e.c,f:a.f+e.f}),{k:0,p:0,c:0,f:0}); }
 function ring(v,max,size=150){
  const r=size/2-10, C=2*Math.PI*r, pct=Math.min(1,v/max), over=v>max;
- return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" role="img" aria-label="${fmt(v)} von ${fmt(max)} kcal"><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="var(--surface-2)" stroke-width="12"/><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${over?'var(--bad)':'var(--accent)'}" stroke-width="12" stroke-linecap="round" stroke-dasharray="${C*pct} ${C}" transform="rotate(-90 ${size/2} ${size/2})"/><text x="50%" y="46%" text-anchor="middle" font-family="-apple-system, Inter, sans-serif" font-size="28" font-weight="600" fill="var(--fg)">${fmt(Math.abs(max-v))}</text><text x="50%" y="62%" text-anchor="middle" font-size="12" fill="var(--muted)">${over?'kcal drüber':'kcal übrig'}</text></svg>`;
+ return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" role="img" aria-label="${fmt(v)} von ${fmt(max)} kcal"><circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="var(--surface-2)" stroke-width="12"/><circle class="ring-arc" style="--C:${C.toFixed(1)}" cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${over?'var(--bad)':'var(--accent)'}" stroke-width="12" stroke-linecap="round" stroke-dasharray="${C.toFixed(1)} ${C.toFixed(1)}" stroke-dashoffset="${(C*(1-pct)).toFixed(1)}" transform="rotate(-90 ${size/2} ${size/2})"/><text x="50%" y="46%" text-anchor="middle" font-family="-apple-system, Inter, sans-serif" font-size="28" font-weight="700" fill="var(--fg)" data-count="${Math.round(Math.abs(max-v))}">${fmt(Math.abs(max-v))}</text><text x="50%" y="62%" text-anchor="middle" font-size="12" fill="var(--muted)">${over?'kcal drüber':'kcal übrig'}</text></svg>`;
 }
 function renderFood(){
  const d=V.foodDate, t=S.profile.targets, tot=dayTotals(d), list=S.food[d]||[];
@@ -1221,16 +1285,27 @@ function renderSettings(){
 
 /* ============ Sheets & Toast ============ */
 let SHEET=null;
-function openSheet(kind,arg){ SHEET={kind,arg}; drawSheet(); }
+let SHEET_TOK=0;
+function openSheet(kind,arg){ SHEET_TOK++; const fresh=!SHEET; SHEET={kind,arg}; drawSheet(); if(fresh) haptic(6); }
 function drawSheet(){
- const L=$('#layer'); if(!SHEET){L.innerHTML='';document.body.style.overflow='';return;}
+ const L=$('#layer'); if(!SHEET){L.innerHTML='';document.body.style.overflow='';document.body.classList.remove('sheet-open');return;}
  const html={lib:()=>renderLibSheet(false),pick:()=>renderLibSheet(true),info:()=>renderExInfo(SHEET.arg),customEx:renderCustomEx,food:renderFoodSheet,customFood:renderCustomFood,settings:renderSettings,summary:()=>SHEET.arg}[SHEET.kind]();
+ const ov=L.querySelector('.overlay:not(.closing)');
+ if(ov){ const sh=ov.querySelector('.sheet'); sh.innerHTML=html; if(SHEET.kind==='summary') countUp(sh); return; }
  L.innerHTML=`<div class="overlay" data-act="overlay"><div class="sheet" role="dialog" aria-modal="true">${html}</div></div>`;
- document.body.style.overflow='hidden';
+ document.documentElement.style.setProperty('--sheet-origin',(window.scrollY+window.innerHeight/2)+'px');
+ document.body.style.overflow='hidden'; document.body.classList.add('sheet-open');
+ if(SHEET.kind==='summary') countUp(L);
 }
-function closeSheet(){ SHEET=null; drawSheet(); }
+function closeSheet(){
+ if(!SHEET) return; SHEET=null;
+ const ov=$('#layer .overlay'); document.body.classList.remove('sheet-open');
+ if(!ov||REDUCED){ drawSheet(); return; }
+ ov.classList.add('closing'); const tok=++SHEET_TOK;
+ setTimeout(()=>{ if(tok===SHEET_TOK&&!SHEET) drawSheet(); },300);
+}
 let toastT=null;
-function toast(msg){ let t=$('.toast'); if(!t){t=document.createElement('div');t.className='toast';t.setAttribute('role','status');document.body.appendChild(t)} t.textContent=msg; clearTimeout(toastT); toastT=setTimeout(()=>t.remove(),3200); }
+function toast(msg){ let t=$('.toast'); if(!t){t=document.createElement('div');t.className='toast';t.setAttribute('role','status');document.body.appendChild(t)} t.classList.remove('out'); t.textContent=msg; clearTimeout(toastT); toastT=setTimeout(()=>{t.classList.add('out'); setTimeout(()=>{if(t.classList.contains('out')) t.remove()},320)},3000); }
 
 /* ============ Training-Aktionen ============ */
 function newDraft(name,ids,planKey){
@@ -1250,9 +1325,9 @@ function finishWorkout(){
  const ups=MKEYS.filter(m=>tierOf(R.sr[m]).label!==tierOf(before[m]).label);
  const total=Object.values(g).reduce((a,b)=>a+b,0); const mins=Math.round((w.end-w.ts)/60000);
  const vol=items.reduce((a,it)=>a+it.sets.reduce((b,s)=>b+s.w*s.r,0),0);
- V.tab='home'; render();
+ V.tab='home'; render(); haptic([10,40,18]);
  openSheet('summary',`<div class="row between"><h2>Training gespeichert</h2><button class="icon-btn" data-act="close" aria-label="Schließen">${I.x}</button></div>
-  <div class="kpis"><div class="card kpi"><div class="lbl">Dauer</div><span class="v">${mins}</span> min</div><div class="card kpi"><div class="lbl">Volumen</div><span class="v">${fmt(vol)}</span> kg</div><div class="card kpi"><div class="lbl">Rangpunkte</div><span class="v" style="color:var(--accent-text)">+${fmt(total)}</span></div></div>
+  <div class="kpis"><div class="card kpi"><div class="lbl">Dauer</div><span class="v" data-count="${mins}">${mins}</span> min</div><div class="card kpi"><div class="lbl">Volumen</div><span class="v" data-count="${Math.round(vol)}">${fmt(vol)}</span> kg</div><div class="card kpi"><div class="lbl">Rangpunkte</div><span class="v" style="color:var(--accent-text)" data-count="${total}" data-prefix="+">+${fmt(total)}</span></div></div>
   ${ups.map(m=>`<div class="rankup">${emblem(R.sr[m],60)}<div><h3>Aufstieg: ${MUSCLES[m]} ${tierOf(R.sr[m]).label}</h3><div class="muted">vorher ${tierOf(before[m]).label}</div></div></div>`).join('')}
   ${prs.length?`<div class="card"><div class="lbl">Neue Rekorde</div>${prs.map(id=>`<div style="margin-top:6px">${I.up.replace('<svg','<svg width="14" height="14" style="color:var(--accent)"')} ${esc(EX[id].n)}</div>`).join('')}</div>`:''}
   <div class="stack" style="gap:6px">${Object.entries(g).sort((a,b)=>b[1]-a[1]).map(([m,v])=>`<div class="row between" style="font-size:.875rem;flex-wrap:nowrap"><span>${MUSCLES[m]}</span><span class="num">+${fmt(v)} SR, ${tierOf(R.sr[m]).label}</span></div>`).join('')}</div>
@@ -1293,7 +1368,7 @@ function loadDemo(){
  for(let i=0;i<8;i++) S.profile.weights[addDays(today(),-42+i*6)]=Math.round((79.2+i*0.22+(i%2?0.2:-0.1))*10)/10;
  const mk=(fid,g,meal)=>{const f=FOODS.find(x=>x.id===fid);return {id:uid(),fid,n:f.n,g,meal,k:f.k*g/100,p:f.p*g/100,c:f.c*g/100,f:f.f*g/100}};
  S.food={[today()]:[mk('f-haferflocken',80,'b'),mk('f-skyr-natur',250,'b'),mk('f-banane',120,'b'),mk('g-haehnchen-reis-brokkoli',450,'l'),mk('f-proteinriegel',60,'s')]};
- S.draft=null; V.tab='home'; render();
+ S.draft=null; V.tab='home'; render(); window.scrollTo(0,0);
 }
 
 /* ============ Events ============ */
@@ -1302,13 +1377,13 @@ document.addEventListener('click',e=>{
  const a=b.dataset.act, v=b.dataset.v;
  if(a==='overlay'&&e.target!==b) return;
  const H={
-  tab:()=>{V.tab=v;closeSheet();render();window.scrollTo(0,0)},
+  tab:()=>{const ch=V.tab!==v; V.tab=v;closeSheet();render();window.scrollTo(0,0); if(ch) haptic(5)},
   overlay:closeSheet, close:closeSheet,
   obSet:()=>{const o=V.ob;o[b.dataset.k]=['days'].includes(b.dataset.k)?+v:v; if(b.dataset.k==='days'||b.dataset.k==='goal') o.split=recSplit(o.days,o.goal); render()},
   obBack:()=>{V.ob.step--;render()},
   obNext:()=>{const o=V.ob; if(o.step<4){o.step++;render();window.scrollTo(0,0);return}
    S.profile={name:o.name.trim(),goal:o.goal,days:o.days,split:o.split,sex:o.sex,age:o.age,height:o.height,weight:o.weight,activity:o.activity,rot:0,customEx:[],customFoods:[],weights:{[today()]:o.weight},created:today()};
-   S.profile.targets=calcTargets(S.profile); buildEx(); buildFoods(); saveProfile(); V.tab='home'; render(); toast('Profil erstellt. Willkommen auf der Leiter!')},
+   S.profile.targets=calcTargets(S.profile); buildEx(); buildFoods(); saveProfile(); V.tab='home'; render(); window.scrollTo(0,0); toast('Profil erstellt. Willkommen auf der Leiter!')},
   demo:loadDemo,
   exitDemo:()=>{S={profile:null,workouts:[],food:{},draft:null,demo:false}; V.ob=obDefaults(); cacheLoad(); if(S.profile){buildEx();buildFoods()} render()},
   settings:()=>{V.resetAsk=false;openSheet('settings')},
@@ -1326,7 +1401,7 @@ document.addEventListener('click',e=>{
   toggleSet:()=>{const [i,j]=v.split('.').map(Number); const it=S.draft.items[i], s=it.sets[j];
    const row=b.closest('tr'); row.querySelectorAll('input').forEach(inp=>{const k=inp.dataset.set.split('.')[2]; if(inp.value===''&&inp.placeholder&&k!=='rir') {inp.value=inp.placeholder; s[k]=inp.placeholder}});
    if(!s.done&&num(s.r)<=0){toast('Trage zuerst die Wiederholungen ein.');return}
-   s.done=!s.done; row.classList.toggle('done',s.done); b.setAttribute('aria-pressed',s.done);
+   s.done=!s.done; row.classList.toggle('done',s.done); if(s.done) haptic(12); b.setAttribute('aria-pressed',s.done);
    if(s.done) S.rest={end:Date.now()+restSec(EX[it.ex])*1000}; draftSave(); tick()},
   restAdd:()=>{if(S.rest){S.rest.end+=30000;S.rest.buzzed=false} tick()},
   restSkip:()=>{S.rest=null;tick()},
