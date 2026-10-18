@@ -750,6 +750,47 @@ const GUIDE_P={
  quad:['Starte im Vierfüßlerstand oder in der Position der Übung.','Geh langsam in die Dehnung.|Atme ruhig und lass mit jedem Ausatmen etwas nach.|Halte 30–60 s oder wiederhole die Bewegung langsam.','Dehnen soll ziehen, nicht schmerzen.','Ruckartig in die Endposition gehen.']
 };
 const GUIDE_X={
+ 'scott-curls-maschine':['Sitz so einstellen, dass die Achseln oben am Polster anliegen und die Ellbogen auf Höhe der Drehachse sind.','Greif die Griffe, Oberarme liegen flach auf dem Polster.|Beug die Arme langsam bis ganz oben.|Lass kontrolliert ab, bis die Arme fast gestreckt sind.','Die Maschine hält die Spannung auch unten, wo Hanteln leicht werden. Ideal für den gedehnten Bereich.','Den Hintern vom Sitz heben oder mit dem Oberkörper nach hinten ziehen.'],
+ 'scott-curls-kurzhantel-einarmig':'Einarmig an der steilen Seite des Scottpults. Unten nicht ganz durchstrecken, das schont die Ellbogensehne.',
+ 'scott-curls-am-kabel':'Scottpult vor den Kabelzug stellen, Rolle unten. So bleibt die Spannung über die ganze Bewegung.',
+ 'bizepsmaschine':'Ellbogen genau auf die Drehachse ausrichten. Langsam ablassen, oben kurz anspannen.',
+ 'hammer-curls-am-kabel-seil':'Seil am unteren Kabel, Daumen zeigen nach oben. Trifft Bizeps, Brachialis und Unterarme.',
+ 'smith-maschine-drag-curls':'Stange am Körper entlang nach oben ziehen, Ellbogen wandern nach hinten. Stark für den langen Bizepskopf.',
+ 'dip-maschine-sitzend':['Sitz so einstellen, dass die Griffe neben dem Brustkorb liegen.','Drück die Griffe nach unten, bis die Arme gestreckt sind.|Halte kurz.|Lass langsam zurück, bis die Ellbogen etwa 90° gebeugt sind.','Oberkörper aufrecht = mehr Trizeps, leicht vorgebeugt = mehr untere Brust.','Schultern zu den Ohren hochziehen.'],
+ 'ueberkopf-trizepsmaschine':'Ellbogen zeigen nach vorn oben und bleiben auf dem Polster. Unten tief in die Dehnung gehen.',
+ 'einarmiges-trizepsdruecken-am-kabel':'Einarmig mit Griff oder ohne Griff am Kabel. Ellbogen bleibt fest an der Seite.',
+ 'einarmige-brustpresse-maschine':'Eine Seite nach der anderen. Gut, um Kraftunterschiede links und rechts auszugleichen.',
+ 'smith-maschine-negativbankdruecken':'Negativbank unter die Smith-Stange, Stange zur unteren Brust senken.',
+ 'brustpresse-stehend-am-kabel':'Zwischen zwei Kabeln, Rollen auf Brusthöhe. Drück die Griffe nach vorn zusammen, Rumpf fest.',
+ 'latzug-maschine-hebelarm':'Oberschenkelpolster fest, Griffe zur oberen Brust ziehen. Die Ellbogen führen nach unten.',
+ 'einarmiges-latziehen-maschine':'Eine Seite nach der anderen, Ellbogen Richtung Hüfte. Oben voll in die Dehnung gehen.',
+ 'pullover-maschine':['Sitz so einstellen, dass die Schultern auf Höhe der Drehachse liegen. Oberarme auf die Polster.','Lass die Arme nach oben hinten in die Dehnung.|Drück die Polster mit den Ellbogen nach unten bis zum Bauch.|Kurz halten, langsam zurück.','Trainiert den Latissimus ohne Bizeps. Gut als Vorermüdung vor Latziehen.','Mit den Händen statt mit den Ellbogen drücken.'],
+ 'rudermaschine-breit':'Breiter Griff, Ellbogen gehen seitlich nach hinten. Betont oberen Rücken und hintere Schulter.',
+ 't-bar-rudern-brustgestuetzt-maschine':'Brust bleibt am Polster, so kann der untere Rücken nicht mithelfen.',
+ 'smith-maschine-rudern':'Vorgebeugt wie beim Langhantelrudern, nur mit geführter Stange. Zur unteren Brust ziehen.',
+ 'rueckenstrecker-maschine':['Sitz einstellen, Polster liegt am oberen Rücken, Füße fest.','Streck den Oberkörper langsam nach hinten.|Halte kurz in gerader Position.|Lass kontrolliert nach vorn.','Leichtes Gewicht, saubere Bewegung. Gut für den unteren Rücken ohne Achsenlast.','Ins Hohlkreuz überstrecken.'],
+ 'shrug-maschine':'Schultern gerade nach oben zu den Ohren ziehen, nicht rollen. Oben eine Sekunde halten.',
+ 'smith-maschine-shrugs':'Stange vor oder hinter dem Körper. Geführt, daher gut für schwere Sätze.',
+ 'smith-maschine-schulterdruecken':'Bank senkrecht unter die Stange. Stange vor dem Gesicht bis knapp unter das Kinn senken.',
+ 'rear-delt-kabelzug-kreuzzug':'Kabel über Kreuz greifen, Arme fast gestreckt nach außen hinten ziehen. Leichtes Gewicht.',
+ 'einarmiges-seitheben-am-kabel':'Kabel unten, hinter dem Körper führen. Die Spannung bleibt auch unten erhalten.',
+ 'bauchmaschine-crunch':['Sitz so einstellen, dass die Polster auf der Brust oder Schulter liegen.','Roll den Oberkörper nach vorn unten ein.|Spann den Bauch unten fest an.|Lass langsam zurück.','Wie ein Crunch, aber mit Gewicht steigerbar, ideal für progressive Overload.','Mit den Armen ziehen statt mit dem Bauch.'],
+ 'rotationsmaschine-torso':['Sitz einstellen, Beine fixieren, Oberkörper gerade.','Dreh den Oberkörper langsam zur Seite.|Halte kurz.|Kontrolliert zurück, dann Seite wechseln.','Langsam und ohne Schwung, Bewegung aus dem Rumpf.','Mit Schwung drehen.'],
+ 'beinheben-im-captain-s-chair':'Unterarme auf den Polstern, Rücken an der Lehne. Knie zur Brust ziehen, langsam absenken.',
+ 'v-squat-maschine':'Schultern unter den Polstern, Füße mittig auf der Platte. Tief beugen, Rücken bleibt an der Lehne.',
+ 'belt-squat':['Gurt um die Hüfte, Füße schulterbreit auf der Plattform.','Beug Hüfte und Knie, bis die Oberschenkel waagerecht sind.|Drück dich über die ganze Fußsohle hoch.|Oben nicht ganz durchstrecken.','Kniebeuge ohne Last auf der Wirbelsäule, gut bei Rückenproblemen.','Knie fallen nach innen.'],
+ 'horizontale-beinpresse':'Rücken flach am Polster, Füße schulterbreit. Knie nicht ganz durchdrücken.',
+ 'einbeinige-beinpresse':'Ein Fuß mittig auf der Platte. Gleiches Gewicht und Wiederholungen pro Seite.',
+ 'reverse-hack-squat':'Brust zur Polsterseite, Hüfte nach hinten schieben. Betont Gesäß und Beinbeuger.',
+ 'smith-maschine-ausfallschritte':'Stange auf dem oberen Rücken, Schritt nach vorn. Senkrecht nach unten gehen.',
+ 'smith-maschine-bulgarian-split-squats':'Hinterer Fuß auf der Bank, geführte Stange auf dem Rücken. Gute Balance, schwer belastbar.',
+ 'beinbeuger-stehend-einbeinig':['Stehend, Polster hinter dem Sprunggelenk, Hüfte am Polster.','Beug das Knie und zieh die Ferse zum Gesäß.|Halte kurz.|Lass langsam zurück.','Ein Bein nach dem anderen, gut gegen Seitenunterschiede.','Hüfte vom Polster wegdrehen.'],
+ 'glute-kickback-maschine':'Brust ans Polster, ein Fuß auf die Platte. Mit der Ferse nach hinten oben drücken.',
+ 'smith-maschine-hip-thrust':'Oberer Rücken auf der Bank, Stange mit Polster auf der Hüfte. Oben voll anspannen.',
+ 'smith-maschine-wadenheben':'Fußballen auf eine Stufe oder Scheibe, Stange auf dem oberen Rücken.',
+ 'donkey-calf-raises-maschine':'Oberkörper vorgebeugt, Polster auf der Hüfte. Starke Dehnung unten.',
+ 'skierg':['Stell dich vor das Gerät, greif beide Griffe über Kopf.','Zieh die Griffe kräftig nach unten, beug dabei die Hüfte.|Arme bis zu den Oberschenkeln durchziehen.|Richte dich auf und lass die Griffe zurück.','Kraft aus Hüfte und Lat, nicht nur aus den Armen.','Nur mit den Armen ziehen.'],
+ 'air-bike':'Arme und Beine arbeiten gleichzeitig. Kurze Intervalle sind besonders effektiv.',
  'kurzhantel-bankdruecken':'Mit Kurzhanteln darfst du unten etwas tiefer gehen. Oben die Hanteln nicht zusammenschlagen.',
  'negativ-bankdruecken':'Bank 15–30° nach unten neigen, Beine einhaken, Stange zur unteren Brust senken. Betont die untere Brust.',
  'smith-maschine-bankdruecken':'Stell die Bank so, dass die geführte Stange über der unteren Brust läuft.',
@@ -967,6 +1008,21 @@ const EX_RAW=[
  ['Katze-Kuh','quad','KG','lower','abs','t'],['BWS-Rotation (Thread the Needle)','quad','KG','traps','lower','t'],['Schulter-Dislocates mit Band','lateral','BD','delts','chest','t'],
  ['Brustdehnung am Türrahmen','fly','KG','chest','delts','t'],['Beinbeuger-Dehnung','rdl','KG','hams','','t'],['Wadendehnung','calf','KG','calves','','t'],
  ['Jefferson Curl','rdl','KH','lower','hams'],['Lat-Dehnung','pulldown','KG','lats','','t'],['Kindhaltung','quad','KG','lower','lats','t'],['Herabschauender Hund','pushup','KG','hams','calves delts','t'],
+ /* Geräte & Maschinen (Ergänzung) */
+ ['Scott-Curls (Maschine)','curl','MA','biceps',''],['Scott-Curls (Kurzhantel, einarmig)','curl','KH','biceps',''],['Scott-Curls am Kabel','curl','KB','biceps',''],
+ ['Bizepsmaschine','curl','MA','biceps','forearms'],['Hammer Curls am Kabel (Seil)','curl','KB','biceps','forearms'],['Smith-Maschine Drag Curls','curl','SM','biceps',''],
+ ['Dip-Maschine (sitzend)','dip','MA','triceps','chest_low delt_front'],['Überkopf-Trizepsmaschine','ohext','MA','triceps',''],['Einarmiges Trizepsdrücken am Kabel','pushdown','KB','triceps',''],
+ ['Einarmige Brustpresse (Maschine)','bench','MA','chest_mid','triceps delt_front'],['Smith-Maschine Negativbankdrücken','bench','SM','chest_low','triceps'],['Brustpresse stehend am Kabel','fly','KB','chest_mid','triceps delt_front'],
+ ['Latzug-Maschine (Hebelarm)','pulldown','MA','lats','biceps'],['Einarmiges Latziehen (Maschine)','pulldown','MA','lats','biceps'],['Pullover-Maschine','pullover','MA','lats','chest_mid'],
+ ['Rudermaschine (breit)','cablerow','MA','upback','delt_rear biceps'],['T-Bar Rudern (brustgestützt, Maschine)','row','MA','upback','lats biceps'],['Smith-Maschine Rudern','row','SM','upback','lats biceps'],
+ ['Rückenstrecker-Maschine','hyperext','MA','lower','glutes'],['Shrug-Maschine','shrug','MA','traps','forearms'],['Smith-Maschine Shrugs','shrug','SM','traps','forearms'],
+ ['Smith-Maschine Schulterdrücken','ohp','SM','delt_front','triceps delt_side'],['Rear-Delt-Kabelzug (Kreuzzug)','lateral','KB','delt_rear','upback'],['Einarmiges Seitheben am Kabel','lateral','KB','delt_side',''],
+ ['Bauchmaschine (Crunch)','crunch','MA','abs',''],['Rotationsmaschine (Torso)','twist','MA','obliques','abs'],["Beinheben im Captain's Chair",'hangleg','MA','abs','','bw'],
+ ['V-Squat (Maschine)','squat','MA','quads','glutes'],['Belt Squat','squat','MA','quads','glutes adductors'],['Horizontale Beinpresse','legpress','MA','quads','glutes'],
+ ['Einbeinige Beinpresse','legpress','MA','quads','glutes'],['Reverse Hack Squat','legpress','MA','glutes','hams'],['Smith-Maschine Ausfallschritte','lunge','SM','quads','glutes'],
+ ['Smith-Maschine Bulgarian Split Squats','lunge','SM','quads','glutes'],['Beinbeuger stehend (einbeinig)','legcurl','MA','hams',''],['Glute-Kickback-Maschine','kickback','MA','glutes','hams'],
+ ['Smith-Maschine Hip Thrust','hipthrust','SM','glutes','hams'],['Smith-Maschine Wadenheben','calf','SM','calves',''],['Donkey Calf Raises (Maschine)','calf','MA','calves',''],
+ ['SkiErg','pulldown','CA','lats','triceps abs','c'],['Air Bike','bike','CA','quads','delt_front','c'],
 ];
 const COMPOUND=new Set(['bench','incline','ohp','row','cablerow','pulldown','pullup','squat','lunge','deadlift','rdl','hipthrust','legpress','dip','pushup','goodmorning','clean','stepup']);
 const LOWER=new Set(['squat','lunge','deadlift','rdl','hipthrust','legpress','goodmorning','stepup']);
@@ -1386,7 +1442,9 @@ function alternatives(id){
  const okKind=e=>ex.kind==='c'?e.kind==='c':ex.kind==='t'?e.kind==='t':(e.kind==='w'||e.kind==='bw');
  const tried=new Set(S.workouts.flatMap(w=>w.items.map(i=>i.ex)));
  const near={squat:['legpress','lunge'],legpress:['squat'],bench:['incline','pushup','dip'],incline:['bench'],row:['cablerow'],cablerow:['row'],pulldown:['pullup'],pullup:['pulldown'],deadlift:['rdl'],rdl:['deadlift','goodmorning'],curl:[],fly:['bench']};
- const score=e=>(e.prim===ex.prim?0:10)+(e.pat===ex.pat?0:(near[ex.pat]||[]).includes(e.pat)?1:3)+(e.comp===ex.comp?0:2)+(tried.has(e.id)?0:.5)+(e.n==='Burpees'?20:0);
+ const fam=n=>{const w=n.split(/[\s(-]/)[0];return /^(Smith|Kurzhantel|Einarmige[s]?|Einbeinige[s]?|Kabel|Langhantel)$/.test(w)?'':w};
+ const myFam=fam(ex.n);
+ const score=e=>(myFam&&fam(e.n)===myFam?-1.5:0)+(e.prim===ex.prim?0:10)+(e.pat===ex.pat?0:(near[ex.pat]||[]).includes(e.pat)?1:3)+(e.comp===ex.comp?0:2)+(tried.has(e.id)?0:.5)+(e.n==='Burpees'?20:0);
  const same=Object.values(EX).filter(e=>e.id!==id&&okKind(e)&&e.prim===ex.prim);
  const grp=same.length>=5?[]:Object.values(EX).filter(e=>e.id!==id&&okKind(e)&&e.prim!==ex.prim&&PARENT[e.prim]===PARENT[ex.prim]);
  return [...same,...grp].sort((a,b)=>score(a)-score(b)||a.n.localeCompare(b.n,'de')).slice(0,14);
@@ -1740,7 +1798,7 @@ function libMatch(ex,f){
 const libPrimary=(ex,f)=>GROUP_BY[f]?PARENT[ex.prim]===f:ex.prim===f;
 function libList(){
  const f=V.libSub||V.libM, q=norm(V.libQ);
- return Object.values(EX).filter(ex=>libMatch(ex,f)&&(!q||norm(ex.n).includes(q)||norm(MUSCLES[ex.prim]).includes(q)||norm(GROUP_BY[PARENT[ex.prim]].n).includes(q)||norm(EQ[ex.eq]).includes(q)))
+ return Object.values(EX).filter(ex=>libMatch(ex,f)&&(!V.libEq||ex.eq===V.libEq)&&(!q||norm(ex.n).includes(q)||norm(MUSCLES[ex.prim]).includes(q)||norm(GROUP_BY[PARENT[ex.prim]].n).includes(q)||norm(EQ[ex.eq]).includes(q)))
   .sort((a,b)=>(libPrimary(a,f)?0:1)-(libPrimary(b,f)?0:1)||a.n.localeCompare(b.n,'de'));
 }
 function renderLibSheet(pick){
@@ -1749,6 +1807,7 @@ function renderLibSheet(pick){
  <input type="search" id="lib-q" placeholder="Suchen: Übung, Muskel, Equipment …" value="${esc(V.libQ)}" data-lib="q">
  <div class="chips scroll">${[['all','Alle'],...GROUPS.map(g=>[g.k,g.n]),['cardio','Cardio'],['mob','Mobilität']].map(([k,n])=>`<button class="chip" data-act="libM" data-v="${k}" aria-pressed="${V.libM===k}">${n}</button>`).join('')}</div>
  ${GROUP_BY[V.libM]?`<div class="chips scroll subchips">${[[V.libM,'Alle '+GROUP_BY[V.libM].n],...leavesOf(V.libM).map(m=>[m,MUSCLES[m]])].map(([k,n])=>`<button class="chip sm" data-act="libSub" data-v="${k}" aria-pressed="${(V.libSub||V.libM)===k}">${esc(n)}</button>`).join('')}</div>`:''}
+ <div class="chips scroll subchips eqchips">${[['','Alle Geräte'],['MA','Maschine'],['KB','Kabelzug'],['SM','Smith-Maschine'],['LH','Langhantel'],['KH','Kurzhantel'],['SZ','SZ-Stange'],['KG','Körpergewicht'],['KT','Kettlebell'],['BD','Band'],['CA','Cardiogerät']].map(([k,n])=>`<button class="chip sm" data-act="libEq" data-v="${k}" aria-pressed="${(V.libEq||'')===k}">${n}</button>`).join('')}</div>
  <div id="lib-res">${libResults(pick,list)}</div>
  <button class="btn ghost" data-act="customEx">${I.plus.replace('<svg','<svg width="14" height="14"')} Eigene Übung anlegen</button>`;
 }
@@ -2180,9 +2239,10 @@ document.addEventListener('click',e=>{
   startWith:()=>newDraft('Freies Training',[v],null),
   lib:()=>{openSheet('lib')}, addEx:()=>openSheet('pick'),
   libM:()=>{V.libM=v; V.libSub=null; drawSheet()},
+  libEq:()=>{V.libEq=v||null; drawSheet()},
   libSub:()=>{V.libSub=v===V.libM?null:v; drawSheet()},
   rankOpen:()=>{V.rankOpen=V.rankOpen===v?null:v; render()},
-  libFor:()=>{V.libM=PARENT[v]; V.libSub=v; V.libQ=''; openSheet(S.draft?'pick':'lib')},
+  libFor:()=>{V.libM=PARENT[v]; V.libSub=v; V.libEq=null; V.libQ=''; openSheet(S.draft?'pick':'lib')},
   exInfo:()=>openSheet('info',v),
   pickEx:()=>{S.draft.items.push(makeItem(v)); draftSave(); closeSheet(); render(); toast(EX[v].n+' hinzugefügt')},
   rmEx:()=>{S.draft.items.splice(+b.dataset.i,1); draftSave(); render()},
