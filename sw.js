@@ -1,4 +1,4 @@
-const CACHE='iron-ladder-5d93c9c0';
+const CACHE='iron-ladder-4ce3cd38';
 const SHELL=['/','/manifest.webmanifest','/icon.svg','/icon-192.png'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});

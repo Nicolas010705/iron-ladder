@@ -310,6 +310,25 @@ input:focus,select:focus{outline:2px solid var(--accent);outline-offset:0;border
 .ph-cmp img{width:100%;border-radius:var(--r-sm);display:block}
 .ph-cmp figcaption{font-size:.875rem;color:var(--muted);margin-top:4px}
 .ph-cmp figure{margin:0}
+.sheet>*{flex-shrink:0}
+.ex-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:-4px}
+.ex-top .thumb{all:unset;cursor:pointer;width:64px;height:64px;border-radius:var(--r-sm);background:var(--row);display:grid;place-items:center;overflow:hidden}
+.ex-top .thumb svg{width:100%;height:100%}
+.linkbtn{all:unset;cursor:pointer;color:var(--accent-text);font-weight:600;font-size:.875rem;padding:6px 0;min-height:32px;display:inline-flex;align-items:center}
+.fig-anim{display:flex;flex-direction:column;align-items:center;gap:4px}
+.fig-anim svg{width:100%;height:auto;max-height:240px}
+.fig-cap{font-size:.75rem;color:var(--muted);font-weight:600}
+.guide{display:flex;flex-direction:column;gap:10px}
+.guide p{line-height:1.55}
+.guide-note{background:var(--accent-soft);color:var(--fg);border-radius:var(--r-sm);padding:10px 12px;font-size:.9375rem}
+.guide-steps{margin:0;padding-left:0;list-style:none;counter-reset:st;display:flex;flex-direction:column;gap:8px}
+.guide-steps li{counter-increment:st;display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;align-items:start;line-height:1.5}
+.guide-steps li::before{content:counter(st);width:26px;height:26px;border-radius:50%;background:var(--ink);color:var(--on-ink);display:grid;place-items:center;font-weight:700;font-size:.8125rem;margin-top:-1px}
+.guide-cards{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media (max-width:520px){.guide-cards{grid-template-columns:1fr}}
+.gc{border-radius:var(--r-sm);padding:12px;display:flex;flex-direction:column;gap:4px;font-size:.9375rem;line-height:1.45}
+.gc.ok{background:var(--accent-soft)}.gc.warn{background:var(--yellow-soft)}
+.gc b{font-size:.8125rem}
 /* Training */
 .ex-card{display:flex;flex-direction:column;gap:14px}
 .ex-top{display:grid;grid-template-columns:64px minmax(0,1fr) auto;gap:14px;align-items:center}
@@ -608,21 +627,256 @@ const P={
  nordic:{h:[25,50],s:[32,54],p:[52,66],k:[60,86],a:[84,86],e:[26,64],w:[22,72],eq:'<path d="M80 80h10"/>'},
  pullover:{h:[21,53],s:[29,57],p:[60,57],k:[76,61],a:[80,91],e:[18,52],w:[8,58],tool:DB_,eq:'<rect x="16" y="60" width="54" height="5" rx="2"/><path d="M24 65v26M62 65v26"/>'},
 };
-function figure(pat,cls=''){
- const p=P[pat]||P.ohp; const L=(a,b)=>`<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}"/>`;
+/* Zweite Position je Bewegungsmuster: die Figur pendelt zwischen P (Start) und POSE_B (Umkehrpunkt) */
+const POSE_B={
+ bench:{e:[41,59],w:[33,48]},
+ incline:{e:[45,44],w:[37,33]},
+ ohp:{e:[58,34],w:[56,24]},
+ pushup:{h:[19,74],s:[27,79],p:[58,77],k:[72,78],e:[38,80]},
+ dip:{h:[50,29],s:[50,39],p:[51,66],k:[60,79],a:[52,89],e:[38,40]},
+ fly:{e:[25,31],w:[14,36],e2:[75,31],w2:[86,36]},
+ row:{e:[56,41],w:[45,52]},
+ cablerow:{e:[55,45],w:[70,46]},
+ pulldown:{e:[39,57],w:[46,45]},
+ pullup:{h:[50,30],s:[50,36],e:[46,22],p:[50,64],k:[53,79],a:[49,90]},
+ curl:{w:[53,57]},
+ pushdown:{w:[65,35]},
+ ohext:{e:[54,12],w:[55,1]},
+ lateral:{e:[40,38],w:[40,53],e2:[60,38],w2:[60,53]},
+ frontraise:{e:[52,40],w:[54,56]},
+ facepull:{e:[62,22],w:[78,18]},
+ shrug:{h:[50,10],s:[50,18],e:[51,35],w:[52,52]},
+ squat:{h:[50,13],s:[50,22],p:[50,52],k:[49,72],e:[57,27],w:[47,20]},
+ lunge:{h:[50,8],s:[50,17],p:[50,46],k:[62,67],k2:[42,70],a2:[26,90],e:[50,31],w:[51,47]},
+ deadlift:{h:[50,13],s:[50,22],p:[50,52],k:[50,72],e:[51,38],w:[51,54]},
+ rdl:{h:[50,13],s:[50,22],p:[52,50],k:[54,70],e:[51,37],w:[52,52]},
+ goodmorning:{h:[50,13],s:[50,22],p:[52,50],k:[54,70],e:[57,27],w:[48,21]},
+ hipthrust:{p:[44,66],e:[34,60],w:[44,64]},
+ legpress:{k:[63,66],a:[81,58]},
+ legext:{a:[64,82]},
+ legcurl:{a:[90,58]},
+ calf:{h:[50,16],s:[50,25],p:[50,56],k:[50,74],a:[50,90],e:[51,42],w:[52,58]},
+ crunch:{h:[22,76],s:[31,78]},
+ hangleg:{k:[52,72],a:[49,86]},
+ twist:{e:[44,58],w:[37,62]},
+ run:{k:[38,70],a:[24,75],k2:[62,64],a2:[56,86],e:[42,37],w:[36,47],e2:[62,35],w2:[70,28]},
+ bike:{k:[59,61],a:[64,80]},
+ swing:{h:[50,13],s:[50,22],p:[52,52],k:[52,72],e:[62,31],w:[72,33]},
+ clean:{h:[30,40],s:[37,45],p:[64,50],k:[57,70],e:[41,62],w:[43,77]},
+ pullover:{e:[30,44],w:[33,32]},
+ kickback:{k:[64,64],a:[70,80]},
+ abduct:{k:[43,73],k2:[57,73],a:[43,91],a2:[57,91]},
+ hyperext:{h:[29,41],s:[36,44],e:[42,52],w:[46,46]},
+ nordic:{h:[58,30],s:[58,40],p:[58,66],e:[60,52],w:[62,62]},
+ stepup:{h:[48,8],s:[50,17],p:[54,45],k:[62,58],k2:[52,64],a2:[50,78],e:[52,31],w:[52,45]},
+ carry:{k:[45,72],k2:[55,72]},
+ abwheel:{h:[48,50],s:[52,56],p:[70,70],e:[44,66],w:[30,82]},
+};
+const HOLD_PATS=new Set(['plank','stretch','deepsquat','quad']);
+const ANIM_KEYS='keyTimes="0;.45;.55;1" calcMode="spline" keySplines=".45 0 .55 1;0 0 1 1;.45 0 .55 1" dur="2.6s" repeatCount="indefinite"';
+function figure(pat,cls='',anim=false){
+ const A=P[pat]||P.ohp; const Bp=anim&&!REDUCED&&POSE_B[pat]?Object.assign({},A,POSE_B[pat]):null;
+ const B=Bp||A; const moving=!!Bp;
+ const av=(attr,a,b)=>moving&&(a!==b)?`<animate attributeName="${attr}" values="${a};${b};${b};${a}" ${ANIM_KEYS}/>`:'';
+ const L=(j1,j2,src1=A,src2=A,dst1=B,dst2=B)=>{ const a1=src1[j1]||A[j1.replace('2','')], a2=src2[j2]||A[j2.replace('2','')], b1=dst1[j1]||a1, b2=dst2[j2]||a2;
+  return `<line x1="${a1[0]}" y1="${a1[1]}" x2="${a2[0]}" y2="${a2[1]}">${av('x1',a1[0],b1[0])}${av('y1',a1[1],b1[1])}${av('x2',a2[0],b2[0])}${av('y2',a2[1],b2[1])}</line>`; };
  let back='',front='';
- if(p.e2) (p.front?(f=>front+=f):(f=>back+=f))(L(p.s2||p.s,p.e2)+L(p.e2,p.w2));
- if(p.k2) (p.front?(f=>front+=f):(f=>back+=f))(L(p.p2||p.p,p.k2)+L(p.k2,p.a2));
- front+=L(p.s,p.p)+L(p.s,p.e)+L(p.e,p.w)+L(p.p,p.k)+L(p.k,p.a);
- if(p.s2) front+=L(p.s2,p.p2)+L(p.s,p.s2)+L(p.p,p.p2);
- const hp=p.front?[p.h[0],p.h[1]+6]:p.s; front+=L(p.h,hp);
+ const push=(f,isFront)=>{ if(isFront) front+=f; else back+=f; };
+ if(A.e2){ const sj=A.s2?'s2':'s'; push(L(sj,'e2')+L('e2','w2'),A.front); }
+ if(A.k2){ const pj=A.p2?'p2':'p'; push(L(pj,'k2')+L('k2','a2'),A.front); }
+ front+=L('s','p')+L('s','e')+L('e','w')+L('p','k')+L('k','a');
+ if(A.s2) front+=L('s2','p2')+L('s','s2')+L('p','p2');
+ /* Hals */
+ const hpA=A.front?[A.h[0],A.h[1]+6]:A.s, hpB=A.front?[B.h[0],B.h[1]+6]:B.s;
+ front+=`<line x1="${A.h[0]}" y1="${A.h[1]}" x2="${hpA[0]}" y2="${hpA[1]}">${av('x1',A.h[0],B.h[0])}${av('y1',A.h[1],B.h[1])}${av('x2',hpA[0],hpB[0])}${av('y2',hpA[1],hpB[1])}</line>`;
  let tool='';
- const tp=p.toolAt?p[p.toolAt]:p.w;
- if(p.tool==='p') tool=`<circle cx="${tp[0]}" cy="${tp[1]}" r="7" class="pl"/>`;
- if(p.tool==='d'){ tool=`<rect x="${p.w[0]-5}" y="${p.w[1]-2.5}" width="10" height="5" rx="1.5" class="pl"/>`; if(p.tool2) tool+=`<rect x="${p.w2[0]-5}" y="${p.w2[1]-2.5}" width="10" height="5" rx="1.5" class="pl"/>`;}
- if(p.tool==='k') tool=`<circle cx="${p.w[0]}" cy="${p.w[1]+5}" r="5" class="pl"/>`;
- return `<svg viewBox="0 0 100 100" class="${cls}" aria-hidden="true"><g fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity=".7">${p.eq||''}<path d="M2 92h96"/></g><g stroke="var(--fig)" stroke-width="5" stroke-linecap="round" fill="none"><g opacity=".4">${back}</g>${front}</g><circle cx="${p.h[0]}" cy="${p.h[1]}" r="6" fill="var(--fig)"/><g fill="var(--accent)">${tool}</g></svg>`;
+ const tj=A.toolAt||'w', tA=A[tj], tB=B[tj];
+ if(A.tool==='p') tool=`<circle cx="${tA[0]}" cy="${tA[1]}" r="7" class="pl">${av('cx',tA[0],tB[0])}${av('cy',tA[1],tB[1])}</circle>`;
+ if(A.tool==='d'){ tool=`<rect x="${A.w[0]-5}" y="${A.w[1]-2.5}" width="10" height="5" rx="1.5" class="pl">${av('x',A.w[0]-5,B.w[0]-5)}${av('y',A.w[1]-2.5,B.w[1]-2.5)}</rect>`;
+  if(A.tool2) tool+=`<rect x="${A.w2[0]-5}" y="${A.w2[1]-2.5}" width="10" height="5" rx="1.5" class="pl">${av('x',A.w2[0]-5,B.w2[0]-5)}${av('y',A.w2[1]-2.5,B.w2[1]-2.5)}</rect>`; }
+ if(A.tool==='k') tool=`<circle cx="${A.w[0]}" cy="${A.w[1]+5}" r="5" class="pl">${av('cx',A.w[0],B.w[0])}${av('cy',A.w[1]+5,B.w[1]+5)}</circle>`;
+ const head=`<circle cx="${A.h[0]}" cy="${A.h[1]}" r="6" fill="var(--fig)">${av('cx',A.h[0],B.h[0])}${av('cy',A.h[1],B.h[1])}</circle>`;
+ return `<svg viewBox="0 0 100 100" class="${cls}" aria-hidden="true"><g fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity=".7">${A.eq||''}<path d="M2 92h96"/></g><g stroke="var(--fig)" stroke-width="5" stroke-linecap="round" fill="none"><g opacity=".4">${back}</g>${front}</g>${head}<g fill="var(--accent)">${tool}</g></svg>`;
 }
+
+/* Anleitungen: Grundanleitung pro Bewegungsmuster [Ausgangsposition, Schritte (| getrennt), Tipp, Häufiger Fehler].
+   Übungsspezifisch: Text = Varianten-Hinweis, Array = eigene Anleitung (leere Felder übernehmen die Grundanleitung). */
+const GUIDE_P={
+ bench:['Leg dich auf die Flachbank, Füße fest am Boden, Schulterblätter zusammen und nach unten ziehen.','Greif die Stange etwas breiter als schulterbreit und heb sie aus der Ablage.|Senke sie kontrolliert zur unteren Brust, Ellbogen etwa 45–70° vom Körper.|Drück sie kraftvoll zurück nach oben über die Schultern.','Leichtes Hohlkreuz und Spannung im ganzen Körper geben eine stabile Basis.','Ellbogen weit seitlich abspreizen oder die Stange auf der Brust abfedern.'],
+ incline:['Stell die Bank auf 30–45°, Schulterblätter zurück, Füße fest am Boden.','Heb die Stange über der oberen Brust aus der Ablage.|Senke sie Richtung Schlüsselbein, Ellbogen leicht unter der Stange.|Drück nach oben, bis die Arme fast gestreckt sind.','30° reicht meist. Steiler wird es zur Schulterübung.','Das Gesäß von der Bank heben, um mehr Gewicht zu schaffen.'],
+ fly:['Leg dich mit Kurzhanteln auf die Flachbank, Arme über der Brust, Ellbogen leicht gebeugt.','Senke die Arme in einem weiten Bogen seitlich ab, bis die Brust gedehnt ist.|Der Ellbogenwinkel bleibt dabei fest.|Führe die Arme im gleichen Bogen zurück, als würdest du einen Baum umarmen.','Moderates Gewicht wählen. Die Dehnung unten macht die Übung wirksam.','Die Arme beugen und strecken, sodass es zum Drücken wird.'],
+ pushup:['Hände etwas breiter als schulterbreit, Körper bildet eine Linie von Kopf bis Fuß.','Spann Bauch und Gesäß an.|Senke die Brust bis knapp über den Boden, Ellbogen etwa 45° vom Körper.|Drück dich kraftvoll hoch, ohne dass die Hüfte durchhängt.','Zu schwer? Hände erhöht auf eine Bank. Zu leicht? Füße erhöht oder Gewichtsweste.','Durchhängende Hüfte oder den Kopf nach vorn strecken.'],
+ dip:['Stütz dich zwischen den Barren, Arme gestreckt, Schultern tief.','Neig den Oberkörper leicht nach vorn.|Senke dich, bis die Oberarme etwa parallel zum Boden sind.|Drück dich kraftvoll hoch, ohne die Ellbogen hart zu blockieren.','Zu schwer? Unterstützte Dips an der Maschine oder mit Band.','Zu tief gehen und dabei die Schultern hochziehen. Das belastet das Schultergelenk.'],
+ pullover:['Leg dich auf die Bank, Kurzhantel mit beiden Händen über der Brust.','Senke die Hantel mit leicht gebeugten Armen in einem Bogen hinter den Kopf.|Geh bis zu einer deutlichen Dehnung in Brust und Latissimus.|Zieh sie im gleichen Bogen zurück über die Brust.','Rippen unten halten, nicht ins Hohlkreuz fallen.','Die Ellbogen beugen und strecken, statt aus der Schulter zu arbeiten.'],
+ row:['Greif die Stange schulterbreit, schieb die Hüfte nach hinten, Oberkörper etwa 45° vorgeneigt, Rücken gerade.','Zieh zuerst die Schulterblätter nach hinten.|Zieh die Stange zum Bauchnabel, Ellbogen nah am Körper.|Lass sie kontrolliert ab, bis die Arme gestreckt sind.','Knie leicht gebeugt, Rumpf fest. Der Oberkörper bewegt sich nicht mit.','Mit Schwung aus dem Rücken ziehen.'],
+ lateral:['Steh aufrecht, Kurzhanteln seitlich, Ellbogen leicht gebeugt.','Heb die Arme seitlich an, die Ellbogen führen.|Geh bis etwa Schulterhöhe.|Senke sie langsam in 2–3 Sekunden ab.','Leicht nach vorn lehnen trifft die seitliche Schulter oft besser.','Mit Schwung arbeiten oder die Schultern zu den Ohren ziehen.'],
+ plank:['Unterarme unter den Schultern, Körper in einer Linie von Kopf bis Ferse.','Spann Bauch und Gesäß an, Becken leicht einrollen.|Atme ruhig weiter.|Halte die Position, bis die Form nachlässt.','Lieber 3 × 30 s sauber als 2 Minuten mit Hohlkreuz.','Die Hüfte hängt durch oder ragt nach oben.'],
+ squat:['Stange auf dem oberen Rücken, Füße schulterbreit, Zehen leicht nach außen.','Atme tief ein und spann den Rumpf an.|Beuge Hüfte und Knie gleichzeitig, die Knie folgen den Zehen.|Geh mindestens bis die Oberschenkel parallel zum Boden sind und drück dich kraftvoll hoch.','Gewicht über dem Mittelfuß, die Fersen bleiben am Boden.','Die Knie fallen nach innen oder der Rücken rundet sich unten.'],
+ kickback:['Manschette am Fußgelenk, Kabel unten, mit den Händen am Gerät abstützen.','Beug dich leicht vor, das Standbein ist leicht gebeugt.|Führ das Bein gestreckt nach hinten oben und spann das Gesäß an.|Bring es langsam zurück, ohne abzusetzen.','Das Becken bleibt gerade, kein Hohlkreuz.','Schwung aus dem unteren Rücken holen.'],
+ carry:['Nimm zwei schwere Kurzhanteln seitlich und steh aufrecht.','Geh mit kurzen, festen Schritten.|Schultern unten, Rumpf fest, Blick nach vorn.|20–40 m oder 30–60 s am Stück.','Oft ist die Griffkraft der Engpass. Zughilfen erst am Ende einsetzen.','Die Schultern hochziehen oder seitlich wanken.'],
+ hangleg:['Häng dich an die Klimmzugstange, Schultern aktiv.','Roll das Becken ein und heb die Beine an.|Bis auf Hüfthöhe oder höher.|Lass sie langsam und ohne Schwung ab.','Angewinkelte Knie sind leichter, gestreckte Beine schwerer.','Ins Schwingen kommen.'],
+ crunch:['Leg dich auf den Rücken, Knie angewinkelt, Hände an den Schläfen.','Spann den Bauch an, die Lendenwirbel bleiben am Boden.|Roll den Oberkörper ein, bis die Schulterblätter abheben.|Senke dich langsam zurück.','Denk daran, die Rippen zum Becken zu ziehen.','Den Kopf mit den Händen nach vorn ziehen.'],
+ pullup:['Greif die Stange etwas breiter als schulterbreit im Obergriff und häng dich daran.','Zieh zuerst die Schultern nach unten.|Zieh die Brust zur Stange, bis das Kinn darüber ist.|Lass dich kontrolliert bis zur Streckung ab.','Zu schwer? Band oder Maschine helfen. Langsame negative Wiederholungen bauen Kraft auf.','Halbe Wiederholungen oder Schwung aus den Beinen.'],
+ pulldown:['Setz dich an den Latzug, Knie unter dem Polster, Stange breit greifen.','Lehn dich leicht zurück, Brust raus.|Zieh die Stange zur oberen Brust, Ellbogen nach unten und hinten.|Führ sie langsam nach oben, bis die Arme gestreckt sind.','Denk an „Ellbogen in die Hosentaschen“ statt mit den Händen zu ziehen.','Weit nach hinten fallen und mit Schwung ziehen.'],
+ cablerow:['Setz dich an den Kabelzug, Füße an der Plattform, Knie leicht gebeugt, Rücken gerade.','Zieh die Schulterblätter zurück.|Zieh den Griff zum Bauch, Ellbogen nah am Körper.|Lass ihn langsam nach vorn, bis die Schultern leicht mitgehen.','Der Oberkörper bleibt nahezu ruhig.','Mit dem ganzen Oberkörper vor und zurück schaukeln.'],
+ deadlift:['Füße hüftbreit, Stange über dem Mittelfuß, Schienbeine fast an der Stange.','Schieb die Hüfte nach hinten und greif die Stange knapp außerhalb der Beine, Rücken gerade, Brust raus.|Atme tief ein, spann den Rumpf an und drück die Stange dicht am Körper vom Boden.|Streck Hüfte und Knie gemeinsam, steh oben aufrecht und lass kontrolliert ab.','Spann den Latissimus an, als würdest du die Stange an die Beine ziehen.','Runder Rücken oder die Hüfte schießt zuerst hoch.'],
+ hyperext:['Hüfte an der Kante des Polsters, Füße eingehakt, Hände vor der Brust.','Senke den Oberkörper mit geradem Rücken nach unten.|Richte dich über unteren Rücken und Gesäß auf, bis der Körper eine Linie bildet.|Nicht darüber hinaus überstrecken.','Für mehr Widerstand eine Hantelscheibe vor der Brust halten.','Ins Hohlkreuz überstrecken.'],
+ goodmorning:['Stange auf dem oberen Rücken, Füße hüftbreit, Knie leicht gebeugt.','Schieb die Hüfte nach hinten und neig den Oberkörper mit geradem Rücken nach vorn.|Bis du die Beinbeuger deutlich spürst, etwa bis parallel.|Schieb die Hüfte nach vorn und richte dich auf.','Leicht beginnen. Die Übung ist stärker als sie aussieht.','Den Rücken rund werden lassen.'],
+ shrug:['Steh aufrecht, Gewicht in den Händen, Arme gestreckt.','Zieh die Schultern gerade nach oben zu den Ohren.|Halte oben 1 Sekunde.|Senke sie langsam ab.','Keine Rollbewegung, einfach hoch und runter.','Mit den Armen mitziehen oder den Kopf nach vorn schieben.'],
+ facepull:['Seil am Kabelzug auf Kopfhöhe, mit den Daumen nach hinten greifen.','Zieh das Seil zum Gesicht und die Hände auseinander.|Ellbogen hoch, am Ende nach außen drehen, Hände neben den Ohren.|Lass langsam zurück.','Leichtes Gewicht, viele Wiederholungen.','So schwer, dass du dich zurücklehnen musst.'],
+ ohp:['Stange vor dem Hals auf Schulterhöhe, Griff knapp schulterbreit, Füße hüftbreit.','Spann Gesäß und Bauch an.|Drück die Stange gerade nach oben, nimm den Kopf kurz zurück und dann unter die Stange.|Streck oben die Arme und lass kontrolliert ab.','Rippen unten halten, kein starkes Hohlkreuz.','Mit den Beinen Schwung holen.'],
+ frontraise:['Steh aufrecht, Kurzhanteln vor den Oberschenkeln.','Heb die fast gestreckten Arme nach vorn bis Schulterhöhe.|Halte kurz.|Senke sie langsam ab.','Abwechselnd ausführen geht auch.','Schwung aus dem Rücken holen.'],
+ curl:['Steh aufrecht, Stange schulterbreit im Untergriff, Arme gestreckt.','Die Ellbogen bleiben seitlich am Körper.|Beug die Arme, bis die Stange an den Schultern ist, und spann den Bizeps an.|Lass sie langsam ab, bis die Arme fast gestreckt sind.','Langsames Ablassen in 2–3 s bringt viel.','Mit der Hüfte Schwung holen.'],
+ pushdown:['Steh am Kabelzug, Griff oben, Ellbogen am Körper.','Fixier die Oberarme.|Streck die Unterarme nach unten, bis die Arme gerade sind.|Lass sie langsam bis etwa 90° zurück.','Mit dem Seil am Ende die Hände leicht auseinanderziehen.','Die Ellbogen wandern nach vorn oder der Oberkörper drückt mit.'],
+ ohext:['Halte das Gewicht über dem Kopf, Ellbogen zeigen nach vorn oben.','Die Ellbogen bleiben fixiert.|Beug die Arme, bis das Gewicht hinter dem Kopf ist und der Trizeps gedehnt wird.|Streck die Arme wieder.','Die gedehnte Position trifft den langen Trizepskopf besonders.','Die Ellbogen weit nach außen öffnen.'],
+ legpress:['Rücken und Gesäß fest am Polster, Füße schulterbreit mittig auf der Plattform.','Löse die Sicherung.|Beug die Knie Richtung Brust, bis etwa 90° oder tiefer, solange das Becken liegen bleibt.|Drück durch die ganze Fußsohle, ohne die Knie ganz durchzustrecken.','Füße höher betont Gesäß und Beinbeuger, tiefer den Quadrizeps.','Das Becken hebt sich unten vom Polster.'],
+ legext:['Setz dich mit dem Rücken an die Lehne, Polster vor den Sprunggelenken, Knie auf Höhe der Drehachse.','Streck die Beine, bis sie fast gerade sind.|Spann oben 1 Sekunde den Quadrizeps an.|Senke langsam ab.','Langsam arbeiten, das Gewicht nicht fallen lassen.','Schwung holen, das Gesäß hebt ab.'],
+ lunge:['Steh aufrecht, Kurzhanteln seitlich.','Mach einen großen Schritt nach vorn.|Senke das hintere Knie Richtung Boden, das vordere Knie bleibt über dem Fuß.|Drück dich über die vordere Ferse zurück.','Oberkörper leicht vorlehnen betont das Gesäß.','Das vordere Knie knickt nach innen.'],
+ stepup:['Stell eine Box oder Bank auf etwa Kniehöhe.','Setz einen Fuß komplett auf die Box.|Drück dich über das vordere Bein hoch, das hintere Bein hilft kaum mit.|Steig kontrolliert zurück.','Je höher die Box, desto mehr Gesäß.','Mit dem hinteren Bein abspringen.'],
+ rdl:['Stange in den Händen, Füße hüftbreit, Knie leicht gebeugt.','Schieb die Hüfte nach hinten, die Stange gleitet an den Oberschenkeln entlang.|Rücken gerade, bis du die Beinbeuger deutlich spürst, meist knapp unter dem Knie.|Schieb die Hüfte nach vorn und richte dich auf.','Die Bewegung kommt aus der Hüfte, nicht aus dem Rücken.','Runder Rücken oder zu stark gebeugte Knie, dann wird es eine Kniebeuge.'],
+ legcurl:['Bauchlage, Polster über den Fersen, Knie knapp über der Polsterkante.','Drück die Hüfte ins Polster.|Zieh die Fersen zum Gesäß.|Lass langsam zurück.','Das langsame Ablassen ist der wichtigste Teil.','Die Hüfte hebt ab.'],
+ nordic:['Knie dich hin, Fersen fest fixiert (Partner, Bank oder Gerät).','Körper von Knie bis Kopf gerade.|Lass dich so langsam wie möglich nach vorn fallen, die Beinbeuger bremsen.|Fang dich mit den Händen ab und drück dich leicht zurück.','Schon die langsame Absenkphase ist sehr wirksam gegen Verletzungen.','In der Hüfte einknicken.'],
+ hipthrust:['Oberer Rücken an der Bankkante, Stange mit Polster in der Hüftbeuge, Füße hüftbreit.','Nimm das Kinn leicht zur Brust.|Drück die Hüfte hoch, bis Schultern, Hüfte und Knie eine Linie bilden.|Spann oben das Gesäß an und senke langsam ab.','Die Schienbeine sind oben etwa senkrecht.','Ins Hohlkreuz gehen statt die Hüfte zu strecken.'],
+ abduct:['Setz dich in die Maschine, Polster außen an den Knien.','Drück die Beine gegen den Widerstand nach außen.|Halte kurz.|Lass langsam zurück.','Oberkörper leicht nach vorn betont das Gesäß.','Mit Schwung arbeiten.'],
+ swing:['Kettlebell vor dir, Füße schulterbreit.','Schieb die Hüfte nach hinten und schwing die Kettlebell zwischen den Beinen nach hinten.|Streck die Hüfte explosiv, die Kettlebell schwingt bis Brusthöhe.|Die Arme sind nur Seile, die Kraft kommt aus der Hüfte.','Oben kurz Gesäß und Bauch anspannen.','Eine Kniebeuge statt Hüftbeuge machen oder mit den Armen heben.'],
+ calf:['Fußballen auf einer Kante, Fersen frei.','Senke die Fersen so tief wie möglich.|Drück dich hoch auf die Zehenspitzen und halte oben 1 Sekunde.|Lass langsam ab.','Volle Bewegungsweite, unten kurz dehnen.','Wippen mit kleinem Bewegungsweg.'],
+ twist:['Setz dich hin, Oberkörper leicht zurückgelehnt, Füße angehoben oder am Boden.','Rumpf fest, Rücken gerade.|Dreh den Oberkörper samt Händen zu einer Seite.|Dann zur anderen Seite.','Ein Gewicht in den Händen macht es schwerer.','Mit rundem Rücken arbeiten.'],
+ abwheel:['Knie dich hin, das Rad unter den Schultern.','Spann den Bauch an und roll das Rad langsam nach vorn.|So weit, wie du den Rücken gerade halten kannst.|Roll mit Bauchspannung zurück.','Am Anfang nur ein kurzes Stück rollen.','Ins Hohlkreuz fallen.'],
+ clean:['Stange vor den Schienbeinen, Startposition wie beim Kreuzheben.','Zieh die Stange bis über die Knie.|Streck die Hüfte explosiv und zieh die Schultern hoch.|Tauch unter die Stange und fang sie vorn auf den Schultern, Ellbogen hoch.','Technikübung: leichte Gewichte, am besten mit Coach lernen.','Mit den Armen ziehen.'],
+ run:['Lauf locker und aufrecht, die Arme schwingen mit.','Starte mit lockerem Tempo.|Du solltest dich noch unterhalten können (Zone 2).|Steigere den Umfang langsam, etwa 10 % pro Woche.','Der Fuß landet unter dem Körper, nicht weit vorn.','Zu schnell starten.'],
+ bike:['Stell den Sattel so hoch, dass das Knie unten leicht gebeugt bleibt.','Tritt gleichmäßig mit 80–90 Umdrehungen pro Minute.|Wähl den Widerstand so, dass du noch sprechen kannst.|Für Intervalle kurze schwere Abschnitte einbauen.','Oberkörper locker, Schultern unten.','Sattel zu tief, das belastet die Knie.'],
+ stretch:['Geh in einen Ausfallschritt, das hintere Knie am Boden.','Spann das Gesäß an.|Schieb die Hüfte nach vorn, bis du vorn in der Hüfte eine Dehnung spürst.|Halte 30–60 s je Seite und atme ruhig.','Dehnen nach dem Training oder an Ruhetagen.','Ins Hohlkreuz ausweichen.'],
+ deepsquat:['Geh tief in die Hocke, Fersen am Boden.','Drück die Knie mit den Ellbogen leicht nach außen.|Halte den Oberkörper aufrecht.|Bleib 30–60 s und atme ruhig.','Halt dich anfangs an etwas fest, wenn die Fersen abheben.','Mit rundem Rücken zusammensacken.'],
+ quad:['Starte im Vierfüßlerstand oder in der Position der Übung.','Geh langsam in die Dehnung.|Atme ruhig und lass mit jedem Ausatmen etwas nach.|Halte 30–60 s oder wiederhole die Bewegung langsam.','Dehnen soll ziehen, nicht schmerzen.','Ruckartig in die Endposition gehen.']
+};
+const GUIDE_X={
+ 'kurzhantel-bankdruecken':'Mit Kurzhanteln darfst du unten etwas tiefer gehen. Oben die Hanteln nicht zusammenschlagen.',
+ 'negativ-bankdruecken':'Bank 15–30° nach unten neigen, Beine einhaken, Stange zur unteren Brust senken. Betont die untere Brust.',
+ 'smith-maschine-bankdruecken':'Stell die Bank so, dass die geführte Stange über der unteren Brust läuft.',
+ 'brustpresse':'Sitz so einstellen, dass die Griffe auf Brusthöhe liegen. Der Rücken bleibt am Polster.',
+ 'bankdruecken-mit-untergriff':'Untergriff mit den Handflächen zu dir, etwas enger greifen. Trifft die obere Brust stärker. Am besten mit Partner üben.',
+ 'negativ-kurzhantelbankdruecken':'Kurzhanteln auf der Negativbank, betont die untere Brust.',
+ 'negativ-brustpresse':'Maschine mit Druckrichtung schräg nach unten, betont die untere Brust.',
+ 'enges-bankdruecken':'Schulterbreit greifen, Ellbogen nah am Körper. Der Fokus liegt auf dem Trizeps.',
+ 'kurzhantel-schraegbankdruecken':'Mit Kurzhanteln unten etwas tiefer gehen, oben leicht zusammenführen.',
+ 'schraegbank-brustpresse':'Maschine mit Druck schräg nach oben. Sitzhöhe so, dass die Griffe auf Höhe der oberen Brust liegen.',
+ 'smith-maschine-schraegbankdruecken':'Geführte Stange auf der Schrägbank, Stange läuft über der oberen Brust.',
+ 'landmine-press':['Steck die Stange in eine Landmine-Halterung und halte das freie Ende auf Schulterhöhe.','Steh leicht schräg mit festem Stand.|Drück die Stange schräg nach vorn oben, bis der Arm gestreckt ist.|Lass sie kontrolliert zur Schulter zurück.','',''],
+ 'cable-crossover':['Steh zwischen zwei Kabelzügen, Griffe oben, Oberkörper leicht vorgebeugt.','Führ die Hände in einem Bogen nach vorn unten zusammen.|Halte kurz und spann die Brust an.|Lass sie kontrolliert zurück in die Dehnung.','',''],
+ 'butterfly-maschine':['Setz dich in die Butterfly-Maschine, Griffe auf Brusthöhe.','Führ die Arme vor der Brust zusammen.|Halte kurz.|Öffne sie langsam bis zur Dehnung.','',''],
+ 'schraegbank-fliegende-kurzhantel':'Auf der Schrägbank mit 30°. Betont die obere Brust.',
+ 'low-to-high-cable-fly':['Kabel unten, Griffe auf Hüfthöhe, ein Schritt nach vorn.','Führ die Hände in einem Bogen nach vorn oben bis auf Kinnhöhe zusammen.|Spann die obere Brust an.|Lass langsam zurück.','Arme leicht gebeugt lassen, die Bewegung kommt aus der Schulter.',''],
+ 'high-to-low-cable-fly':['Kabel ganz oben, ein Schritt nach vorn, Oberkörper leicht vorgebeugt.','Führ die Hände in einem Bogen nach vorn unten bis auf Hüfthöhe zusammen.|Spann die untere Brust an.|Lass langsam zurück.','',''],
+ 'brustdehnung-am-tuerrahmen':['Leg den Unterarm im Türrahmen auf Schulterhöhe an.','Mach einen kleinen Schritt nach vorn, bis die Brust dehnt.|Halte 30–60 s und atme ruhig.|Wechsle die Seite.','',''],
+ 'burpees':['Steh aufrecht.','Geh in die Hocke und setz die Hände auf den Boden.|Spring mit den Füßen nach hinten in den Liegestütz, optional ein Liegestütz.|Spring zurück in die Hocke und explosiv nach oben, Arme hoch.','Gleichmäßiges Tempo statt Sprint, weich landen.','Mit rundem Rücken die Hände aufsetzen.'],
+ 'herabschauender-hund':['Starte im Vierfüßlerstand.','Schieb die Hüfte nach oben, Arme und Rücken lang.|Drück die Fersen Richtung Boden, die Knie dürfen leicht gebeugt sein.|Halte 30–60 s und atme ruhig.','',''],
+ 'dips-trizepsfokus':'Oberkörper aufrecht, Ellbogen nah am Körper. So arbeitet vor allem der Trizeps.',
+ 'bankdips':['Hände hinter dir auf einer Bank, Beine vorn gestreckt oder angewinkelt.','Beug die Ellbogen nach hinten, bis die Oberarme fast parallel zum Boden sind.|Drück dich wieder hoch.|Der Rücken bleibt nah an der Bank.','Angewinkelte Beine sind leichter.',''],
+ 'french-press-skull-crushers':['Rückenlage auf der Bank, SZ-Stange mit gestreckten Armen über dem Kopf.','Beug nur die Ellbogen und senke die Stange zur Stirn oder knapp hinter den Kopf.|Die Oberarme bleiben ruhig.|Streck die Arme wieder.','Oberarme leicht nach hinten geneigt halten, dann bleibt oben Spannung.','Die Ellbogen nach außen fallen lassen.'],
+ 'seal-row-bauchlage':'Bauchlage auf einer erhöhten Bank, die Stange hängt darunter. Zieh sie zur Bank. Ohne Schwung möglich, sehr sauber für den oberen Rücken.',
+ 'rear-delt-rudern-kurzhantel':['Beug dich mit Kurzhanteln vor, Oberkörper fast waagerecht.','Ellbogen weit ausgestellt, etwa 70–90° vom Körper.|Zieh die Hanteln seitlich hoch bis auf Schulterhöhe.|Lass langsam ab.','Leichtes Gewicht, der Fokus liegt auf der hinteren Schulter.',''],
+ 'pendlay-rudern':'Oberkörper parallel zum Boden, die Stange startet jede Wiederholung am Boden. Zieh sie explosiv zur unteren Brust und leg sie wieder ab.',
+ 'einarmiges-kurzhantelrudern':'Knie und Hand auf der Bank abstützen, Rücken flach. Zieh die Hantel zur Hüfte, Ellbogen nah am Körper.',
+ 't-bar-rudern':'Stange in der Landmine oder T-Bar-Station, enger Griff. Zieh zur Brust.',
+ 'australian-pull-ups':['Leg dich unter eine Stange auf Hüfthöhe, Körper gestreckt, Fersen am Boden.','Zieh die Brust zur Stange.|Schulterblätter zusammen.|Lass dich kontrolliert ab.','Je flacher du liegst, desto schwerer.','Die Hüfte durchhängen lassen.'],
+ 'trizeps-kickbacks':['Beug dich vor und stütz dich an der Bank ab, Oberarm parallel zum Körper.','Fixier den Oberarm.|Streck nur den Unterarm nach hinten, bis der Arm gerade ist.|Halte oben kurz und lass langsam zurück.','','Den Oberarm mitschwingen lassen.'],
+ 'kabel-rear-delt-fly':['Greif die Kabelzüge über Kreuz auf Schulterhöhe.','Zieh die Arme gestreckt nach außen und hinten.|Halte kurz.|Lass langsam zurück.','Fokus auf die hintere Schulter, nicht die Schulterblätter zusammenpressen.',''],
+ 'reverse-flys-kurzhantel':['Beug dich vor, Oberkörper fast waagerecht, Arme hängen.','Heb die Arme seitlich nach außen.|Halte kurz.|Senke langsam ab.','Fokus auf die hintere Schulter.',''],
+ 'reverse-butterfly':['Setz dich mit der Brust ans Polster der Butterfly-Maschine, Griffe vorn.','Öffne die Arme nach hinten.|Halte kurz.|Lass langsam zurück.','',''],
+ 'seitheben-am-kabel':'Am Kabel ist die Spannung auch unten gleichmäßig. Kabel hinter oder vor dem Körper führen.',
+ 'seitheben-maschine':'Polster an den Oberarmen, Sitzhöhe so, dass die Schultern auf Höhe der Drehachse sind.',
+ 'schulter-dislocates-mit-band':['Greif ein Band weit, Arme gestreckt vor dem Körper.','Führ die Arme langsam über den Kopf nach hinten bis zum Gesäß.|Und wieder zurück nach vorn.|10–15 Wiederholungen.','Je enger der Griff, desto schwerer.','Die Ellbogen beugen.'],
+ 'kopenhagen-planke':['Seitstütz auf dem Unterarm, das obere Bein liegt auf einer Bank (Knie oder Fuß).','Das untere Bein hängt frei.|Drück die Hüfte hoch in eine Linie.|Halte 15–30 s je Seite.','Trainiert die Adduktoren sehr effektiv.',''],
+ 'seitstuetz':'Seitlich auf einem Unterarm, Füße übereinander, Hüfte hoch in einer Linie. Trainiert den seitlichen Bauch.',
+ 'mountain-climbers':['Geh in den hohen Liegestütz, Hände unter den Schultern.','Zieh abwechselnd die Knie zügig zur Brust.|Die Hüfte bleibt tief.|20–40 s am Stück.','',''],
+ 'sumo-kniebeuge-kurzhantel':'Weiter Stand, Zehen nach außen, die Hantel hängt zwischen den Beinen. Betont Adduktoren und Gesäß.',
+ 'frontkniebeuge':'Stange vorn auf den Schultern, Ellbogen hoch, Oberkörper sehr aufrecht. Betont den Quadrizeps.',
+ 'goblet-squat':'Halte die Hantel vor der Brust. Ideal, um die Kniebeuge zu lernen.',
+ 'smith-maschine-kniebeuge':'Füße leicht vor der geführten Stange, dann bleibt der Oberkörper aufrechter.',
+ 'pendulum-squat':'Rücken an das Polster der Maschine, Schultern unter den Polstern. Sehr tiefe Kniebeuge mit viel Quadrizeps.',
+ 'sissy-squats':['Halt dich an einer Stütze fest und geh auf die Fußballen.','Schieb die Knie nach vorn und lehn den Oberkörper nach hinten, die Hüfte bleibt gestreckt.|Geh so tief, wie es kontrolliert geht.|Drück dich zurück nach oben.','Isoliert den Quadrizeps. Langsam starten, belastet die Knie.',''],
+ 'adduktoren-am-kabel':['Stell dich seitlich zum Kabel, Manschette am inneren Bein.','Zieh das Bein vor dem Standbein vorbei nach innen.|Halte kurz.|Lass langsam zurück.','',''],
+ 'seitbeugen-mit-kurzhantel':['Steh aufrecht, eine Kurzhantel seitlich.','Beug dich zur Hantelseite.|Richte dich mit dem gegenüberliegenden seitlichen Bauch wieder auf.|Nur seitlich, nicht nach vorn.','','Mit dem Oberkörper nach vorn kippen.'],
+ 'haengende-scheibenwischer':['Häng dich an die Stange, Beine gestreckt.','Heb die Beine bis über die Stange.|Pendel kontrolliert von Seite zu Seite.|Langsam und ohne Schwung.','Sehr anspruchsvoll für den seitlichen Bauch.',''],
+ 'fahrradcrunches':'Führ den Ellbogen zum gegenüberliegenden Knie, die Beine radeln. Trifft den seitlichen Bauch.',
+ 'kabel-crunches':['Knie dich vor den Kabelzug, Seil an den Kopf halten.','Roll den Oberkörper Richtung Boden ein.|Die Hüfte bleibt ruhig.|Lass langsam zurück.','',''],
+ 'sit-ups':'Wie Crunches, aber du richtest den ganzen Oberkörper bis zu den Knien auf.',
+ 'beinheben-liegend':['Rückenlage, Hände neben dem Körper oder unter dem Gesäß.','Heb die gestreckten Beine bis senkrecht.|Der untere Rücken bleibt am Boden.|Senke sie langsam, ohne abzulegen.','',''],
+ 'dead-bug':['Rückenlage, Arme senkrecht, Knie 90° gebeugt über der Hüfte.','Streck gegengleich einen Arm und das andere Bein.|Der Rücken bleibt flach am Boden.|Zurück und Seite wechseln.','Langsam ausatmen beim Strecken.',''],
+ 'hollow-body-hold':['Rückenlage, Arme über dem Kopf.','Heb Arme, Schultern und gestreckte Beine leicht an.|Der untere Rücken bleibt am Boden.|Halte 20–40 s.','Knie anwinkeln macht es leichter.',''],
+ 'chin-ups-untergriff':'Untergriff, schulterbreit. Der Bizeps arbeitet stärker mit.',
+ 'unterstuetzte-klimmzuege':'An der Maschine mit Gegengewicht: Je mehr Gewicht du einstellst, desto leichter wird es.',
+ 'dead-hang':['Häng dich mit Obergriff an die Stange.','Schultern leicht aktiv.|Halte 20–60 s.|Ruhig atmen.','Stärkt den Griff und entlastet die Wirbelsäule.',''],
+ 'latziehen-eng':'Enger V-Griff, zieh den Griff zur Brust.',
+ 'straight-arm-pulldown':['Steh vor dem Kabelzug, Stange oben, Arme fast gestreckt.','Drück die Stange in einem Bogen bis zu den Oberschenkeln.|Spann den Latissimus an.|Lass langsam zurück.','Die Arme bleiben gestreckt, die Bewegung kommt aus der Schulter.',''],
+ 'lat-dehnung':['Greif mit einer Hand einen Rahmen oder eine Stange.','Schieb die Hüfte nach hinten und zur Seite.|Bis die Seite deutlich dehnt.|Halte 30–60 s je Seite.','',''],
+ 'rudermaschine-brustgestuetzt':'Brust am Polster, so ist keine Ausweichbewegung möglich.',
+ 'rudergeraet':['Schnall die Füße fest, Griff mit gestreckten Armen.','Streck zuerst die Beine, dann lehn den Oberkörper leicht zurück, dann zieh den Griff zum Bauch.|Zurück in umgekehrter Reihenfolge.|Lockeres Tempo mit 20–30 Zügen pro Minute.','Die Kraft kommt zu 60 % aus den Beinen.','Mit den Armen zuerst ziehen.'],
+ 'sumo-kreuzheben':'Weiter Stand, Zehen nach außen, Griff innerhalb der Beine. Der Oberkörper bleibt aufrechter.',
+ 'rack-pulls':'Die Stange startet auf Kniehöhe im Rack. Betont den oberen Rücken, schwerere Gewichte möglich.',
+ 'aufrechtes-rudern':['SZ-Stange schulterbreit, Arme hängen.','Zieh die Stange am Körper bis knapp unter die Brust, die Ellbogen führen.|Nicht höher als Schulterhöhe.|Lass langsam ab.','Nicht zu eng greifen, das schont die Schultern.',''],
+ 'pallof-press':['Stell dich seitlich zum Kabel auf Brusthöhe, Griff vor der Brust.','Drück die Arme gerade nach vorn.|Lass dich nicht zum Kabel drehen, halte 2 s.|Zurück zur Brust.','Trainiert den Rumpf gegen Rotation.',''],
+ 'kurzhantel-schulterdruecken':'Sitzend oder stehend, Hanteln auf Schulterhöhe starten.',
+ 'arnold-press':'Start mit den Handflächen zu dir, beim Hochdrücken nach außen drehen.',
+ 'schulterpresse-maschine':'Sitzhöhe so, dass die Griffe auf Schulterhöhe liegen.',
+ 'thruster':['Stange vorn auf den Schultern wie bei der Frontkniebeuge.','Geh in die tiefe Hocke.|Komm explosiv hoch und nutz den Schwung direkt für das Überkopfdrücken.|Eine flüssige Bewegung.','',''],
+ 'sz-curls':'Der angewinkelte Griff der SZ-Stange schont die Handgelenke.',
+ 'kurzhantel-curls':'Dreh die Handflächen beim Hochbeugen nach oben.',
+ 'hammer-curls':'Neutraler Griff mit dem Daumen oben. Trifft zusätzlich Brachialis und Unterarm.',
+ 'schraegbank-curls':'Rückenlage auf der Schrägbank mit 45°, die Arme hängen hinter dem Körper. Große Dehnung im Bizeps.',
+ 'scott-curls':'Oberarme liegen auf dem Scottpult. Nicht ganz durchstrecken.',
+ 'konzentrationscurls':'Sitzend, der Ellbogen liegt am Innenschenkel.',
+ 'kabel-curls':'Kabel unten. Gleichmäßige Spannung über den ganzen Weg.',
+ 'bayesian-cable-curls':'Rücken zum Kabel, der Arm startet hinter dem Körper. Maximale Dehnung im Bizeps.',
+ 'spider-curls':'Bauchlage auf der Schrägbank, die Arme hängen senkrecht nach unten.',
+ 'reverse-curls':'Obergriff mit den Handflächen nach unten. Fokus auf den Unterarm.',
+ 'handgelenk-curls':['Leg die Unterarme auf die Oberschenkel oder eine Bank, Handflächen oben.','Beug und streck nur die Handgelenke.|Volle Bewegung.|15–20 Wiederholungen.','',''],
+ 'reverse-handgelenk-curls':['Leg die Unterarme ab, Handflächen unten.','Heb nur die Handrücken nach oben.|Langsam senken.|15–20 Wiederholungen.','',''],
+ 'trizepsdruecken-mit-seil':'Am Ende die Seilenden auseinanderziehen.',
+ 'trizepsmaschine':'Sitzhöhe so, dass die Ellbogen auf Höhe der Drehachse liegen.',
+ 'ueberkopf-trizepsstrecken-kabel':'Rücken zum Kabel, Seil hinter dem Kopf, nach vorn oben strecken.',
+ 'ueberkopf-trizepsstrecken-kurzhantel':'Eine Kurzhantel mit beiden Händen hinter dem Kopf.',
+ 'hackenschmidt-kniebeuge':'Schultern unter den Polstern, Rücken an der Lehne, tief beugen.',
+ 'wadenheben-an-der-beinpresse':['Nur die Fußballen auf die Plattformkante, Beine fast gestreckt.','Senke die Fersen tief ab.|Drück dich auf die Zehenspitzen.|Halte oben kurz.','','Die Sicherung lösen und die Knie beugen.'],
+ 'beinbeuger-sitzend':['Polster hinter den Sprunggelenken, das Oberschenkelpolster liegt fest.','Zieh die Fersen nach unten hinten.|Halte kurz.|Lass langsam zurück.','',''],
+ 'wadenheben-sitzend':['Polster auf den Oberschenkeln, Fußballen auf der Kante.','Senke die Fersen tief ab.|Drück dich hoch auf die Zehen.|Halte oben kurz.','Trifft vor allem den tiefen Wadenmuskel (Soleus).',''],
+ 'walking-lunges':'Geh abwechselnd mit großen Schritten vorwärts.',
+ 'bulgarian-split-squats':'Hinterer Fuß auf der Bank, vorderer Fuß weit vorn, senkrecht nach unten gehen.',
+ 'cossack-squats':['Weiter Stand, Zehen leicht nach außen.','Geh zu einer Seite tief in die Hocke, das andere Bein bleibt gestreckt, Zehen hoch.|Drück dich zurück in die Mitte.|Seite wechseln.','',''],
+ 'treppensteiger':['Steh aufrecht, leicht festhalten oder freihändig.','Gleichmäßiges Tempo.|Setz die ganze Fußsohle auf die Stufe.|20–40 min locker.','',''],
+ 'kurzhantel-rdl':'Mit Kurzhanteln, die vor den Beinen nach unten gleiten.',
+ 'gestrecktes-kreuzheben':'Beine fast gestreckt, die Stange startet am Boden.',
+ 'beinbeuger-dehnung':['Stell die Ferse auf eine Erhöhung, Bein gestreckt.','Beug dich mit geradem Rücken aus der Hüfte vor.|Bis die Rückseite des Oberschenkels dehnt.|Halte 30–60 s je Seite.','',''],
+ 'jefferson-curl':['Steh auf einer Erhöhung mit einer leichten Kurzhantel.','Roll dich Wirbel für Wirbel nach unten ein, Kinn zuerst.|Geh so weit, wie es angenehm ist.|Roll dich langsam wieder auf.','Nur sehr leicht und langsam.',''],
+ 'glute-ham-raise':'Am Gerät, Oberschenkel auf dem Polster. Senk den Oberkörper langsam und zieh dich mit den Beinbeugern zurück.',
+ 'hip-thrust-maschine':'An der Maschine ist das Einrichten schneller als mit der Stange.',
+ 'glute-bridge':'Rückenlage am Boden statt an der Bank. Leichter, gut zum Aufwärmen.',
+ 'adduktoren-maschine':['Setz dich in die Maschine, Polster innen an den Knien.','Drück die Beine zusammen.|Halte kurz.|Lass langsam auseinander.','',''],
+ 'einbeiniges-wadenheben':'Auf einem Bein, mit der Hand abstützen.',
+ 'wadendehnung':['Hände an die Wand, ein Bein nach hinten gestreckt.','Ferse am Boden lassen.|Schieb die Hüfte nach vorn.|Halte 30–60 s je Seite.','',''],
+ 'holzhacker-am-kabel':['Kabel oben seitlich, Griff mit beiden Händen.','Zieh diagonal nach unten zur anderen Seite.|Die Drehung kommt aus dem Rumpf, Arme fast gestreckt.|Lass kontrolliert zurück.','',''],
+ 'laufband':'Eine Steigung von 1 % entspricht etwa dem Laufen draußen.',
+ 'crosstrainer':'Aufrecht bleiben, gleichmäßig treten, die Arme schieben und ziehen mit.',
+ 'seilspringen':['Seil hinter dir, Ellbogen nah am Körper.','Kleine Sprünge auf den Fußballen.|Das Seil kommt aus den Handgelenken.|Intervalle von 30–60 s.','',''],
+ 'schwimmen':['Wähl eine Lage, die du sauber kannst.','Gleichmäßig atmen.|Lockeres Tempo.|Bahnen in Intervallen.','',''],
+ 'couch-stretch':['Hinteres Knie an die Wand, Fuß hoch an der Wand, vorderer Fuß aufgestellt.','Richte den Oberkörper auf.|Spann das Gesäß an.|Halte 30–60 s je Seite.','Intensiv für Hüftbeuger und Quadrizeps.',''],
+ 'world-s-greatest-stretch':['Ausfallschritt, Hände innen neben dem vorderen Fuß.','Ellbogen Richtung Boden.|Dreh dann den Arm zur Decke.|5 Wiederholungen je Seite.','',''],
+ '90-90-hueftmobilitaet':['Setz dich hin, beide Beine 90° gebeugt, eins vorn, eins seitlich.','Sitz aufrecht und lehn dich über das vordere Bein.|Wechsle die Knie über die Mitte zur anderen Seite.|8–10 Wechsel.','',''],
+ 'tauben-dehnung':['Ein Bein vorn quer angewinkelt, das andere gestreckt nach hinten.','Hüfte gerade.|Senke den Oberkörper nach vorn.|Halte 30–60 s je Seite.','',''],
+ 'katze-kuh':['Vierfüßlerstand.','Mach ausatmend den Rücken rund.|Lass einatmend den Rücken durchhängen, Brust raus.|Langsam 8–10 Mal.','',''],
+ 'bws-rotation-thread-the-needle':['Vierfüßlerstand.','Fädel einen Arm unter dem anderen durch, Schulter Richtung Boden.|Dreh ihn dann zur Decke auf.|8 Wiederholungen je Seite.','',''],
+ 'kindhaltung':['Knie dich hin, Gesäß auf die Fersen.','Streck die Arme lang nach vorn.|Leg die Stirn ab.|Atme ruhig 30–60 s.','','']
+};
+function guideFor(id){
+ const ex=EX[id]; if(!ex) return null;
+ const base=GUIDE_P[ex.pat]||GUIDE_P.quad, x=GUIDE_X[id];
+ const g={setup:base[0],steps:base[1].split('|'),tip:base[2],mistake:base[3],note:''};
+ if(typeof x==='string') g.note=x;
+ else if(Array.isArray(x)){ if(x[0]) g.setup=x[0]; if(x[1]) g.steps=x[1].split('|'); if(x[2]) g.tip=x[2]; if(x[3]) g.mistake=x[3]; }
+ if(ex.custom) g.note='Eigene Übung: Die Anleitung zeigt das Grundmuster der gewählten Bewegung.';
+ return g;
+}
+
 
 /* Muskelkarte (vorn + hinten) */
 /* Körperkarte: jede Fläche gehört zu einer oder mehreren Unterkategorien */
@@ -1457,9 +1711,10 @@ function renderExCard(it,i){
  const isT=ex.kind==='t', isC=ex.kind==='c';
  const wl=ex.kind==='bw'?'+kg':'kg', rl=isT?'Sek.':isC?'Min.':'Wdh.';
  return `<div class="card ex-card${it.ss?' ss':''}">
-  <div class="ex-top"><button class="thumb" data-act="exInfo" data-v="${ex.id}" style="all:unset;cursor:pointer;width:64px;height:64px;border-radius:var(--r-sm);background:var(--row)" aria-label="Details zu ${esc(ex.n)}">${figure(ex.pat)}</button>
-  <div style="min-width:0"><h3>${esc(ex.n)}</h3><div class="row" style="gap:6px;margin-top:4px"><span class="tag p">${MUSCLES[ex.prim]}</span>${ex.sec.slice(0,2).map(m=>`<span class="tag">${MUSCLES[m]}</span>`).join('')}<span class="tag">${EQ[ex.eq]}</span></div></div>
+  <div class="ex-top"><button class="thumb" data-act="exInfo" data-v="${ex.id}" aria-label="Anleitung zu ${esc(ex.n)}">${figure(ex.pat,'',!HOLD_PATS.has(ex.pat)&&ex.kind!=='t')}</button>
+  <div style="min-width:0"><h3>${esc(ex.n)}</h3><button class="linkbtn" data-act="exInfo" data-v="${ex.id}">So geht's</button></div>
   <div class="row" style="gap:2px;flex-wrap:nowrap"><button class="icon-btn" data-act="swapEx" data-i="${i}" aria-label="${esc(ex.n)} tauschen">${I.swap}</button><button class="icon-btn" data-act="rmEx" data-i="${i}" aria-label="Übung entfernen">${I.x}</button></div></div>
+  <div class="ex-tags"><span class="tag p">${MUSCLES[ex.prim]}</span>${ex.sec.slice(0,2).map(m=>`<span class="tag">${MUSCLES[m]}</span>`).join('')}<span class="tag">${EQ[ex.eq]}</span></div>
   ${it.ss?`<div class="ss-badge">Supersatz ${it.ss}: ${ssPartners(i).map(k=>esc(EX[S.draft.items[k].ex].n)).join(' + ')}</div>`:''}
   <div class="sugg">${I.up}<div><b>Ziel heute: ${esc(s.head)}</b><br>${esc(s.text)}<br><span class="muted" style="font-size:.875rem">${esc(s.why)}</span></div></div>
   ${(()=>{const wu=warmups(ex,workW(it,s)); return wu.length?`<div class="warm"><span class="lbl">Aufwärmen</span>${wu.map((x,k)=>`<button class="chip ${(it.warm||[])[k]?'on':''}" data-act="warmSet" data-v="${i}.${k}" aria-pressed="${!!(it.warm||[])[k]}">${fmt(x.w,2)} kg × ${x.r}</button>`).join('')}</div>`:''})()}
@@ -1499,10 +1754,20 @@ function renderLibSheet(pick){
 }
 function libResults(pick,list){ list=list||libList(); /* pick: false | true | 'plan' */
  return list.length?`<div class="lib">${list.map(ex=>`<button class="lib-item" data-act="${pick==='plan'?'pickPlanEx':pick?'pickEx':'exInfo'}" data-v="${ex.id}"><div class="pics">${figure(ex.pat)}${exMap(ex)}</div><b>${esc(ex.n)}</b><small>${MUSCLES[ex.prim]}, ${EQ[ex.eq]}</small></button>`).join('')}</div>`:`<div class="empty">Keine Übung gefunden. Lege sie als eigene Übung an.</div>`; }
+function renderGuide(ex){
+ const g=guideFor(ex.id); if(!g) return '';
+ return `<section class="guide"><h3>So geht's</h3>
+  ${g.note?`<p class="guide-note">${esc(g.note)}</p>`:''}
+  <p><b>Ausgangsposition:</b> ${esc(g.setup)}</p>
+  <ol class="guide-steps">${g.steps.map(t=>`<li>${esc(t)}</li>`).join('')}</ol>
+  <div class="guide-cards"><div class="gc ok"><b>Tipp</b><span>${esc(g.tip)}</span></div><div class="gc warn"><b>Häufiger Fehler</b><span>${esc(g.mistake)}</span></div></div></section>`;
+}
 function renderExInfo(id){
  const ex=EX[id]; const [lo,hi]=repRange(ex); const h=history(id); const best=h.length?Math.max(...h.map(x=>x.best)):0; const s=suggestion(id);
- return `<div class="row between"><h2>${esc(ex.n)}</h2><button class="icon-btn" data-act="close" aria-label="Schließen">${I.x}</button></div>
- <div class="fig-big">${figure(ex.pat)}${exMap(ex)}</div>
+ const moving=!HOLD_PATS.has(ex.pat)&&ex.kind!=='t'&&POSE_B[ex.pat];
+ return `<div class="row between" style="flex-wrap:nowrap"><h2>${esc(ex.n)}</h2><button class="icon-btn" data-act="close" aria-label="Schließen">${I.x}</button></div>
+ <div class="fig-big"><div class="fig-anim">${figure(ex.pat,'',!!moving)}<span class="fig-cap">${moving?(REDUCED?'Bewegung (Animation aus)':'Bewegungsablauf'):'Position halten'}</span></div>${exMap(ex)}</div>
+ ${renderGuide(ex)}
  <div class="row" style="gap:6px"><span class="tag p">Primär: ${MUSCLES[ex.prim]}</span>${ex.sec.map(m=>`<span class="tag">${MUSCLES[m]}</span>`).join('')}<span class="tag">${EQ[ex.eq]}</span><span class="tag">${ex.comp?'Grundübung':'Isolation'}</span></div>
  <div class="grid g2"><div class="card"><div class="lbl">Für dein Ziel</div><b class="num">${ex.kind==='t'?'30–60 s':ex.kind==='c'?'20–45 min':`${setCount(ex)} × ${lo}–${hi} Wdh.`}</b><div class="muted" style="font-size:.875rem">Pause ca. ${Math.round(restSec(ex))} s, 0–3 RIR</div></div>
  <div class="card"><div class="lbl">Dein Bestwert</div><b class="num">${h.length?(ex.kind==='t'?fmt(best)+' s':ex.kind==='c'?fmt(best)+' min':'e1RM '+fmt(best,1)+' kg'):'–'}</b><div class="muted" style="font-size:.875rem">${h.length} Einheit${h.length===1?'':'en'} geloggt</div></div></div>
