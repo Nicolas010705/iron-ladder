@@ -475,42 +475,58 @@ body.scrolled .head h1{opacity:0;transform:scale(.92)}
 .rankup::after{content:"";position:absolute;top:0;bottom:0;left:0;width:35%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent);animation:sheen 1.3s var(--ease-ios) .5s both;pointer-events:none}
 .rankup .emb{animation:popIn .8s var(--spring) .15s both}
 /* ============ App-Rundgang ============ */
-.tour{position:fixed;inset:0;z-index:90;touch-action:pan-y}
-.tour-spot{position:fixed;left:50%;top:50%;width:0;height:0;border-radius:22px;box-shadow:0 0 0 200vmax rgba(0,0,0,.66);pointer-events:none;
- transition:left .6s var(--ease-ios),top .6s var(--ease-ios),width .6s var(--ease-ios),height .6s var(--ease-ios),border-radius .6s var(--ease-ios)}
-.tour-spot::after{content:"";position:absolute;inset:-3px;border-radius:inherit;border:2px solid var(--accent);opacity:0;animation:spotRing 2.2s var(--ease-out) .5s infinite}
-.tour.center .tour-spot::after{display:none}
-.tour.in .tour-spot{animation:fadeIn .5s var(--ease-ios) both}
-@keyframes spotRing{0%{opacity:.9;transform:scale(1)}70%,100%{opacity:0;transform:scale(1.06)}}
-.tour-card{position:fixed;width:min(380px,calc(100vw - 24px));background:var(--surface);color:var(--fg);border-radius:24px;padding:20px 20px 16px;
- box-shadow:0 24px 60px -12px rgba(0,0,0,.45),0 0 0 .5px rgba(255,255,255,.06);transition:left .55s var(--ease-ios),top .55s var(--ease-ios),opacity .3s}
-@media (max-width:620px){.tour-card{left:12px!important;right:12px;width:auto}}
+.tour{position:fixed;inset:0;z-index:90;touch-action:none}
+.tour-spot{position:fixed;left:0;top:0;width:0;height:0;border-radius:22px;box-shadow:0 0 0 200vmax rgba(0,0,0,.68);pointer-events:none;will-change:transform,width,height;
+ transition:transform .7s var(--ease-ios),width .7s var(--ease-ios),height .7s var(--ease-ios),border-radius .7s var(--ease-ios)}
+.tour-spot::after{content:"";position:absolute;inset:-3px;border-radius:inherit;border:2px solid var(--accent);opacity:0}
+.tour-spot.ring::after{animation:spotRing 2.4s var(--ease-out) infinite}
+@keyframes spotRing{0%{opacity:.85;transform:scale(1)}70%,100%{opacity:0;transform:scale(1.05)}}
+.tour.in{animation:fadeIn .45s var(--ease-ios) both}
+.tour.out{opacity:0;transition:opacity .35s var(--ease-ios)}
+.tour-card{position:fixed;left:0;top:0;width:min(380px,calc(100vw - 24px));background:var(--surface);color:var(--fg);border-radius:24px;padding:20px 20px 16px;
+ box-shadow:0 24px 60px -12px rgba(0,0,0,.45),0 0 0 .5px rgba(255,255,255,.06);
+ opacity:1;transform:translate3d(var(--cx,0),var(--cy,0),0);transition:opacity .32s var(--ease-ios),transform .55s var(--ease-ios);will-change:transform,opacity}
+.tour-card.hide{opacity:0;transition:opacity .18s var(--ease-ios)}
+.tour-card.nomove{transition:opacity .32s var(--ease-ios)}
+@media (max-width:620px){.tour-card{width:calc(100vw - 24px);padding:16px 16px 12px;border-radius:22px}.tour-body h2{font-size:1.125rem}.tour-body p{font-size:.9375rem;line-height:1.4}.tour-actions{margin-top:6px}.tour-body{gap:6px}}
 .tour.center .tour-card{text-align:center}
-.tour-body{display:flex;flex-direction:column;gap:8px;animation:tourIn .5s var(--spring) both}
-.tour-body.back{animation-name:tourInBack}
-@keyframes tourIn{from{opacity:0;transform:translateX(18px) scale(.98)}to{opacity:1;transform:none}}
-@keyframes tourInBack{from{opacity:0;transform:translateX(-18px) scale(.98)}to{opacity:1;transform:none}}
+.tour-body{display:flex;flex-direction:column;gap:8px}
+.tour-card:not(.hide) .tour-body{animation:tourIn .55s var(--ease-ios) both}
+.tour-card:not(.hide) .tour-body.back{animation-name:tourInBack}
+@keyframes tourIn{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:none}}
+@keyframes tourInBack{from{opacity:0;transform:translateX(-14px)}to{opacity:1;transform:none}}
 .tour-step{font-size:.8125rem;font-weight:600;color:var(--accent-text)}
 .tour-body h2{font-size:1.25rem;letter-spacing:-.02em;line-height:1.2;margin:0}
 .tour-body p{margin:0;color:var(--muted);line-height:1.45}
 .tour-prog{height:4px;border-radius:4px;background:var(--row);overflow:hidden;margin-top:6px}
-.tour-prog i{display:block;height:100%;background:var(--accent);border-radius:4px;transition:width .6s var(--ease-ios)}
+.tour-prog i{display:block;height:100%;width:100%;background:var(--accent);border-radius:4px;transform-origin:left;transform:scaleX(var(--p0,0));animation:progGrow .7s var(--ease-ios) .1s forwards}
+@keyframes progGrow{to{transform:scaleX(var(--p1,0))}}
 .tour-actions{display:flex;align-items:center;gap:8px;margin-top:12px}
 .tour-actions .skip{all:unset;cursor:pointer;color:var(--muted);font-weight:600;font-size:.9375rem;padding:10px 4px;margin-right:auto}
 .tour-actions .skip:focus-visible{outline:2px solid var(--accent);border-radius:8px}
 .tour.center .tour-actions{justify-content:center}
 .tour.center .tour-actions .skip{margin-right:0}
 .tour-hero{display:flex;flex-direction:column;align-items:center;gap:14px;padding:6px 0 4px}
-.tour-hero .logo svg{width:68px;height:68px;animation:popIn .8s var(--spring) .1s both}
+.tour-hero .logo svg{width:68px;height:68px;animation:popIn .8s var(--spring) .15s both}
 .tour-ladder{display:flex;align-items:flex-end;gap:10px;height:76px}
-.tour-ladder span{animation:climbUp .7s var(--spring) both;animation-delay:calc(.35s + var(--k)*.12s)}
-.tour-ladder span:nth-child(1){margin-bottom:0}.tour-ladder span:nth-child(2){margin-bottom:10px}.tour-ladder span:nth-child(3){margin-bottom:20px}.tour-ladder span:nth-child(4){margin-bottom:30px}
+.tour-ladder span{animation:climbUp .7s var(--spring) both;animation-delay:calc(.4s + var(--k)*.12s)}
+.tour-ladder span:nth-child(2){margin-bottom:10px}.tour-ladder span:nth-child(3){margin-bottom:20px}.tour-ladder span:nth-child(4){margin-bottom:30px}
 @keyframes climbUp{from{opacity:0;transform:translateY(26px) scale(.7)}to{opacity:1;transform:none}}
 .tour-done svg{width:72px;height:72px}
-.tour-done circle{stroke-dasharray:190;stroke-dashoffset:190;animation:drawLine .9s var(--ease-ios) .15s forwards}
-.tour-done path{stroke-dasharray:40;stroke-dashoffset:40;animation:drawLine .5s var(--ease-ios) .8s forwards}
+.tour-done circle{stroke-dasharray:190;stroke-dashoffset:190;animation:drawLine .9s var(--ease-ios) .2s forwards}
+.tour-done path{stroke-dasharray:40;stroke-dashoffset:40;animation:drawLine .5s var(--ease-ios) .85s forwards}
 @keyframes drawLine{to{stroke-dashoffset:0}}
-.tour-card.leaving{opacity:0}
+/* Seitenwechsel im Rundgang: weich überblenden statt springen */
+body.touring .main .wrap{transition:opacity .22s var(--ease-ios)}
+body.touring.tour-swap .main .wrap{opacity:0}
+/* Tab-Leiste bleibt über der Abdunklung sichtbar, der besprochene Tab leuchtet */
+body.tour-nav .side{z-index:95;pointer-events:none}
+@media (min-width:861px){body.tour-nav .side{background:transparent}body.tour-nav .side .brand,body.tour-nav .side .foot{opacity:.25}body.tour-nav .nav button{color:#d6d6dc}}
+body.tour-nav .nav button{transition:opacity .4s var(--ease-ios),background-color .4s var(--ease-ios)}
+body.tour-nav .nav button:not([aria-current="page"]){opacity:.4}
+body.tour-nav .nav button[aria-current="page"]{background:var(--accent-soft);color:var(--accent-text);box-shadow:none;animation:tourTab .6s var(--spring) both}
+body.tour-nav .nav button[aria-current="page"] svg{color:var(--accent)}
+@keyframes tourTab{from{transform:scale(.86)}to{transform:none}}
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{animation:none!important;transition:none!important}
   body.sheet-open .main{transform:none;filter:none}
@@ -2187,10 +2203,10 @@ const visEl=e=>{if(!e) return false; const r=e.getBoundingClientRect(); return r
 const q1=sel=>[...document.querySelectorAll(sel)].find(visEl);
 const TOUR_STEPS=[
  {c:'hello',t:'Willkommen bei Iron Ladder',b:'Ein kurzer Rundgang durch die App. In einer Minute weißt du, wo du was findest.'},
- {tab:'home',el:()=>q1('.hero-main'),t:'Dein nächstes Training',b:'Hier steht, welcher Tag deines Splits als Nächstes dran ist. Ein Tipp auf Starten und das Training läuft.'},
+ {tab:'home',el:()=>q1('.nav'),t:'Fünf Bereiche',b:'Heute, Training, Ernährung, Ränge und Fortschritt. Der Tab, um den es gerade geht, leuchtet in der Navigation mit.'},
+ {tab:'home',el:()=>q1('.hero-main'),t:'Dein nächstes Training',b:'Hier steht, welcher Tag deines Splits als Nächstes dran ist, mit Arbeitssätzen, Dauer und den Muskeln im Fokus. Darunter startest du das Training.'},
  {tab:'home',el:()=>q1('.goal-list'),t:'Ziele nach Progressive Overload',b:'Für jede Übung rechnet die App Gewicht und Wiederholungen aus deiner letzten Einheit hoch. So wirst du Schritt für Schritt stärker.'},
  {tab:'home',el:()=>q1('.rec'),t:'Erholung im Blick',b:'Zeigt, welche Muskeln bereit sind und welche noch Pause brauchen, berechnet aus deinem Training der letzten Tage.'},
- {tab:'home',el:()=>q1('.nav'),t:'Fünf Bereiche',b:'Heute, Training, Ernährung, Ränge und Fortschritt. Schauen wir sie uns kurz an.'},
  {tab:'train',el:()=>q1('[data-act=lib]'),t:'Über 200 Übungen',b:'Freie Gewichte, Maschinen, Kabelzug und Mobilität. Jede Übung hat eine Animation und eine Schritt-für-Schritt-Anleitung.'},
  {tab:'train',el:()=>q1('[data-act=swapPlan]'),t:'Übungen tauschen',b:'Gefällt dir eine Übung nicht oder ist das Gerät belegt? Hier bekommst du Alternativen für denselben Muskel.'},
  {tab:'train',el:()=>q1('.mesoblock')?.closest('.card'),t:'Trainingsblock mit Deload',b:'Das Volumen steigt über mehrere Wochen, danach kommt eine leichtere Woche. So bleibst du frisch und kommst weiter.'},
@@ -2199,82 +2215,123 @@ const TOUR_STEPS=[
  {tab:'ranks',el:()=>q1('.overall'),t:'Dein Rang',b:'Von Eisen bis Legende: Jede gute Einheit bringt Punkte. Wer regelmäßig trainiert und stärker wird, steigt auf.'},
  {tab:'ranks',el:()=>q1('.rgroups > *'),t:'Rang pro Muskel',b:'Jede Muskelgruppe hat einen eigenen Rang, aufgeteilt in Unterkategorien wie obere und untere Brust.'},
  {tab:'prog',el:()=>q1('.wrap > .card.stack'),t:'Fortschritt sehen',b:'Kraftverlauf, Wochenvolumen, Körpergewicht, Maße und Fortschrittsfotos an einem Ort.'},
- {tab:'home',el:()=>q1('[data-act=settings]'),t:'Profil und Ziele',b:'Hier änderst du Split, Ziele und Trainingsblock. Auch diesen Rundgang kannst du hier jederzeit neu starten.'},
+ {tab:'home',el:()=>q1('.home-head [data-act=settings]')||q1('[data-act=settings]'),t:'Profil und Ziele',b:'Hier änderst du Split, Ziele und Trainingsblock. Auch diesen Rundgang kannst du hier jederzeit neu starten.'},
  {c:'done',t:'Bereit zum Klettern',b:'Starte dein erstes Training. Jeder saubere Satz bringt dich im Rang nach oben.'},
 ];
 let TOUR=null;
+const wait=ms=>new Promise(r=>setTimeout(r,REDUCED?0:ms));
+const nextFrame=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
 function startTour(){
- if(!S.profile) return; closeSheet();
- TOUR={i:0,dir:1,from:V.tab,until:0};
+ if(!S.profile||TOUR) return; closeSheet();
+ TOUR={i:-1,busy:false,from:V.tab};
  let el=document.getElementById('tour'); if(!el){el=document.createElement('div');el.id='tour';document.body.appendChild(el)}
- el.innerHTML=`<div class="tour in center" role="dialog" aria-modal="true" aria-labelledby="tour-t"><div class="tour-spot"></div><div class="tour-card" aria-live="polite"></div></div>`;
- document.body.style.overflow='hidden';
- showTourStep(0,1); tourLoop();
+ el.innerHTML=`<div class="tour in center" role="dialog" aria-modal="true" aria-labelledby="tour-t"><div class="tour-spot"></div><div class="tour-card hide nomove" aria-live="polite"></div></div>`;
+ const sp=el.querySelector('.tour-spot'); sp.style.transition='none'; sp.style.transform=`translate3d(${innerWidth/2}px,${innerHeight/2}px,0)`; sp.offsetWidth; sp.style.transition='';
+ document.body.style.overflow='hidden'; document.body.classList.add('touring');
+ showTourStep(0,1);
 }
 function tourTarget(st){ return st.c?null:(st.el()||null); }
-function showTourStep(i,dir){
- const N=TOUR_STEPS.length; if(i<0) i=0; if(i>=N) return endTour(true);
- let st=TOUR_STEPS[i];
- if(st.tab&&V.tab!==st.tab){ V.tab=st.tab; render(); window.scrollTo(0,0); }
- if(!st.c&&!tourTarget(st)) return showTourStep(i+dir,dir); /* Element fehlt (z. B. laufendes Training): überspringen */
- TOUR.i=i; TOUR.dir=dir; haptic(5);
- const root=$('#tour .tour'), card=root.querySelector('.tour-card');
- root.classList.toggle('center',!!st.c);
- const real=TOUR_STEPS.filter(x=>!x.c).length, k=TOUR_STEPS.slice(0,i+1).filter(x=>!x.c).length;
+function tourHTML(st,i,dir){
+ const N=TOUR_STEPS.length, real=TOUR_STEPS.filter(x=>!x.c).length, k=TOUR_STEPS.slice(0,i+1).filter(x=>!x.c).length;
+ const kPrev=Math.max(0,dir>0?k-1:k+1);
  const hero=st.c==='hello'?`<div class="tour-hero" aria-hidden="true"><div class="logo">${LOGO}</div><div class="tour-ladder">${[160,420,820,1450].map((sr,j)=>`<span style="--k:${j}">${emblem(sr,40)}</span>`).join('')}</div></div>`
   :st.c==='done'?`<div class="tour-hero tour-done" aria-hidden="true"><svg viewBox="0 0 72 72" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><circle cx="36" cy="36" r="30"/><path d="M24 37l8 8 16-17"/></svg></div>`:'';
- card.innerHTML=`<div class="tour-body${dir<0?' back':''}">${hero}
+ return `<div class="tour-body${dir<0?' back':''}">${hero}
   ${st.c?'':`<div class="tour-step">${k} von ${real}</div>`}
   <h2 id="tour-t">${esc(st.t)}</h2><p>${esc(st.b)}</p>
-  ${st.c?'':`<div class="tour-prog" aria-hidden="true"><i style="width:${k/real*100}%"></i></div>`}
+  ${st.c?'':`<div class="tour-prog" aria-hidden="true"><i style="--p0:${Math.min(kPrev,real)/real};--p1:${k/real}"></i></div>`}
   <div class="tour-actions">
    ${st.c==='done'?'':`<button class="skip" data-tour="skip">${st.c==='hello'?'Später':'Überspringen'}</button>`}
    ${i>0&&!st.c?`<button class="btn ghost" data-tour="back">Zurück</button>`:''}
    <button class="btn pri" data-tour="next">${st.c==='hello'?'Rundgang starten':st.c==='done'?"Los geht's":i===N-2?'Fertig':'Weiter'}</button>
   </div></div>`;
- /* Ziel in den sichtbaren Bereich holen */
- const t=tourTarget(st);
- if(t&&!t.closest('.nav,.side')){
-  const r=t.getBoundingClientRect(), mob=innerWidth<=620;
-  const want=mob?92:Math.max(90,(innerHeight-r.height)/2-80);
-  window.scrollTo({top:Math.max(0,scrollY+r.top-want),behavior:REDUCED?'auto':'smooth'});
- }
- TOUR.until=performance.now()+1100;
- placeTour();
- setTimeout(()=>card.querySelector('[data-tour=next]')?.focus({preventScroll:true}),60);
 }
-function placeTour(){
- if(!TOUR) return;
- const st=TOUR_STEPS[TOUR.i], root=$('#tour .tour'); if(!root) return;
- const spot=root.querySelector('.tour-spot'), card=root.querySelector('.tour-card');
- const iw=innerWidth, ih=innerHeight, mob=iw<=620, ch=card.offsetHeight, cw=card.offsetWidth;
- const t=tourTarget(st);
- if(!t){ Object.assign(spot.style,{left:iw/2+'px',top:ih/2+'px',width:'0px',height:'0px'});
-  card.style.left=(iw-cw)/2+'px'; card.style.top=Math.max(16,(ih-ch)/2)+'px'; return; }
- const r=t.getBoundingClientRect(), pad=Math.min(r.width,r.height)<60?12:8;
- const top=Math.max(8,r.top-pad), bot=Math.min(ih-8,r.bottom+pad), left=Math.max(6,r.left-pad), right=Math.min(iw-6,r.right+pad);
- const rad=parseFloat(getComputedStyle(t).borderRadius)||12;
- Object.assign(spot.style,{left:left+'px',top:top+'px',width:Math.max(0,right-left)+'px',height:Math.max(0,bot-top)+'px',borderRadius:(rad+pad/2)+'px'});
- const safeB=16, safeT=16;
- let y, x;
- if(mob){ x=12; y=(top+bot)/2<ih*.55?ih-ch-safeB-12:safeT+12; }
+/* Sichtbarer Bereich für das Ziel: zwischen Bildschirmrand oben und Karte bzw. Tab-Leiste unten */
+function tourLayout(t,ch){
+ const iw=innerWidth, ih=innerHeight, mob=iw<=860;
+ const nav=q1('.nav'), navTop=mob&&nav?nav.getBoundingClientRect().top:ih;
+ const inNav=t&&t.closest('.side');
+ return {iw,ih,mob,navTop,inNav,cardTop:mob?(inNav?16:navTop-ch-12):null};
+}
+async function showTourStep(i,dir){
+ if(!TOUR||TOUR.busy) return;
+ const N=TOUR_STEPS.length; if(i<0) return; if(i>=N) return endTour(true);
+ TOUR.busy=true;
+ const root=$('#tour .tour'), card=root.querySelector('.tour-card'), spot=root.querySelector('.tour-spot');
+ let st=TOUR_STEPS[i];
+ /* 1. Karte ausblenden */
+ if(TOUR.i>=0){ card.classList.add('hide'); spot.classList.remove('ring'); await wait(180); }
+ /* 2. Bereich wechseln: Seite blendet aus, Tab-Leiste wechselt, Seite blendet ein */
+ if(st.tab&&V.tab!==st.tab){
+  document.body.classList.add('tour-swap'); await wait(220);
+  V.tab=st.tab; LAST_TAB=st.tab; render(); window.scrollTo(0,0);
+  await nextFrame(); document.body.classList.remove('tour-swap');
+ }
+ document.body.classList.toggle('tour-nav',!st.c);
+ if(!st.c&&!tourTarget(st)){ TOUR.busy=false; return showTourStep(i+dir,dir); }
+ TOUR.i=i; haptic(5);
+ root.classList.toggle('center',!!st.c);
+ /* 3. Inhalt setzen (noch unsichtbar) und Höhe messen */
+ card.innerHTML=tourHTML(st,i,dir);
+ const ch=card.offsetHeight, cw=card.offsetWidth;
+ const t=tourTarget(st), L=tourLayout(t,ch);
+ /* 4. Ziel an seine Endposition scrollen, ohne Zwischenstopps */
+ let rect=t?t.getBoundingClientRect():null;
+ if(t&&!L.inNav){
+  const tb=q1('.topbar'), areaTop=L.mob?Math.max(24,(tb?tb.offsetHeight:0)+6):24, areaBot=L.mob?L.cardTop-12:L.ih-24;
+  const room=areaBot-areaTop, h=rect.height+16;
+  let want=h<=room?areaTop+8+(room-h)/2:areaTop+8;
+  if(!L.mob) want=Math.max(80,(L.ih-rect.height)/2-(rect.height+ch+40<L.ih?ch/2:0));
+  const maxScroll=document.documentElement.scrollHeight-L.ih;
+  const to=Math.max(0,Math.min(maxScroll,scrollY+rect.top-want));
+  const dy=to-scrollY;
+  if(Math.abs(dy)>1){ window.scrollTo({top:to,behavior:REDUCED?'auto':'smooth'}); rect=new DOMRect(rect.x,rect.y-dy,rect.width,rect.height); }
+ }
+ /* 5. Lichtkegel und Karte in einer Bewegung zum Ziel */
+ placeSpot(spot,rect,L);
+ placeCard(card,rect,L,ch,cw,!!st.c);
+ await wait(140);
+ card.classList.remove('hide','nomove');
+ if(t) setTimeout(()=>spot.classList.add('ring'),REDUCED?0:700);
+ setTimeout(()=>card.querySelector('[data-tour=next]')?.focus({preventScroll:true}),REDUCED?0:400);
+ await wait(380); TOUR.busy=false;
+}
+function placeSpot(spot,r,L){
+ if(!r){ spot.style.transform=`translate3d(${L.iw/2}px,${L.ih/2}px,0)`; spot.style.width='0px'; spot.style.height='0px'; return; }
+ const pad=Math.min(r.width,r.height)<60?12:8;
+ let top=Math.max(8,r.top-pad), bot=Math.min(L.ih-8,r.bottom+pad);
+ if(L.mob&&!L.inNav){ bot=Math.min(bot,L.cardTop-10); const tb=q1('.topbar'); if(tb) top=Math.max(top,tb.offsetHeight-4); }
+ const left=Math.max(6,r.left-pad), right=Math.min(L.iw-6,r.right+pad);
+ spot.style.transform=`translate3d(${left}px,${top}px,0)`;
+ spot.style.width=Math.max(0,right-left)+'px'; spot.style.height=Math.max(0,bot-top)+'px';
+ spot.style.borderRadius=(L.inNav&&L.mob?18:20)+'px';
+}
+function placeCard(card,r,L,ch,cw,center){
+ let x,y;
+ if(center||!r){ x=(L.iw-cw)/2; y=Math.max(16,(L.ih-ch)/2); }
+ else if(L.mob){ x=12; y=L.cardTop; }
  else{
-  x=Math.min(Math.max(16,left),iw-cw-16);
-  if(bot+14+ch<ih-12) y=bot+14; else if(top-14-ch>12) y=top-14-ch;
-  else if(right+16+cw<iw){ x=right+16; y=Math.min(Math.max(16,top),ih-ch-16); }
-  else { x=iw-cw-24; y=ih-ch-24; }
+  const top=r.top-8, bot=r.bottom+8, left=r.left-8, right=r.right+8;
+  x=Math.min(Math.max(16,left),L.iw-cw-16);
+  if(right+20+cw<L.iw-16&&L.inNav){ x=right+20; y=Math.min(Math.max(16,top),L.ih-ch-16); }
+  else if(bot+16+ch<L.ih-12) y=bot+16; else if(top-16-ch>12) y=top-16-ch;
+  else if(right+20+cw<L.iw){ x=right+20; y=Math.min(Math.max(16,top),L.ih-ch-16); }
+  else { x=L.iw-cw-24; y=L.ih-ch-24; }
  }
- card.style.left=x+'px'; card.style.top=y+'px';
+ /* Karte wird unsichtbar umgesetzt und dann eingeblendet */
+ card.classList.add('nomove');
+ card.style.setProperty('--cx',Math.round(x)+'px'); card.style.setProperty('--cy',Math.round(y)+'px');
+ card.offsetWidth;
 }
-function tourLoop(){ if(!TOUR) return; if(performance.now()<TOUR.until) placeTour(); requestAnimationFrame(tourLoop); }
 function endTour(done){
- if(!TOUR) return; const from=TOUR.from; TOUR=null;
- const el=$('#tour .tour'); document.body.style.overflow='';
+ if(!TOUR) return; TOUR=null;
+ const el=$('#tour .tour');
  if(S.profile&&!S.profile.tourDone){ S.profile.tourDone=true; saveProfile(); }
- const fin=()=>{ $('#tour')&&($('#tour').innerHTML=''); };
- if(el&&!REDUCED){ el.style.transition='opacity .35s var(--ease-ios)'; el.style.opacity='0'; setTimeout(fin,360); } else fin();
- V.tab='home'; render(); window.scrollTo({top:0,behavior:REDUCED?'auto':'smooth'});
- if(done) toast('Rundgang abgeschlossen. Viel Erfolg!');
+ const fin=()=>{ const t=$('#tour'); if(t) t.innerHTML=''; document.body.classList.remove('touring','tour-nav','tour-swap'); document.body.style.overflow=''; };
+ if(el&&!REDUCED){ el.classList.add('out'); document.body.classList.remove('tour-nav'); setTimeout(fin,360); } else fin();
+ if(V.tab!=='home'){ document.body.classList.add('tour-swap'); setTimeout(()=>{V.tab='home'; LAST_TAB='home'; render(); window.scrollTo(0,0); requestAnimationFrame(()=>document.body.classList.remove('tour-swap'))},REDUCED?0:220); }
+ else window.scrollTo({top:0,behavior:REDUCED?'auto':'smooth'});
+ if(done) setTimeout(()=>toast('Rundgang abgeschlossen. Viel Erfolg!'),400);
 }
 document.addEventListener('click',e=>{
  const b=e.target.closest('[data-tour]'); if(!b||!TOUR) return; e.stopPropagation();
@@ -2291,8 +2348,7 @@ let tourX=null;
 document.addEventListener('touchstart',e=>{ if(TOUR&&e.target.closest('#tour')) tourX=e.touches[0].clientX; },{passive:true});
 document.addEventListener('touchend',e=>{ if(!TOUR||tourX==null) return; const dx=e.changedTouches[0].clientX-tourX; tourX=null;
  if(Math.abs(dx)>60) showTourStep(TOUR.i+(dx<0?1:-1),dx<0?1:-1); },{passive:true});
-addEventListener('resize',()=>{ if(TOUR){ TOUR.until=performance.now()+300; } });
-addEventListener('scroll',()=>{ if(TOUR){ TOUR.until=Math.max(TOUR.until,performance.now()+120); } },{passive:true});
+addEventListener('resize',()=>{ if(!TOUR||TOUR.busy||TOUR.i<0) return; const st=TOUR_STEPS[TOUR.i], root=$('#tour .tour'); if(!root) return; const card=root.querySelector('.tour-card'), t=tourTarget(st), L=tourLayout(t,card.offsetHeight), r=t?t.getBoundingClientRect():null; placeSpot(root.querySelector('.tour-spot'),r,L); placeCard(card,r,L,card.offsetHeight,card.offsetWidth,!!st.c); card.classList.remove('nomove'); });
 
 /* ============ Training-Aktionen ============ */
 function newDraft(name,ids,planKey){
