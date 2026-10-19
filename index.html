@@ -2255,8 +2255,8 @@ function renderSettings(){
  <button class="btn sm ghost" data-act="recalc" style="margin-top:8px">Aus Körperdaten neu berechnen</button></div>
  <div class="card" style="background:var(--surface-2)"><div class="lbl">Trainingsblock</div><div class="grid g2" style="margin-top:8px"><div class="field"><label for="st-meso">Blocklänge inkl. Deload</label><select id="st-meso">${[4,5,6].map(n=>`<option value="${n}" ${(S.profile.meso?.len||5)===n?'selected':''}>${n} Wochen</option>`).join('')}</select></div>
  <div class="field"><label>&nbsp;</label><button class="btn ghost" data-act="mesoRestart">Neuen Block ab dieser Woche</button></div></div></div>
- <div class="card stack" style="background:var(--surface-2);gap:10px"><div><div class="lbl">Daten sichern</div><p class="muted" style="margin:4px 0 0">Speichere ein Backup deiner Trainings, Ernährung und Einstellungen als Datei. Fotos sind nicht enthalten. Beim Laden werden die Daten auf diesem Gerät ersetzt.</p></div>
-  <div class="row"><button class="btn sm" data-act="exportData">Backup herunterladen</button><label class="btn sm ghost" style="cursor:pointer">Backup laden<input type="file" accept="application/json,.json" data-import hidden></label></div></div>
+ ${STANDALONE?`<div class="card stack" style="background:var(--surface-2);gap:10px"><div><div class="lbl">Daten sichern</div><p class="muted" style="margin:4px 0 0">Speichere ein Backup deiner Trainings, Ernährung und Einstellungen als Datei. Fotos sind nicht enthalten. Beim Laden werden die Daten auf diesem Gerät ersetzt.</p></div>
+  <div class="row"><button class="btn sm" data-act="exportData">Backup herunterladen</button><label class="btn sm ghost" style="cursor:pointer">Backup laden<input type="file" accept="application/json,.json" data-import hidden></label></div></div>`:''}
  <div class="card row between" style="background:var(--surface-2);gap:12px"><div><div class="lbl">App-Rundgang</div><p class="muted" style="margin:4px 0 0">Alle Bereiche der App in einer Minute erklärt.</p></div><button class="btn sm" data-act="tourStart">Rundgang starten</button></div>
  <button class="btn pri" data-act="saveSettings">Speichern</button>
  <button class="btn ghost danger" data-act="resetAll">${V.resetAsk?'Wirklich alles löschen? Nochmal tippen':'Alle Daten zurücksetzen'}</button>`;
@@ -2752,7 +2752,7 @@ connect();
 </script>
 
 <script>
-if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=52d06582').catch(()=>{}));}
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=021bfde8').catch(()=>{}));}
 </script>
 </body>
 </html>
