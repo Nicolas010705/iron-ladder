@@ -550,6 +550,11 @@ body.tour-nav .nav button[aria-current="page"] svg{color:var(--accent)}
 .ms-badge{display:inline-grid;place-items:center;border-radius:50%;background:var(--row);flex:none}
 .ms-badge.on{background:var(--accent)}
 .ms-card .btn{align-self:flex-start}
+.acc-card{display:flex;gap:12px;align-items:center;background:var(--row)}
+.acc-msg{margin:0;padding:10px 12px;border-radius:12px;font-size:.9375rem}
+.acc-msg.bad{background:color-mix(in srgb,var(--bad) 14%,transparent);color:var(--bad)}
+.acc-msg.ok{background:var(--accent-soft);color:var(--accent-text)}
+.acc-links{gap:8px}
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{animation:none!important;transition:none!important}
   body.sheet-open .main{transform:none;filter:none}
@@ -1349,10 +1354,10 @@ function cacheLoad(){ try{const d=JSON.parse(localStorage.getItem(LS)||'null'); 
 let DB=null, UID=null; const chains={};
 const pref=()=>DB.doc('data/users/'+UID+'/profile');
 function queue(key,fn){ chains[key]=(chains[key]||Promise.resolve()).then(fn).catch(e=>{console.warn(e); if(e&&e.code==='quota_exceeded') toast('Cloud-Speicher ist voll. Lösche alte Trainings in „Fortschritt“.')}); }
-function saveProfile(){ cacheSave(); if(!DB||S.demo) return; const p=clone(S.profile); queue('p',()=>pref().set(p)); }
-function saveWorkout(w){ cacheSave(); if(!DB||S.demo) return; const c=clone(w); queue('w'+w.id,()=>pref().collection('workouts').doc(w.id).set(c)); }
-function dropWorkout(id){ cacheSave(); if(!DB||S.demo) return; queue('w'+id,()=>pref().collection('workouts').doc(id).delete()); }
-function saveDay(date){ cacheSave(); if(!DB||S.demo) return; const e=clone(S.food[date]||[]); queue('d'+date,()=>e.length?pref().collection('days').doc(date).set({entries:e}):pref().collection('days').doc(date).delete()); }
+function saveProfile(){ if(S.profile&&!S.demo) S.profile._ts=Date.now(); cacheSave(); if(SB.on&&!S.demo) return sbQueue('p',()=>sbUpsert('profiles',{data:clone(S.profile)},'user_id')); if(!DB||S.demo) return; const p=clone(S.profile); queue('p',()=>pref().set(p)); }
+function saveWorkout(w){ cacheSave(); if(SB.on&&!S.demo){ const c=clone(w); return sbQueue('w'+w.id,()=>sbUpsert('workouts',{id:c.id,data:c},'user_id,id')); } if(!DB||S.demo) return; const c=clone(w); queue('w'+w.id,()=>pref().collection('workouts').doc(w.id).set(c)); }
+function dropWorkout(id){ if(S.profile&&!S.demo){ S.profile.delW=[...new Set([...(S.profile.delW||[]),id])].slice(-500); saveProfile(); } cacheSave(); if(SB.on&&!S.demo) return sbQueue('w'+id,()=>sbReq('/rest/v1/workouts?id=eq.'+encodeURIComponent(id),{method:'DELETE'})); if(!DB||S.demo) return; queue('w'+id,()=>pref().collection('workouts').doc(id).delete()); }
+function saveDay(date){ if(!S.demo){ SB.dayTs[date]=Date.now(); sbMetaSave(); } cacheSave(); if(SB.on&&!S.demo){ const e=clone(S.food[date]||[]); return sbQueue('d'+date,()=>e.length?sbUpsert('food_days',{day:date,entries:e},'user_id,day'):sbReq('/rest/v1/food_days?day=eq.'+date,{method:'DELETE'})); } if(!DB||S.demo) return; const e=clone(S.food[date]||[]); queue('d'+date,()=>e.length?pref().collection('days').doc(date).set({entries:e}):pref().collection('days').doc(date).delete()); }
 async function connect(){
  if(!window.claude||!window.claude.use) return;
  claude.use('mcp').then(m=>{MCP=m; if(SHEET&&SHEET.kind==='food') drawOff();}).catch(()=>{});
@@ -1372,6 +1377,126 @@ async function connect(){
   } else if(S.profile&&!S.demo){ saveProfile(); S.workouts.forEach(saveWorkout); Object.keys(S.food).forEach(saveDay); }
   V.sync='cloud'; render();
  }catch(e){ console.warn(e); }
+}
+
+/* ============ Konto & Sync über Supabase (nur installierte Web-App) ============
+   Direkt über die Supabase-REST-Schnittstellen (Auth + PostgREST), ohne Bibliothek.
+   Tabellen: profiles(user_id, data), workouts(user_id, id, data), food_days(user_id, day, entries).
+   Row Level Security: jede Zeile gehört genau einem Konto (user_id = auth.uid()). */
+const SBC=(STANDALONE&&window.IRON_SB&&window.IRON_SB.url&&window.IRON_SB.key)?window.IRON_SB:null;
+const SB={on:false,sess:null,user:null,dayTs:{},last:0,busy:false,err:'',msg:'',dirty:false,mode:'login'};
+const SB_LS=LS+'.sb';
+function sbMetaLoad(){ try{ const d=JSON.parse(localStorage.getItem(SB_LS)||'{}'); SB.sess=d.sess||null; SB.dayTs=d.dayTs||{}; SB.last=d.last||0; SB.dirty=!!d.dirty; }catch(e){} }
+function sbMetaSave(){ try{ localStorage.setItem(SB_LS,JSON.stringify({sess:SB.sess,dayTs:SB.dayTs,last:SB.last,dirty:SB.dirty})); }catch(e){} }
+async function sbAuth(path,body,method='POST',token){
+ const r=await fetch(SBC.url+'/auth/v1'+path,{method,headers:{apikey:SBC.key,'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},body:body?JSON.stringify(body):undefined});
+ const t=await r.text(); let j={}; try{ j=t?JSON.parse(t):{}; }catch(e){}
+ if(!r.ok){ const err=new Error(j.msg||j.error_description||j.message||('HTTP '+r.status)); err.status=r.status; err.code=j.error_code||j.code||j.error; throw err; }
+ return j;
+}
+function sbSetSession(j){ if(!j||!j.access_token) return false; SB.sess={access:j.access_token,refresh:j.refresh_token,exp:Date.now()+(j.expires_in||3600)*1000,user:{id:j.user?.id,email:j.user?.email}}; sbMetaSave(); return true; }
+async function sbToken(){
+ if(!SB.sess) return null;
+ if(Date.now()>SB.sess.exp-60000){ try{ const j=await sbAuth('/token?grant_type=refresh_token',{refresh_token:SB.sess.refresh}); sbSetSession(j); }catch(e){ if(e.status===400||e.status===401){ SB.sess=null; SB.on=false; sbMetaSave(); V.sync='lokal'; } throw e; } }
+ return SB.sess.access;
+}
+async function sbReq(path,opt={}){
+ const tok=await sbToken(); if(!tok) throw new Error('nicht angemeldet');
+ const r=await fetch(SBC.url+path,{...opt,headers:{apikey:SBC.key,Authorization:'Bearer '+tok,'Content-Type':'application/json',...(opt.headers||{})}});
+ if(!r.ok){ const t=await r.text(); const e=new Error('Sync '+r.status+': '+t.slice(0,160)); e.status=r.status; throw e; }
+ const t=await r.text(); return t?JSON.parse(t):null;
+}
+function sbUpsert(table,row,conflict){
+ const rows=(Array.isArray(row)?row:[row]).map(x=>({...x,user_id:SB.sess.user.id,updated_at:new Date().toISOString()}));
+ return sbReq(`/rest/v1/${table}?on_conflict=${conflict}`,{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(rows)});
+}
+function sbQueue(key,fn){ chains[key]=(chains[key]||Promise.resolve()).then(fn).then(()=>{ SB.last=Date.now(); sbMetaSave(); }).catch(e=>{ console.warn(e); SB.dirty=true; sbMetaSave(); }); }
+/* Abgleich: Cloud holen, mit diesem Gerät zusammenführen, Unterschiede hochladen */
+async function sbSync(silent){
+ if(!SBC||!SB.sess||SB.busy||S.demo) return; SB.busy=true;
+ try{
+  const [ps,ws,ds]=await Promise.all([sbReq('/rest/v1/profiles?select=data,updated_at'),sbReq('/rest/v1/workouts?select=id,data'),sbReq('/rest/v1/food_days?select=day,entries,updated_at')]);
+  const cloudP=ps&&ps[0]?ps[0].data:null;
+  const hadLocal=!!S.profile;
+  /* Profil: neuere Änderung gewinnt */
+  let prof=S.profile;
+  if(cloudP&&(!prof||(cloudP._ts||0)>(prof._ts||0))) prof=cloudP;
+  const del=new Set([...(S.profile?.delW||[]),...(cloudP?.delW||[])]);
+  if(prof) prof.delW=[...del].slice(-500);
+  /* Trainings: Vereinigung, gelöschte bleiben gelöscht */
+  const byId={}; (ws||[]).forEach(r=>byId[r.id]=r.data); const cloudIds=new Set(Object.keys(byId));
+  S.workouts.forEach(w=>{ byId[w.id]=w; });
+  const workouts=Object.values(byId).filter(w=>w&&!del.has(w.id));
+  /* Ernährung: pro Tag gewinnt die neuere Änderung */
+  const food={...S.food}; const cloudDays={};
+  (ds||[]).forEach(r=>{ cloudDays[r.day]=r; const lt=SB.dayTs[r.day]||0, ct=new Date(r.updated_at).getTime(); if(!(r.day in S.food)||ct>lt) food[r.day]=r.entries; });
+  S.profile=prof; S.workouts=workouts; S.food=food;
+  if(S.profile){ buildEx(); buildFoods(); }
+  cacheSave();
+  /* Hochladen, was in der Cloud fehlt oder abweicht */
+  const jobs=[];
+  if(S.profile&&(!cloudP||JSON.stringify(cloudP)!==JSON.stringify(S.profile))) jobs.push(sbUpsert('profiles',{data:S.profile},'user_id'));
+  const upW=workouts.filter(w=>!cloudIds.has(w.id)||JSON.stringify(byId[w.id])!==JSON.stringify((ws||[]).find(r=>r.id===w.id)?.data));
+  for(let i=0;i<upW.length;i+=100) jobs.push(sbUpsert('workouts',upW.slice(i,i+100).map(w=>({id:w.id,data:w})),'user_id,id'));
+  const goneW=[...cloudIds].filter(id=>del.has(id)); if(goneW.length) jobs.push(sbReq('/rest/v1/workouts?id=in.('+goneW.map(encodeURIComponent).join(',')+')',{method:'DELETE'}));
+  const upD=Object.keys(S.food).filter(d=>(S.food[d]||[]).length&&(!cloudDays[d]||JSON.stringify(cloudDays[d].entries)!==JSON.stringify(S.food[d])));
+  if(upD.length) jobs.push(sbUpsert('food_days',upD.map(d=>({day:d,entries:S.food[d]})),'user_id,day'));
+  await Promise.all(jobs);
+  SB.on=true; SB.dirty=false; SB.last=Date.now(); SB.err=''; V.sync='cloud'; sbMetaSave();
+  if(!silent&&!hadLocal&&S.profile) toast('Daten aus deinem Konto geladen');
+ }catch(e){ console.warn(e); SB.err=e.status===404?'Die Datenbank ist noch nicht eingerichtet.':'Abgleich fehlgeschlagen. Ich versuche es später erneut.'; SB.dirty=true; sbMetaSave(); }
+ finally{ SB.busy=false; render(); if(SHEET&&SHEET.kind==='account') drawSheet(); }
+}
+async function sbLogin(email,pw,create){
+ SB.err=''; SB.msg=''; SB.busy=true; drawSheet();
+ try{
+  if(create){ const j=await sbAuth('/signup',{email,password:pw}); if(!sbSetSession(j)){ SB.busy=false; SB.mode='login'; SB.msg='Fast geschafft: Bestätige den Link in der E-Mail, die wir dir geschickt haben. Danach hier anmelden.'; drawSheet(); return; } }
+  else{ const j=await sbAuth('/token?grant_type=password',{email,password:pw}); sbSetSession(j); }
+  SB.busy=false; await sbSync(); closeSheet(); window.scrollTo(0,0); toast(S.profile?'Angemeldet. Deine Daten sind jetzt in deinem Konto gesichert.':'Angemeldet');
+ }catch(e){ SB.busy=false; SB.err=sbErrText(e); drawSheet(); }
+}
+function sbErrText(e){
+ const m=String(e.code||e.message||'');
+ if(/invalid_credentials|Invalid login/i.test(m)) return 'E-Mail oder Passwort stimmt nicht.';
+ if(/email_not_confirmed|not confirmed/i.test(m)) return 'Bitte bestätige zuerst den Link in deiner E-Mail.';
+ if(/user_already_exists|already registered/i.test(m)) return 'Für diese E-Mail gibt es schon ein Konto. Melde dich an.';
+ if(/weak_password|at least/i.test(m)) return 'Das Passwort ist zu kurz. Nimm mindestens 8 Zeichen.';
+ if(/rate|too many|429/i.test(m)) return 'Zu viele Versuche. Warte kurz und probiere es dann erneut.';
+ if(/Failed to fetch|NetworkError|Load failed/i.test(m)) return 'Keine Verbindung. Prüfe dein Internet.';
+ return 'Das hat nicht geklappt: '+m;
+}
+async function sbLogout(){ try{ await sbAuth('/logout',null,'POST',SB.sess?.access); }catch(e){} SB.sess=null; SB.on=false; V.sync='lokal'; sbMetaSave(); closeSheet(); render(); toast('Abgemeldet. Deine Daten bleiben auf diesem Gerät.'); }
+async function sbRecover(email){ SB.err=''; SB.msg=''; try{ await sbAuth('/recover?redirect_to='+encodeURIComponent(location.origin+'/'),{email}); SB.msg='Wir haben dir einen Link zum Zurücksetzen geschickt.'; }catch(e){ SB.err=sbErrText(e); } drawSheet(); }
+async function sbNewPassword(pw){ SB.err=''; try{ await sbAuth('/user',{password:pw},'PUT',await sbToken()); SB.mode='login'; closeSheet(); toast('Neues Passwort gespeichert'); sbSync(true); }catch(e){ SB.err=sbErrText(e); drawSheet(); } }
+function renderAccount(){
+ const head=`<div class="row between"><h2>Konto & Sync</h2><button class="icon-btn" data-act="close" aria-label="Schließen">${I.x}</button></div>`;
+ const note=`${SB.err?`<p class="acc-msg bad" role="alert">${esc(SB.err)}</p>`:''}${SB.msg?`<p class="acc-msg ok" role="status">${esc(SB.msg)}</p>`:''}`;
+ if(SB.mode==='newpw') return head+`<p class="muted">Lege ein neues Passwort fest.</p>${note}<div class="field"><label for="sb-pw">Neues Passwort</label><input id="sb-pw" type="password" autocomplete="new-password" minlength="8"></div><button class="btn pri" data-act="sbNewPw">Passwort speichern</button>`;
+ if(SB.sess){ const t=SB.last?new Date(SB.last).toLocaleString('de-DE',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'noch nie';
+  return head+`<div class="card acc-card"><span class="dot ${SB.on?'on':''}"></span><div><b>${esc(SB.sess.user.email||'Angemeldet')}</b><div class="muted">${SB.busy?'Gleiche ab …':`Zuletzt abgeglichen: ${t}`}</div></div></div>${note}
+  <p class="muted">Trainings, Ernährung und Einstellungen werden automatisch in deinem Konto gespeichert und auf allen Geräten abgeglichen, auf denen du angemeldet bist. Fortschrittsfotos bleiben nur auf diesem Gerät.</p>
+  <div class="row"><button class="btn" data-act="sbSyncNow"${SB.busy?' disabled':''}>Jetzt abgleichen</button><button class="btn ghost danger" data-act="sbLogout">Abmelden</button></div>`; }
+ const create=SB.mode==='create';
+ return head+`<p class="muted">${create?'Mit einem Konto sind deine Trainings sicher gespeichert und auf Handy und Laptop gleich.':'Melde dich an, um deine Daten auf allen Geräten zu haben.'}${S.profile&&create?' Deine bisherigen Daten auf diesem Gerät werden ins Konto übernommen.':''}</p>${note}
+  <div class="field"><label for="sb-email">E-Mail</label><input id="sb-email" type="email" autocomplete="email" inputmode="email" value="${esc(V.sbEmail||'')}"></div>
+  <div class="field"><label for="sb-pw">Passwort</label><input id="sb-pw" type="password" autocomplete="${create?'new-password':'current-password'}" minlength="8" placeholder="${create?'Mindestens 8 Zeichen':''}"></div>
+  <button class="btn pri" data-act="${create?'sbCreate':'sbLogin'}"${SB.busy?' disabled':''}>${SB.busy?'Einen Moment …':create?'Konto erstellen':'Anmelden'}</button>
+  <div class="row between acc-links"><button class="linkbtn" data-act="sbMode" data-v="${create?'login':'create'}">${create?'Schon ein Konto? Anmelden':'Noch kein Konto? Erstellen'}</button>${create?'':'<button class="linkbtn" data-act="sbForgot">Passwort vergessen</button>'}</div>`;
+}
+function sbInit(){
+ if(!SBC) return; sbMetaLoad();
+ /* Rücksprung aus E-Mail-Links (Bestätigung oder Passwort zurücksetzen) */
+ if(location.hash.includes('access_token=')){
+  const h=new URLSearchParams(location.hash.slice(1)); const type=h.get('type');
+  sbSetSession({access_token:h.get('access_token'),refresh_token:h.get('refresh_token'),expires_in:+h.get('expires_in')||3600,user:{}});
+  history.replaceState(null,'',location.pathname);
+  sbAuth('/user',null,'GET',SB.sess.access).then(u=>{ SB.sess.user={id:u.id,email:u.email}; sbMetaSave();
+   if(type==='recovery'){ SB.mode='newpw'; openSheet('account'); } else { sbSync(); toast('E-Mail bestätigt. Du bist angemeldet.'); } }).catch(e=>console.warn(e));
+  return;
+ }
+ if(SB.sess){ SB.on=true; V.sync='cloud'; sbSync(true); }
+ document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible'&&SB.sess&&Date.now()-SB.last>30000) sbSync(true); });
+ addEventListener('online',()=>{ if(SB.sess) sbSync(true); });
 }
 
 /* ============ Berechnungen ============ */
@@ -1741,7 +1866,7 @@ function render(){
  app.innerHTML=`<div class="app">
  <aside class="side"><div class="brand">${LOGO}<b>Iron Ladder</b></div>
  <nav class="nav${enter?' bump':''}" aria-label="Hauptnavigation">${tabs.map(t=>`<button data-act="tab" data-v="${t[0]}" ${V.tab===t[0]?'aria-current="page"':''}>${t[2]}<span>${t[1]}</span></button>`).join('')}</nav>
- <div class="foot"><button class="btn sm ghost" data-act="settings">${I.gear} Profil & Ziele</button><div class="sync"><span class="dot ${V.sync==='cloud'?'on':''}"></span>${S.demo?'Demo – nichts wird gespeichert':V.sync==='cloud'?'Synchron auf allen Geräten':'Nur auf diesem Gerät'}</div></div></aside>
+ <div class="foot"><button class="btn sm ghost" data-act="settings">${I.gear} Profil & Ziele</button><div class="sync"><span class="dot ${V.sync==='cloud'?'on':''}"></span>${S.demo?'Demo – nichts wird gespeichert':V.sync==='cloud'?(SB.dirty?'Wird abgeglichen …':'Synchron auf allen Geräten'):'Nur auf diesem Gerät'}</div></div></aside>
  ${V.tab==='train'&&S.draft?'':`<div class="topbar" aria-hidden="true">${TAB_TITLES[V.tab]}</div>`}
  <main class="main"><div class="wrap${enter?' enter':''}">${S.demo?`<div class="banner"><span><b>Demo-Modus.</b> Beispieldaten eines fiktiven Athleten, nichts wird gespeichert.</span><button class="btn sm" data-act="exitDemo">Eigenes Profil anlegen</button></div>`:''}${body}</div></main></div>
  ${S.draft&&V.tab!=='train'?`<button class="rest" data-act="tab" data-v="train" style="cursor:pointer"><span>Training läuft</span><span class="t" data-elapsed>--:--</span></button>`:''}`;
@@ -1782,7 +1907,7 @@ function renderOnboarding(){
  return `<div class="main"><div class="ob">
   <div class="ob-hero">${LOGO.replace('width="34" height="34"','width="52" height="52"')}<div><h1>Iron Ladder</h1><div class="muted">Trainieren, tracken, im Rang aufsteigen.</div></div></div>
   <div class="stack" style="gap:8px"><span class="step-txt">Schritt ${st+1} von 5</span>${steps}</div><div class="card" style="padding:24px">${body}</div>
-  <div class="row between"><div class="row">${st>0?`<button class="btn ghost" data-act="obBack">Zurück</button>`:`<button class="btn ghost" data-act="demo">Demo ansehen</button>`}</div>
+  <div class="row between"><div class="row">${st>0?`<button class="btn ghost" data-act="obBack">Zurück</button>`:`<button class="btn ghost" data-act="demo">Demo ansehen</button>${SBC?'<button class="btn ghost" data-act="account" data-v="login">Anmelden</button>':''}`}</div>
   <button class="btn pri" data-act="obNext">${st===4?"Los geht's":'Weiter'}</button></div></div></div>`;
 }
 
@@ -1812,6 +1937,7 @@ function renderHome(){
  const name=S.draft?S.draft.name:np.day.n; const mi=mesoInfo();
  return `<div class="head home-head"><div><h1>${greeting()}${p.name?', '+esc(p.name):''}</h1><p class="sub">${dateStr}. Du bist <b class="lv">Level ${lvl}</b> mit ${fmt(xp)} XP.</p></div>
  <button class="icon-btn" data-act="settings" aria-label="Profil & Ziele">${I.gear}</button></div>
+${SBC&&!SB.sess&&!S.demo&&(()=>{try{return !localStorage.getItem(LS+'.sbhint')}catch(e){return true}})()?`<div class="banner"><span><b>Sichere deine Fortschritte.</b> Mit einem Konto sind deine Daten auf allen Geräten und gehen nicht verloren.</span><div class="row"><button class="btn sm" data-act="account" data-v="create">Konto einrichten</button><button class="btn sm ghost" data-act="sbHint">Später</button></div></div>`:''}
 ${deloadAdvice()?`<div class="banner"><span><b>Zwei zähe Einheiten in Folge.</b> Ein vorgezogener Deload hilft, Ermüdung abzubauen.</span><button class="btn sm" data-act="deloadNow">Deload-Woche starten</button></div>`:''}
  <section class="hero-card" aria-label="Nächstes Training">
   <div class="hero-main">
@@ -2237,6 +2363,7 @@ function renderSettings(){
  <button class="btn sm ghost" data-act="recalc" style="margin-top:8px">Aus Körperdaten neu berechnen</button></div>
  <div class="card" style="background:var(--surface-2)"><div class="lbl">Trainingsblock</div><div class="grid g2" style="margin-top:8px"><div class="field"><label for="st-meso">Blocklänge inkl. Deload</label><select id="st-meso">${[4,5,6].map(n=>`<option value="${n}" ${(S.profile.meso?.len||5)===n?'selected':''}>${n} Wochen</option>`).join('')}</select></div>
  <div class="field"><label>&nbsp;</label><button class="btn ghost" data-act="mesoRestart">Neuen Block ab dieser Woche</button></div></div></div>
+ ${SBC?`<div class="card row between" style="background:var(--surface-2);gap:12px"><div><div class="lbl">Konto & Sync</div><p class="muted" style="margin:4px 0 0">${SB.sess?`Angemeldet als ${esc(SB.sess.user.email||'')}. Alles wird automatisch abgeglichen.`:'Noch nicht angemeldet. Deine Daten liegen nur auf diesem Gerät.'}</p></div><button class="btn sm" data-act="account" data-v="${SB.sess?'':'create'}">${SB.sess?'Verwalten':'Konto einrichten'}</button></div>`:''}
  ${STANDALONE?`<div class="card stack" style="background:var(--surface-2);gap:10px"><div><div class="lbl">Daten sichern</div><p class="muted" style="margin:4px 0 0">Speichere ein Backup deiner Trainings, Ernährung und Einstellungen als Datei. Fotos sind nicht enthalten. Beim Laden werden die Daten auf diesem Gerät ersetzt.</p></div>
   <div class="row"><button class="btn sm" data-act="exportData">Backup herunterladen</button><label class="btn sm ghost" style="cursor:pointer">Backup laden<input type="file" accept="application/json,.json" data-import hidden></label></div></div>`:''}
  <div class="card row between" style="background:var(--surface-2);gap:12px"><div><div class="lbl">App-Rundgang</div><p class="muted" style="margin:4px 0 0">Alle Bereiche der App in einer Minute erklärt.</p></div><button class="btn sm" data-act="tourStart">Rundgang starten</button></div>
@@ -2250,7 +2377,7 @@ let SHEET_TOK=0;
 function openSheet(kind,arg){ if(SHEET&&SHEET.kind==='scan'&&kind!=='scan') stopScan(); SHEET_TOK++; const fresh=!SHEET; SHEET={kind,arg}; drawSheet(); if(fresh) haptic(6); }
 function drawSheet(){
  const L=$('#layer'); if(!SHEET){L.innerHTML='';document.body.style.overflow='';document.body.classList.remove('sheet-open');return;}
- const html={lib:()=>renderLibSheet(false),pick:()=>renderLibSheet(true),info:()=>renderExInfo(SHEET.arg),customEx:renderCustomEx,alts:()=>renderAlts(SHEET.arg),planEdit:()=>renderPlanEdit(SHEET.arg),pickPlan:()=>renderLibSheet('plan'),scan:renderScan,phCmp:renderPhotoCompare,rate:renderRate,food:renderFoodSheet,customFood:renderCustomFood,settings:renderSettings,summary:()=>SHEET.arg}[SHEET.kind]();
+ const html={account:renderAccount,lib:()=>renderLibSheet(false),pick:()=>renderLibSheet(true),info:()=>renderExInfo(SHEET.arg),customEx:renderCustomEx,alts:()=>renderAlts(SHEET.arg),planEdit:()=>renderPlanEdit(SHEET.arg),pickPlan:()=>renderLibSheet('plan'),scan:renderScan,phCmp:renderPhotoCompare,rate:renderRate,food:renderFoodSheet,customFood:renderCustomFood,settings:renderSettings,summary:()=>SHEET.arg}[SHEET.kind]();
  const ov=L.querySelector('.overlay:not(.closing)');
  if(ov){ const sh=ov.querySelector('.sheet'); sh.innerHTML=html; if(SHEET.kind==='summary') countUp(sh); return; }
  L.innerHTML=`<div class="overlay" data-act="overlay"><div class="sheet" role="dialog" aria-modal="true">${html}</div></div>`;
@@ -2597,6 +2724,15 @@ document.addEventListener('click',e=>{
   demo:loadDemo,
   exitDemo:()=>{S={profile:null,workouts:[],food:{},draft:null,demo:false}; V.ob=obDefaults(); cacheLoad(); if(S.profile){buildEx();buildFoods()} render()},
   settings:()=>{V.resetAsk=false;openSheet('settings')},
+  account:()=>{SB.err='';SB.msg='';SB.mode=v||'login';openSheet('account')},
+  sbMode:()=>{V.sbEmail=$('#sb-email')?.value||V.sbEmail; SB.mode=v; SB.err=''; SB.msg=''; drawSheet()},
+  sbLogin:()=>{const e=$('#sb-email').value.trim(), p=$('#sb-pw').value; V.sbEmail=e; if(!e||!p){SB.err='Bitte E-Mail und Passwort eingeben.';drawSheet();return} sbLogin(e,p,false)},
+  sbCreate:()=>{const e=$('#sb-email').value.trim(), p=$('#sb-pw').value; V.sbEmail=e; if(!e||p.length<8){SB.err='Bitte E-Mail und ein Passwort mit mindestens 8 Zeichen eingeben.';drawSheet();return} sbLogin(e,p,true)},
+  sbForgot:()=>{const e=$('#sb-email').value.trim(); V.sbEmail=e; if(!e){SB.err='Gib zuerst deine E-Mail ein.';drawSheet();return} sbRecover(e)},
+  sbNewPw:()=>{const p=$('#sb-pw').value; if(p.length<8){SB.err='Mindestens 8 Zeichen.';drawSheet();return} sbNewPassword(p)},
+  sbSyncNow:()=>{sbSync(); drawSheet()},
+  sbLogout:sbLogout,
+  sbHint:()=>{try{localStorage.setItem(LS+'.sbhint','1')}catch(e){} render()},
   msAll:()=>{V.msAll=!V.msAll; render()},
   exportData:exportData,
   tourStart:()=>{closeSheet(); setTimeout(startTour,REDUCED?0:320)},
@@ -2693,6 +2829,7 @@ document.addEventListener('click',e=>{
  S.profile.targets={kcal:num($('#st-t-kcal').value),p:num($('#st-t-p').value),c:num($('#st-t-c').value),f:num($('#st-t-f').value),tdee:calcTargets(S.profile).tdee}; saveProfile(); closeSheet(); render(); toast('Gespeichert')},
   resetAll:()=>{if(!V.resetAsk){V.resetAsk=true;drawSheet();return}
    const ids=S.workouts.map(w=>w.id), days=Object.keys(S.food);
+   if(SB.on&&!S.demo){ ['workouts','food_days','profiles'].forEach(t=>sbQueue('x'+t,()=>sbReq('/rest/v1/'+t+'?user_id=eq.'+SB.sess.user.id,{method:'DELETE'}))); }
    if(DB&&!S.demo){queue('p',()=>pref().delete()); ids.forEach(dropWorkout); days.forEach(d=>{S.food[d]=[];saveDay(d)});}
    try{localStorage.removeItem(LS);localStorage.removeItem(LS+'.draft')}catch(e){}
    S={profile:null,workouts:[],food:{},draft:null,demo:false}; V.ob=obDefaults(); V.resetAsk=false; closeSheet(); render()},
@@ -2723,12 +2860,13 @@ document.addEventListener('change',e=>{
  if(t.id==='ce-p'||t.id==='ce-m'||t.id==='ce-s'){ const prim=$('#ce-m').value, sec=$('#ce-s').value; $('#ce-prev').innerHTML=figure($('#ce-p').value)+muscleMap(m=>m===prim?{c:'var(--accent)'}:m===sec?{c:'var(--accent)',o:.42}:{c:'var(--map-off)'}); }
 });
 document.addEventListener('toggle',e=>{ const d=e.target; if(d.dataset&&d.dataset.hist) V.histOpen[d.dataset.hist]=d.open; },true);
-document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&SHEET) closeSheet(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&SHEET) closeSheet(); if(e.key==='Enter'&&SHEET&&SHEET.kind==='account'&&e.target.matches('#sb-email,#sb-pw')){ e.preventDefault(); $('.sheet .btn.pri')?.click(); } });
 document.addEventListener('submit',e=>{ if(e.target.matches('[data-off-form]')){ e.preventDefault(); FS.sel=null; const a=$('#food-amount'); if(a) a.innerHTML=''; offSearch(); } });
 
 /* ============ Start ============ */
 cacheLoad(); buildEx(); buildFoods();
 if(S.draft) S.draft.items.forEach(it=>{if(!EX[it.ex]) it.ex=null}); if(S.draft) S.draft.items=S.draft.items.filter(it=>it.ex);
+sbInit();
 render();
 connect();
 </script>
