@@ -533,6 +533,23 @@ body.tour-nav .nav button[aria-current="page"] svg{color:var(--accent)}
 .std-table small{font-size:.6875rem;color:var(--muted);font-weight:500;display:flex;align-items:center;gap:4px}
 .std-table small i{width:7px;height:7px;border-radius:2px;flex:none}
 @media (max-width:620px){.std-table>div{grid-template-columns:repeat(5,minmax(0,1fr))}.std-table>div>b{grid-column:1/-1}.std-table span{padding:5px 6px;font-size:.8125rem}.std-table small{font-size:.625rem;white-space:nowrap}}
+.rp-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.rp-chips span{display:inline-flex;gap:6px;align-items:center;padding:6px 10px;border-radius:999px;background:var(--row);font-size:.875rem}
+.rp-chips .up b{color:var(--accent-text)}.rp-chips .down b{color:var(--bad)}
+.ch-row{display:flex;flex-direction:column;gap:6px;padding:12px;margin-top:4px;border-radius:14px;background:var(--row)}
+.ch-row .lbl{display:block;font-size:.75rem;margin-bottom:2px}
+.ch-row b{font-size:.9375rem}
+.ch-row small{font-size:.8125rem;line-height:1.35}
+.ch-row .ch-v{font-weight:700;flex:none}
+.ch-row.done .ch-v svg{width:18px;height:18px;color:var(--accent)}
+.ch-done{background:var(--accent-soft);color:var(--accent-text)}
+.ms-earned{display:flex;flex-wrap:wrap;gap:6px}
+.ms-list{display:flex;flex-direction:column;gap:12px}
+.ms-item{display:flex;gap:12px;align-items:center}
+.ms-item b{font-size:.9375rem}
+.ms-badge{display:inline-grid;place-items:center;border-radius:50%;background:var(--row);flex:none}
+.ms-badge.on{background:var(--accent)}
+.ms-card .btn{align-self:flex-start}
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{animation:none!important;transition:none!important}
   body.sheet-open .main{transform:none;filter:none}
@@ -1133,10 +1150,11 @@ const DIVS=['I','II','III'];
 function tierOf(sr){
  let i=0; for(let k=0;k<TIERS.length;k++) if(sr>=TIERS[k].min) i=k;
  const t=TIERS[i], nx=TIERS[i+1];
- if(!nx) return {i,t,div:'',label:t.n,next:null,prog:1,toNext:0};
+ if(!nx) return {i,t,div:'',label:t.n,next:null,prog:1,toNext:0,rp:Math.floor((sr-t.min)/20),rpToNext:0};
  const span=(nx.min-t.min)/3; const step=Math.min(2,Math.floor((sr-t.min)/span));
  const divNum=3-step; const lo=t.min+step*span, hi=lo+span;
- return {i,t,div:DIVS[divNum-1],divNum,label:`${t.n} ${DIVS[divNum-1]}`,prog:(sr-lo)/span,toNext:Math.ceil(hi-sr),nextLabel:divNum===1?`${nx.n} III`:`${t.n} ${DIVS[divNum-2]}`};
+ const rp=Math.max(0,Math.min(99,Math.floor((sr-lo)/span*100)));
+ return {i,t,div:DIVS[divNum-1],divNum,label:`${t.n} ${DIVS[divNum-1]}`,prog:(sr-lo)/span,toNext:Math.ceil(hi-sr),rp,rpToNext:100-rp,nextLabel:divNum===1?`${nx.n} III`:`${t.n} ${DIVS[divNum-2]}`};
 }
 function emblem(sr,size=56){
  const r=tierOf(sr), t=r.t, i=r.i;
@@ -1785,10 +1803,10 @@ function heroFacts(ids){
 function greeting(){ const h=new Date().getHours(); return h<5?'Noch wach':h<11?'Guten Morgen':h<18?'Hallo':'Guten Abend'; }
 function renderHome(){
  const p=S.profile, np=nextPlan(), ids=planIds(np.key);
- const R=computeRanks(); const xp=totalXP(R.xp), lvl=levelOf(xp);
+ const R=computeRanks(); const xp=playerXP(R), lvl=levelOf(xp);
  const wk=weekKey(today()); const wCount=S.workouts.filter(w=>weekKey(w.date)===wk).length;
  const tot=dayTotals(today()); const t=p.targets;
- const close=MKEYS.map(m=>({m,r:tierOf(R.sr[m])})).filter(x=>x.r.toNext>0).sort((a,b)=>a.r.toNext-b.r.toNext)[0];
+ const close=MKEYS.map(m=>({m,r:tierOf(R.sr[m])})).filter(x=>x.r.rpToNext>0).sort((a,b)=>a.r.rpToNext-b.r.rpToNext)[0];
  const tip=TIPS[Math.floor(Date.now()/864e5)%TIPS.length];
  const dateStr=new Date().toLocaleDateString('de-DE',{weekday:'long',day:'numeric',month:'long'});
  const name=S.draft?S.draft.name:np.day.n; const mi=mesoInfo();
@@ -1809,13 +1827,13 @@ ${deloadAdvice()?`<div class="banner"><span><b>Zwei zähe Einheiten in Folge.</b
  <div class="grid g3">
   <div class="card stack streak"><div class="row between"><h3>Diese Woche</h3><span class="num" style="font-size:1.25rem">${wCount} von ${p.days}</span></div>
    ${weekStrip()}
-   <p>${wCount>=p.days?`Wochenziel erreicht. ${streakWeeks()} Wochen in Folge im Plan.`:`Noch ${p.days-wCount} Einheit${p.days-wCount===1?'':'en'} bis zum Wochenziel. Serie: ${streakWeeks()} Wochen.`}</p></div>
+   <p>${wCount>=p.days?`Wochenziel erreicht. ${streakWeeks()} Wochen in Folge im Plan.`:`Noch ${p.days-wCount} Einheit${p.days-wCount===1?'':'en'} bis zum Wochenziel. Serie: ${streakWeeks()} Wochen.`}</p>${challengeRow()}</div>
   <button class="linkcard" data-act="tab" data-v="food">
    <div class="row between"><h3>Ernährung heute</h3><span class="num">${fmt(tot.k)} / ${fmt(t.kcal)} kcal</span></div>
    <div class="bar"><i style="width:${Math.min(100,tot.k/t.kcal*100)}%"></i></div>
    <div class="row between"><span>Protein <b class="num">${fmt(tot.p)}/${t.p} g</b></span><span class="muted">${tot.p>=t.p?'erreicht':`noch ${fmt(t.p-tot.p)} g`}</span></div>
    <div class="bar"><i style="width:${Math.min(100,tot.p/t.p*100)}%;background:var(--teal)"></i></div></button>
-  ${close?`<button class="linkcard rank" data-act="tab" data-v="ranks">${emblem(R.sr[close.m],52)}<div><div class="tier">${MUSCLES[close.m]}: ${close.r.label}</div><div class="muted">Fast aufgestiegen. Noch ${close.r.toNext} SR bis ${close.r.nextLabel}.</div></div></button>`:''}
+  ${close?`<button class="linkcard rank" data-act="tab" data-v="ranks">${emblem(R.sr[close.m],52)}<div><div class="tier">${MUSCLES[close.m]}: ${close.r.label}</div><div class="muted">${close.r.rp} RP. Noch ${close.r.rpToNext} RP bis ${close.r.nextLabel}.</div></div></button>`:''}
  </div>
  ${recoveryCard()}
  <section class="tip"><h3>${tip.t}</h3><p>${tip.b}</p><div class="src">Wissenschaftlicher Tipp, Quelle: ${tip.s}</div></section>`;
@@ -2102,33 +2120,34 @@ function renderRanks(){
  const wk=weekSets(weekKey(today()));
  const pill=(m)=>{const r=tierOf(R.sr[m]);return `<span class="leafpill"><i style="background:${r.t.c2}"></i>${esc(MUSCLES[m])}<b>${r.t.n}${r.div?' '+r.div:''}</b></span>`};
  return `<div class="head"><div><h1>Deine Ränge</h1><p class="sub">${GROUPS.length} Muskelgruppen mit ${MKEYS.length} Unterkategorien. Jede klettert einzeln, von Eisen bis Legende.</p></div></div>
- <div class="grid g2"><div class="card overall">${emblem(avg,92)}<div style="min-width:0;flex:1"><div class="lbl">Gesamtrang</div><h2 style="font-size:1.75rem">${o.label}</h2><div class="muted"><span data-count="${Math.round(avg)}">${fmt(avg)}</span> SR im Schnitt bei ${fmt(S.profile.weight,1)} kg Körpergewicht. Level ${levelOf(totalXP(R.xp))}, ${fmt(totalXP(R.xp))} XP.</div>${o.toNext?`<div class="bar" style="margin-top:10px"><i style="width:${o.prog*100}%"></i></div><div class="muted" style="font-size:.875rem;margin-top:4px">Noch ${fmt(o.toNext)} SR bis ${o.nextLabel}</div>`:''}</div></div>
+ <div class="grid g2"><div class="card overall">${emblem(avg,92)}<div style="min-width:0;flex:1"><div class="lbl">Gesamtrang</div><h2 style="font-size:1.75rem">${o.label}</h2><div class="muted"><span data-count="${o.rp}">${o.rp}</span> RP, bei ${fmt(S.profile.weight,1)} kg Körpergewicht. Level ${levelOf(playerXP(R))}, ${fmt(playerXP(R))} XP.</div>${o.rpToNext?`<div class="bar" style="margin-top:10px"><i style="width:${o.prog*100}%"></i></div><div class="muted" style="font-size:.875rem;margin-top:4px">Noch ${o.rpToNext} RP bis ${o.nextLabel}</div>`:''}</div></div>
  <div class="card stack"><h3>Rangkarte</h3><div class="maps">${muscleMap(m=>({c:tierOf(R.sr[m]).t.c2}))}</div></div></div>
  ${(()=>{const ss=seasonStats(R); const st=tierOf(ss.now.score);
   return `<div class="card season"><div class="row" style="gap:16px;flex-wrap:nowrap">${emblem(ss.now.score,64)}<div style="min-width:0;flex:1"><div class="lbl">Saison ${esc(ss.now.n)}, endet in ${ss.daysLeft} Tagen</div><h3>${st.label}</h3><div class="bar" style="height:6px;margin-top:6px"><i style="width:${st.prog*100}%;background:${st.t.c2}"></i></div><p class="muted" style="font-size:.875rem;margin-top:6px">Zählt nur SR aus dieser Saison. Am Saisonende bleibt dein Abzeichen in der Sammlung.</p></div></div>
   ${ss.past.length?`<div class="season-past">${ss.past.map(x=>`<span>${emblem(x.score,30)}<small>${esc(x.n)}<br><b>${tierOf(x.score).label}</b></small></span>`).join('')}</div>`:''}</div>`})()}
+ ${milestoneCard()}
  <div class="rgroups">${GROUPS.map(g=>{const gs=groupSR(R.sr,g.k), gr=tierOf(gs), open=V.rankOpen===g.k, leaves=leavesOf(g.k);
   return `<section class="rgroup${open?' open':''}">
    <button class="rgroup-h" data-act="rankOpen" data-v="${g.k}" aria-expanded="${open}">
     ${emblem(gs,52)}
-    <span class="rg-main"><span class="rg-name">${g.n}</span><span class="rg-tier">${gr.label}</span><span class="bar" style="height:6px"><i style="width:${gr.prog*100}%;background:${gr.t.c2}"></i></span></span>
+    <span class="rg-main"><span class="rg-name">${g.n}</span><span class="rg-tier">${gr.label}, ${gr.rp} RP</span><span class="bar" style="height:6px"><i style="width:${gr.prog*100}%;background:${gr.t.c2}"></i></span></span>
     <span class="rg-chev" aria-hidden="true">${I.right}</span>
    </button>
    <div class="rg-pills">${leaves.map(pill).join('')}</div>
    ${open?`<div class="rg-body">${leaves.map(m=>{const r=tierOf(R.sr[m]); const w=wk[m]||0;
     return `<div class="leaf">${emblem(R.sr[m],40)}<div class="leaf-main"><div class="row between" style="flex-wrap:nowrap"><b>${esc(MUSCLES[m])}</b><span class="leaf-tier">${r.label}</span></div>
      <div class="bar" style="height:6px"><i style="width:${r.prog*100}%;background:${r.t.c2}"></i></div>
-     <div class="leaf-meta"><span>${fmt(R.sr[m])} SR${r.toNext?`, noch ${r.toNext} bis ${r.nextLabel}`:''}</span><span class="${w>=WEEK_BONUS?'ok':''}">Woche ${fmt(w,1)}/${WEEK_BONUS} Sätze</span></div>
+     <div class="leaf-meta"><span>${r.rp} RP${r.rpToNext?`, noch ${r.rpToNext} bis ${r.nextLabel}`:''}</span><span class="${w>=WEEK_BONUS?'ok':''}">Woche ${fmt(w,1)}/${WEEK_BONUS} Sätze</span></div>
      ${(()=>{const st=R.strength&&R.strength[m], f=Math.round((R.form[m]||0)*FORM_MAX), sid=stdForLeaf(m);
-      if(st) return `<div class="leaf-str"><b>Kraft:</b> ${esc(EX[st.id].n)}, ${fmt(st.e1rm,1)} kg geschätztes 1RM = ${fmt(st.ratio,2)}× Körpergewicht${st.via?' (mitarbeitend)':''}. Stufe ${st.lvl>=0?STD_N[st.lvl]:'unter '+STD_N[0]}${st.next?`, nächste ab ${fmt(st.next,2)}× (${fmt(Math.ceil(st.next*S.profile.weight))} kg)`:''}. <span class="muted">Form +${f} SR</span></div>`;
-      return `<div class="leaf-str muted">Noch kein Kraftwert, nur Form +${fmt(Math.round((R.form[m]||0)*FORM_MAX*2.5))} SR.${sid?` Mach z. B. ${esc(EX[sid].n)}, dann zählt deine Kraft.`:''}</div>`;})()}</div>
+      if(st) return `<div class="leaf-str"><b>Kraft:</b> ${esc(EX[st.id].n)}, ${fmt(st.e1rm,1)} kg geschätztes 1RM = ${fmt(st.ratio,2)}× Körpergewicht${st.via?' (mitarbeitend)':''}. Stufe ${st.lvl>=0?STD_N[st.lvl]:'unter '+STD_N[0]}${st.next?`, nächste ab ${fmt(st.next,2)}× (${fmt(Math.ceil(st.next*S.profile.weight))} kg)`:''}. <span class="muted">Form-Bonus ${Math.round((R.form[m]||0)*100)} %</span></div>`;
+      return `<div class="leaf-str muted">Noch kein Kraftwert, der Rang kommt nur aus der Form (bis Silber).${sid?` Mach z. B. ${esc(EX[sid].n)}, dann zählt deine Kraft.`:''}</div>`;})()}</div>
      <button class="btn sm ghost" data-act="libFor" data-v="${m}">Übungen</button></div>`}).join('')}</div>`:''}
   </section>`}).join('')}</div>
  <div class="card"><h3>So steigst du auf</h3><div class="grid g2" style="margin-top:10px;font-size:.875rem">
   <div><b>Kraft im Verhältnis zum Körpergewicht.</b> Dein Rang kommt vor allem aus dem besten geschätzten 1RM pro Unterkategorie, geteilt durch dein Körpergewicht. Bei 80 kg ist Bankdrücken mit dem eigenen Körpergewicht Stufe „Fortgeschritten“ und damit Gold. Richtwerte nach gängigen Kraftstandards (ExRx).</div>
   <div><b>Fair für jedes Gewicht.</b> Schwerere Athleten heben absolut mehr, relativ aber weniger. Deshalb sinkt der nötige Faktor mit steigendem Körpergewicht (Kraft wächst etwa mit Gewicht hoch 2/3). Für Frauen gelten eigene Standards. Mitarbeitende Unterkategorien bekommen 60 % der Stufe.</div>
   <div><b>Form-Bonus bis +${FORM_MAX} SR.</b> Regelmäßiges Training der letzten 4 Wochen, bis zu 10 Sätze pro Woche und Unterkategorie. Wer pausiert, verliert die Form wieder, die Kraft bleibt. Ohne Kraftwert zählt nur die Form (bis Silber).</div>
-  <div><b>XP und Level</b> sammelst du mit jedem Satz, Wochenbonus und Bestwert. Sie gehen nie verloren und zählen auch für die Saison.</div></div>
+  <div><b>Rangpunkte (RP).</b> Jede Stufe hat 100 RP. Nach jedem Training siehst du, wie viele du gewonnen hast, auch bei kleinen Kraftsprüngen. Eine Wiederholung mehr bei gleichem Gewicht zählt schon. <b>XP und Level</b> sammelst du mit jedem Satz, Bestwert und jeder Wochen-Challenge. Sie gehen nie verloren.</div></div>
   <div class="std-table">${(()=>{const bw=S.profile.weight, sx=S.profile.sex; return ['bankdruecken','kniebeuge','kreuzheben','schulterdruecken-langhantel'].filter(id=>EX[id]).map(id=>{const need=stdRatio(id,bw,sx); return `<div><b>${esc(EX[id].n)}</b>${STD_M.map((x,i)=>`<span title="${STD_N[i]}"><small><i style="background:${TIERS[i+1].c2}"></i>${TIERS[i+1].n}</small>${fmt(Math.round(need*x*bw/2.5)*2.5,1)}</span>`).join('')}</div>`}).join('')})()}
   <p class="muted" style="font-size:.8125rem">Geschätztes 1RM in kg, das du bei ${fmt(S.profile.weight,1)} kg Körpergewicht für den jeweiligen Rang brauchst. Stufen: Einsteiger (Bronze), Anfänger (Silber), Fortgeschritten (Gold), Erfahren (Platin), Elite (Diamant).</p></div>
   <div class="chips" style="margin-top:14px">${TIERS.map(t=>`<span class="tag" style="gap:6px"><i style="width:9px;height:9px;border-radius:2px;background:${t.c2};display:inline-block"></i>${t.n} ab ${fmt(t.min)}</span>`).join('')}</div></div>`;
@@ -2218,6 +2237,8 @@ function renderSettings(){
  <button class="btn sm ghost" data-act="recalc" style="margin-top:8px">Aus Körperdaten neu berechnen</button></div>
  <div class="card" style="background:var(--surface-2)"><div class="lbl">Trainingsblock</div><div class="grid g2" style="margin-top:8px"><div class="field"><label for="st-meso">Blocklänge inkl. Deload</label><select id="st-meso">${[4,5,6].map(n=>`<option value="${n}" ${(S.profile.meso?.len||5)===n?'selected':''}>${n} Wochen</option>`).join('')}</select></div>
  <div class="field"><label>&nbsp;</label><button class="btn ghost" data-act="mesoRestart">Neuen Block ab dieser Woche</button></div></div></div>
+ <div class="card stack" style="background:var(--surface-2);gap:10px"><div><div class="lbl">Daten sichern</div><p class="muted" style="margin:4px 0 0">Speichere ein Backup deiner Trainings, Ernährung und Einstellungen als Datei. Fotos sind nicht enthalten. Beim Laden werden die Daten auf diesem Gerät ersetzt.</p></div>
+  <div class="row"><button class="btn sm" data-act="exportData">Backup herunterladen</button><label class="btn sm ghost" style="cursor:pointer">Backup laden<input type="file" accept="application/json,.json" data-import hidden></label></div></div>
  <div class="card row between" style="background:var(--surface-2);gap:12px"><div><div class="lbl">App-Rundgang</div><p class="muted" style="margin:4px 0 0">Alle Bereiche der App in einer Minute erklärt.</p></div><button class="btn sm" data-act="tourStart">Rundgang starten</button></div>
  <button class="btn pri" data-act="saveSettings">Speichern</button>
  <button class="btn ghost danger" data-act="resetAll">${V.resetAsk?'Wirklich alles löschen? Nochmal tippen':'Alle Daten zurücksetzen'}</button>`;
@@ -2246,6 +2267,91 @@ function closeSheet(){
 }
 let toastT=null;
 function toast(msg){ let t=$('.toast'); if(!t){t=document.createElement('div');t.className='toast';t.setAttribute('role','status');document.body.appendChild(t)} t.classList.remove('out'); t.textContent=msg; clearTimeout(toastT); toastT=setTimeout(()=>{t.classList.add('out'); setTimeout(()=>{if(t.classList.contains('out')) t.remove()},320)},3000); }
+
+
+/* ============ XP, Wochen-Challenge, Meilensteine ============ */
+const CH_XP=150;
+const playerXP=R=>totalXP(R.xp)+CH_XP*Object.values(S.profile?.challenges||{}).filter(c=>c.done).length;
+const hashStr=t=>[...t].reduce((a,c)=>(a*31+c.charCodeAt(0))>>>0,7);
+function weekVolume(wk){ let v=0; for(const w of S.workouts){ if(weekKey(w.date)!==wk) continue; for(const it of w.items){ const ex=EX[it.ex]; if(!ex||ex.kind!=='w') continue; it.sets.forEach(x=>v+=num(x.w)*num(x.r)); } } return v; }
+function currentChallenge(){
+ if(!S.profile) return null; const wk=weekKey(today()); S.profile.challenges=S.profile.challenges||{};
+ let c=S.profile.challenges[wk];
+ if(!c){
+  const R=computeRanks(); const pool=[];
+  const weak=GROUPS.map(g=>({g,v:groupSR(R.sr,g.k)})).filter(x=>x.g.k!=='core').sort((a,b)=>a.v-b.v)[0].g;
+  pool.push({k:'group',g:weak.k,target:12});
+  pool.push({k:'prs',target:2});
+  const vols=[1,2,3,4].map(i=>weekVolume(addDays(wk,-7*i))).filter(v=>v>0);
+  if(vols.length>=2){ const avg=vols.reduce((a,b)=>a+b,0)/vols.length; pool.push({k:'vol',target:Math.max(2000,Math.round(avg*1.1/500)*500)}); }
+  const logged=[...Array(14)].some((_,i)=>(S.food[addDays(today(),-i-1)]||[]).length);
+  if(logged) pool.push({k:'prot',target:5});
+  c=Object.assign({done:false},pool[hashStr(wk)%pool.length]);
+  S.profile.challenges[wk]=c; if(!S.demo) saveProfile();
+ }
+ return c;
+}
+function challengeInfo(c){
+ const wk=weekKey(today());
+ if(c.k==='group'){ const n=weekGroupSets(wk)[c.g]||0; return {t:`${c.target} Sätze für ${GROUP_BY[c.g].n}`,d:'Deine schwächste Muskelgruppe bekommt diese Woche Extra-Aufmerksamkeit.',v:n}; }
+ if(c.k==='prs'){ const R=computeRanks(); const n=S.workouts.filter(w=>weekKey(w.date)===wk).reduce((a,w)=>a+(R.prs[w.id]||[]).length,0); return {t:`${c.target} neue Bestwerte`,d:'Schlag dein bestes geschätztes 1RM, mehr Gewicht oder mehr Wiederholungen zählen.',v:n}; }
+ if(c.k==='vol'){ return {t:`${fmt(c.target)} kg Wochenvolumen`,d:'Etwa 10 % mehr als dein Schnitt der letzten Wochen.',v:weekVolume(wk)}; }
+ if(c.k==='prot'){ const t=S.profile.targets.p; const n=[0,1,2,3,4,5,6].filter(i=>{const d=addDays(wk,i); return d<=today()&&dayTotals(d).p>=t}).length; return {t:`Proteinziel an ${c.target} Tagen`,d:`Jeweils mindestens ${t} g Protein.`,v:n}; }
+ return {t:'',d:'',v:0};
+}
+function checkChallenge(){ const c=currentChallenge(); if(!c||c.done) return null; const inf=challengeInfo(c); if(inf.v>=c.target){ c.done=true; if(!S.demo) saveProfile(); return inf; } return null; }
+function challengeRow(){
+ const c=currentChallenge(); if(!c) return ''; const inf=challengeInfo(c);
+ if(!c.done&&inf.v>=c.target){ c.done=true; if(!S.demo) saveProfile(); setTimeout(()=>toast(`Wochen-Challenge geschafft: +${CH_XP} XP`),300); }
+ const pr=Math.min(1,inf.v/c.target);
+ return `<div class="ch-row${c.done?' done':''}"><div class="row between" style="flex-wrap:nowrap;gap:8px"><span><span class="lbl">Wochen-Challenge</span><b>${esc(inf.t)}</b></span><span class="num ch-v">${c.done?I.check:`${fmt(Math.min(inf.v,c.target))}/${fmt(c.target)}`}</span></div>
+  <div class="bar" style="height:5px"><i style="width:${pr*100}%"></i></div><small class="muted">${c.done?`Geschafft, +${CH_XP} XP.`:`${esc(inf.d)} Belohnung: +${CH_XP} XP.`}</small></div>`;
+}
+/* Meilensteine: echte Gewichte (schwerster Satz), relative Ziele, Beständigkeit */
+function maxLift(id){ let m=0; for(const w of S.workouts) for(const it of w.items) if(it.ex===id) it.sets.forEach(x=>{ if(num(x.r)>=1&&num(x.w)>m) m=num(x.w); }); return m; }
+function maxReps(id){ let m=0; for(const w of S.workouts) for(const it of w.items) if(it.ex===id) it.sets.forEach(x=>{ if(num(x.w)>=0&&num(x.r)>m) m=num(x.r); }); return m; }
+function bestStreak(){ const per={}; S.workouts.forEach(w=>{const k=weekKey(w.date);per[k]=(per[k]||0)+1}); const ks=Object.keys(per).sort(); let best=0,cur=0,prev=null;
+ for(const k of ks){ const ok=per[k]>=(S.profile.days||3); if(ok&&prev&&addDays(prev,7)===k) cur++; else cur=ok?1:0; if(ok) prev=k; else prev=null; best=Math.max(best,cur); } return best; }
+function milestones(){
+ if(!S.profile) return []; const bw=S.profile.weight||75, out=[];
+ const kg=(id,list,ic)=>{ if(!EX[id]) return; const v=maxLift(id); list.forEach(x=>out.push({ser:id,id:id+x,t:`${x} kg ${EX[id].n}`,d:'Mindestens eine saubere Wiederholung.',v,goal:x,unit:'kg',ic})); };
+ const rel=(id,f,ic)=>{ if(!EX[id]) return; const v=maxLift(id)/bw; out.push({ser:id+'x',id:id+'x'+f,t:`${fmt(f,1)}× Körpergewicht ${EX[id].n}`,d:`Bei deinem Gewicht ${fmt(Math.ceil(f*bw/2.5)*2.5,1)} kg.`,v,goal:f,unit:'×',ic}); };
+ kg('bankdruecken',[60,80,100,120,140],'b'); rel('bankdruecken',1,'b');
+ kg('kniebeuge',[80,100,140,180],'s'); rel('kniebeuge',1.5,'s');
+ kg('kreuzheben',[100,140,180,220],'d'); rel('kreuzheben',2,'d');
+ kg('schulterdruecken-langhantel',[40,60],'o');
+ if(EX['klimmzuege']) out.push({ser:'pu',id:'pu10',t:'10 Klimmzüge am Stück',d:'Ohne Zusatzgewicht.',v:maxReps('klimmzuege'),goal:10,unit:'Wdh.',ic:'p'});
+ const n=S.workouts.length; [10,50,100,250].forEach(x=>out.push({ser:'w',id:'w'+x,t:`${x} Trainings`,d:'Jede gespeicherte Einheit zählt.',v:n,goal:x,unit:'',ic:'w'}));
+ const st=bestStreak(); [4,12,26].forEach(x=>out.push({ser:'st',id:'st'+x,t:`${x} Wochen Serie`,d:'Jede Woche dein Trainingsziel erreicht.',v:st,goal:x,unit:'Wo.',ic:'f'}));
+ out.forEach(x=>{x.done=x.v>=x.goal-1e-9; x.p=Math.min(1,x.v/x.goal)});
+ return out;
+}
+const MS_IC={b:'<path d="M5 12h14M7 8v8M17 8v8M4 10v4M20 10v4"/>',s:'<path d="M12 4v5M8 9h8M9 9l-2 11M15 9l2 11"/>',d:'<path d="M4 18h16M7 14v8M17 14v8M12 4v10"/>',o:'<path d="M12 20V9M8 5h8M8 3v4M16 3v4"/>',p:'<path d="M4 4h16M9 4v6a3 3 0 0 0 6 0V4M12 13v7"/>',w:'<path d="M6 7v10M3 9v6M18 7v10M21 9v6M6 12h12"/>',f:'<path d="M12 21c4 0 7-3 7-7 0-4-3-6-4-10-2 2-3 4-3 6-1-1-2-2-2-4-3 3-5 5-5 8 0 4 3 7 7 7z"/>'};
+function msBadge(x,size=40){ const c=x.done?'var(--accent)':'var(--muted)';
+ return `<span class="ms-badge${x.done?' on':''}" style="width:${size}px;height:${size}px"><svg viewBox="0 0 24 24" width="${Math.round(size*.5)}" height="${Math.round(size*.5)}" fill="none" stroke="${x.done?'var(--accent-ink)':c}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${MS_IC[x.ic]||MS_IC.w}</svg></span>`; }
+function milestoneCard(){
+ const all=milestones(); if(!all.length) return ''; const done=all.filter(x=>x.done), seen=new Set(), open=all.filter(x=>!x.done&&!seen.has(x.ser)&&seen.add(x.ser)).sort((a,b)=>b.p-a.p);
+ const show=V.msAll?all:open.slice(0,3);
+ const fmtV=x=>x.unit==='×'?`${fmt(x.v,2)}× von ${fmt(x.goal,1)}×`:x.unit==='kg'?`${fmt(x.v,1)} von ${x.goal} kg`:`${fmt(x.v)} von ${x.goal}${x.unit?' '+x.unit:''}`;
+ return `<div class="card stack ms-card"><div class="row between"><h3>Meilensteine</h3><span class="muted num">${done.length} von ${all.length}</span></div>
+  ${done.length&&!V.msAll?`<div class="ms-earned" aria-label="Erreichte Meilensteine">${done.map(x=>`<span title="${esc(x.t)}">${msBadge(x,34)}</span>`).join('')}</div>`:''}
+  <div class="ms-list">${show.map(x=>`<div class="ms-item${x.done?' done':''}">${msBadge(x,40)}<div style="min-width:0;flex:1"><b>${esc(x.t)}</b><div class="bar" style="height:5px;margin:6px 0 4px"><i style="width:${x.p*100}%"></i></div><small class="muted">${x.done?'Erreicht':fmtV(x)}</small></div></div>`).join('')}</div>
+  <button class="btn sm ghost" data-act="msAll">${V.msAll?'Weniger anzeigen':'Alle anzeigen'}</button></div>`;
+}
+/* ============ Backup ============ */
+function exportData(){
+ const data={app:'iron-ladder',v:1,exported:new Date().toISOString(),profile:S.profile,workouts:S.workouts,food:S.food};
+ const blob=new Blob([JSON.stringify(data)],{type:'application/json'}); const a=document.createElement('a');
+ a.href=URL.createObjectURL(blob); a.download=`iron-ladder-backup-${today()}.json`; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);
+ toast('Backup gespeichert');
+}
+function importData(text){
+ let d; try{ d=JSON.parse(text); }catch(e){ toast('Die Datei ist kein gültiges Backup.'); return; }
+ if(!d||d.app!=='iron-ladder'||!d.profile||!Array.isArray(d.workouts)){ toast('Die Datei ist kein Iron-Ladder-Backup.'); return; }
+ S.profile=d.profile; S.workouts=d.workouts; S.food=d.food||{}; S.demo=false;
+ buildEx(); buildFoods(); saveProfile(); S.workouts.forEach(saveWorkout); Object.keys(S.food).forEach(saveDay); cacheSave();
+ closeSheet(); V.tab='home'; render(); toast(`Backup geladen: ${S.workouts.length} Trainings`);
+}
 
 /* ============ App-Rundgang ============ */
 const visEl=e=>{if(!e) return false; const r=e.getBoundingClientRect(); return r.width>0&&r.height>0};
@@ -2409,16 +2515,16 @@ function makeItem(id){ const ex=EX[id]; const s=suggestion(id);
 function finishWorkout(rating){
  const d=S.draft; const items=d.items.map(it=>({ex:it.ex,sets:it.sets.filter(s=>s.done&&num(s.r)>0).map(s=>({w:num(s.w),r:num(s.r),rir:s.rir===''?null:num(s.rir)}))})).filter(it=>it.sets.length);
  if(!items.length){ toast('Hake mindestens einen Satz ab, um das Training zu speichern.'); return; }
- const before=computeRanks().sr;
+ const before=computeRanks().sr; const msBefore=new Set(milestones().filter(x=>x.done).map(x=>x.id));
  const goals=goalEval(d); const vd=verdict(goals,rating);
  const w={id:d.id,date:today(),ts:d.start,end:Date.now(),name:d.name,plan:d.planKey,items,goals:{hit:goals.hit,total:goals.total},verdict:vd.n};
  if(rating) w.rating={feel:rating.feel,rpe:rating.rpe,tags:rating.tags};
  if(mesoInfo().deload) w.deload=true;
  S.workouts.push(w); if(d.planKey&&!d.offPlan) S.profile.rot=(S.profile.rot||0)+1;
  S.draft=null; S.rest=null; draftSave(); saveWorkout(w); if(d.planKey) saveProfile();
- const R=computeRanks(); const g=R.gains[w.id]||{}; const prs=R.prs[w.id]||[];
+ const chDone=checkChallenge(); const R=computeRanks(); const g=R.gains[w.id]||{}; const prs=R.prs[w.id]||[];
  const ups=MKEYS.filter(m=>tierOf(R.sr[m]).label!==tierOf(before[m]).label);
- const total=Object.values(g).reduce((a,b)=>a+b,0); const mins=Math.round((w.end-w.ts)/60000);
+ const total=Object.values(g).reduce((a,b)=>a+b,0)+(chDone?CH_XP:0); const mins=Math.round((w.end-w.ts)/60000);
  const vol=items.reduce((a,it)=>a+it.sets.reduce((b,s)=>b+s.w*s.r,0),0);
  V.tab='home'; render(); haptic([10,40,18]);
  openSheet('summary',`<div class="row between"><h2>Training gespeichert</h2><button class="icon-btn" data-act="close" aria-label="Schließen">${I.x}</button></div>
@@ -2426,7 +2532,10 @@ function finishWorkout(rating){
   <div class="kpis"><div class="card kpi"><div class="lbl">Dauer</div><span class="v" data-count="${mins}">${mins}</span> min</div><div class="card kpi"><div class="lbl">Volumen</div><span class="v" data-count="${Math.round(vol)}">${fmt(vol)}</span> kg</div><div class="card kpi"><div class="lbl">XP</div><span class="v" style="color:var(--accent-text)" data-count="${total}" data-prefix="+">+${fmt(total)}</span></div></div>
   ${ups.map(m=>`<div class="rankup">${emblem(R.sr[m],60)}<div><h3>Aufstieg: ${MUSCLES[m]} ${tierOf(R.sr[m]).label}</h3><div class="muted">vorher ${tierOf(before[m]).label}</div></div></div>`).join('')}
   ${prs.length?`<div class="card"><div class="lbl">Neue Rekorde</div>${prs.map(id=>`<div style="margin-top:6px">${I.up.replace('<svg','<svg width="14" height="14" style="color:var(--accent)"')} ${esc(EX[id].n)}</div>`).join('')}</div>`:''}
-  <div class="stack" style="gap:6px">${Object.entries(g).sort((a,b)=>b[1]-a[1]).map(([m,v])=>`<div class="row between" style="font-size:.875rem;flex-wrap:nowrap"><span>${MUSCLES[m]}</span><span class="num">+${fmt(v)} XP, ${tierOf(R.sr[m]).label}${Math.round(R.sr[m]-before[m])?` (${R.sr[m]>before[m]?'+':''}${fmt(R.sr[m]-before[m])} SR)`:''}</span></div>`).join('')}</div>
+  ${(()=>{const ch=MKEYS.map(m=>{const a=tierOf(before[m]),b=tierOf(R.sr[m]);return {m,d:a.label===b.label?b.rp-a.rp:null}}).filter(x=>x.d).sort((a,b)=>b.d-a.d).slice(0,6);
+    return ch.length?`<div class="card"><div class="lbl">Rangpunkte</div><div class="rp-chips">${ch.map(x=>`<span class="${x.d>0?'up':'down'}">${esc(MUSCLES[x.m])} <b>${x.d>0?'+':''}${x.d} RP</b></span>`).join('')}</div></div>`:''})()}
+  ${(()=>{const nw=milestones().filter(x=>x.done&&!msBefore.has(x.id)); return nw.map(x=>`<div class="rankup ms-new">${msBadge(x,48)}<div><h3>Meilenstein: ${esc(x.t)}</h3><div class="muted">${esc(x.d)}</div></div></div>`).join('')})()}
+  ${chDone?`<div class="card ch-done"><b>Wochen-Challenge geschafft.</b> ${esc(chDone.t)}, +${CH_XP} XP.</div>`:''}
   <button class="btn pri" data-act="close">Weiter</button>`);
 }
 
@@ -2488,6 +2597,8 @@ document.addEventListener('click',e=>{
   demo:loadDemo,
   exitDemo:()=>{S={profile:null,workouts:[],food:{},draft:null,demo:false}; V.ob=obDefaults(); cacheLoad(); if(S.profile){buildEx();buildFoods()} render()},
   settings:()=>{V.resetAsk=false;openSheet('settings')},
+  msAll:()=>{V.msAll=!V.msAll; render()},
+  exportData:exportData,
   tourStart:()=>{closeSheet(); setTimeout(startTour,REDUCED?0:320)},
   startPlan:()=>{const np=nextPlan();newDraft(np.day.n,planIds(np.key),np.key)},
   startDay:()=>{const d=newDraft(DAYS[v].n,planIds(v),v); S.draft.offPlan=v!==nextPlan().key; draftSave()},
@@ -2604,6 +2715,7 @@ document.addEventListener('input',e=>{
 });
 document.addEventListener('change',e=>{
  const t=e.target;
+ if(t.matches('[data-import]')&&t.files&&t.files[0]){ const f=t.files[0]; t.value=''; f.text().then(importData); return; }
  if(t.matches('[data-ph-file]')&&t.files&&t.files[0]){ const f=t.files[0]; t.value=''; shrinkImage(f).then(data=>phPut({id:uid(),date:today(),ts:Date.now(),data})).then(()=>{PHOTOS=null; drawPhotos(); toast('Foto gespeichert')}).catch(()=>toast('Das Foto konnte nicht gespeichert werden.')); return; }
  if(t.matches('[data-scan-file]')&&t.files&&t.files[0]){ const f=t.files[0]; t.value=''; const m=$('#scan-msg'); if(m) m.textContent='Lese Barcode …'; decodeImageFile(f).then(code=>{ if(code) scanFound(code); else throw 0; }).catch(()=>{ const m2=$('#scan-msg'); if(m2) m2.textContent='Kein Barcode erkannt. Versuch es näher und scharf, ohne Spiegelung.'; }); return; }
  if(t.matches('[data-food-date]')&&t.value){ V.foodDate=t.value; render(); }
