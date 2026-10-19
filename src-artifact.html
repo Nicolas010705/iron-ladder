@@ -527,6 +527,12 @@ body.tour-nav .nav button:not([aria-current="page"]){opacity:.4}
 body.tour-nav .nav button[aria-current="page"]{background:var(--accent-soft);color:var(--accent-text);box-shadow:none;animation:tourTab .6s var(--spring) both}
 body.tour-nav .nav button[aria-current="page"] svg{color:var(--accent)}
 @keyframes tourTab{from{transform:scale(.86)}to{transform:none}}
+.std-table{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+.std-table>div{display:grid;grid-template-columns:minmax(110px,1.3fr) repeat(5,minmax(0,1fr));gap:6px;align-items:center;font-size:.875rem}
+.std-table span{display:flex;flex-direction:column;background:var(--row);border-radius:10px;padding:6px 8px;font-variant-numeric:tabular-nums;font-weight:600}
+.std-table small{font-size:.6875rem;color:var(--muted);font-weight:500;display:flex;align-items:center;gap:4px}
+.std-table small i{width:7px;height:7px;border-radius:2px;flex:none}
+@media (max-width:620px){.std-table>div{grid-template-columns:repeat(5,minmax(0,1fr))}.std-table>div>b{grid-column:1/-1}.std-table span{padding:5px 6px;font-size:.8125rem}.std-table small{font-size:.625rem;white-space:nowrap}}
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{animation:none!important;transition:none!important}
   body.sheet-open .main{transform:none;filter:none}
@@ -1470,8 +1476,9 @@ function computeRanks(list){
   }
   gains[w.id]=g;
  }
- const strength=strengthMap(); Object.entries(strength).forEach(([m,x])=>{ if(sr[m]!==undefined) sr[m]+=x.sr; });
- return {sr,gains,prs,best,strength};
+ const xp=sr, strength=strengthMap(ws), form=formMap(ws), rank={};
+ MKEYS.forEach(m=>{ const st=strength[m], f=form[m]||0; rank[m]=Math.round(st?st.sr+f*FORM_MAX:f*FORM_MAX*2.5); });
+ return {sr:rank,xp,gains,prs,best,strength,form};
 }
 function weekSets(wk){ const out={}; MKEYS.forEach(m=>out[m]=0);
  for(const w of S.workouts){ if(weekKey(w.date)!==wk) continue; for(const it of w.items){const ex=EX[it.ex]; if(!ex) continue; const n=it.sets.filter(s=>num(s.r)>0).length; out[ex.prim]+=n; ex.sec.forEach(m=>out[m]+=n*.5)} }
@@ -1479,7 +1486,7 @@ function weekSets(wk){ const out={}; MKEYS.forEach(m=>out[m]=0);
 function streakWeeks(){ const per={}; S.workouts.forEach(w=>{const k=weekKey(w.date);per[k]=(per[k]||0)+1});
  let k=weekKey(today()), n=0; if((per[k]||0)<S.profile.days) k=addDays(k,-7);
  while((per[k]||0)>=S.profile.days){n++;k=addDays(k,-7)} return n; }
-const totalXP=sr=>Object.values(sr).reduce((a,b)=>a+b,0);
+const totalXP=x=>Object.values(x).reduce((a,b)=>a+b,0);
 const levelOf=xp=>Math.floor(Math.sqrt(xp/40))+1;
 
 function nextPlan(){ const sp=SPLITS[S.profile.split]||SPLITS.fb; const key=sp.rot[(S.profile.rot||0)%sp.rot.length]; return {key,day:DAYS[key],idx:(S.profile.rot||0)%sp.rot.length+1,len:sp.rot.length}; }
@@ -1539,37 +1546,74 @@ function genWorkoutIds(){
  return {ids,groups:[...new Set(ids.map(id=>GROUP_BY[PARENT[EX[id].prim]].n))]};
 }
 
-/* Kraftstandards: bestes geschätztes 1RM im Verhältnis zum Körpergewicht (Richtwerte für Männer, Frauen ≈ 65 %) */
+/* Kraftstandards: geschätztes 1RM im Verhältnis zum Körpergewicht.
+   Werte = Stufe „Fortgeschritten“ für einen 80-kg-Mann (angelehnt an ExRx/Kilgore-Standards).
+   Schwerere heben absolut mehr, aber relativ weniger: Der nötige Faktor skaliert mit (Gewicht/80)^-1/3
+   (allometrische Skalierung, Kraft ~ Körpergewicht^2/3). Frauen: Bezug 60 kg, Oberkörper ×0,6, Beine ×0,72.
+   Kurzhantelwerte gelten pro Hantel. */
 const STD={
- 'bankdruecken':{leaf:'chest_mid',r:[.5,.75,1,1.5,2]},
- 'schraegbankdruecken':{leaf:'chest_up',r:[.4,.65,.85,1.25,1.65]},
- 'negativ-bankdruecken':{leaf:'chest_low',r:[.55,.8,1.05,1.55,2.05]},
- 'kniebeuge':{leaf:'quads',r:[.75,1.25,1.5,2,2.5]},
- 'kreuzheben':{leaf:'lower',r:[1,1.5,2,2.5,3]},
- 'rumaenisches-kreuzheben':{leaf:'hams',r:[.75,1.1,1.5,1.9,2.3]},
- 'hip-thrust':{leaf:'glutes',r:[.75,1.25,1.75,2.5,3.25]},
- 'schulterdruecken-langhantel':{leaf:'delt_front',r:[.35,.55,.7,.95,1.2]},
- 'langhantelrudern':{leaf:'upback',r:[.5,.75,1,1.3,1.6]},
- 'klimmzuege':{leaf:'lats',r:[1.03,1.17,1.33,1.55,1.8],bw:true},
- 'langhantel-curls':{leaf:'biceps',r:[.2,.4,.6,.85,1.1]},
- 'enges-bankdruecken':{leaf:'triceps',r:[.45,.65,.9,1.3,1.75]},
+ 'bankdruecken':1,'kurzhantel-bankdruecken':.4,'smith-maschine-bankdruecken':1,'brustpresse':1,'einarmige-brustpresse-maschine':.5,
+ 'schraegbankdruecken':.85,'kurzhantel-schraegbankdruecken':.34,'smith-maschine-schraegbankdruecken':.85,'schraegbank-brustpresse':.85,
+ 'negativ-bankdruecken':1.05,'negativ-kurzhantelbankdruecken':.42,'negativ-brustpresse':1,'smith-maschine-negativbankdruecken':1.05,'dips-brustfokus':1.4,
+ 'butterfly-maschine':.75,'cable-crossover':.25,'kurzhantel-fliegende':.2,
+ 'klimmzuege':1.33,'chin-ups-untergriff':1.38,'latziehen-breit':.85,'latziehen-eng':.9,'latzug-maschine-hebelarm':.9,'pullover-maschine':.8,
+ 'langhantelrudern':.9,'pendlay-rudern':.85,'einarmiges-kurzhantelrudern':.45,'t-bar-rudern':.85,'kabelrudern-sitzend':.9,'rudermaschine-brustgestuetzt':.9,
+ 'rudermaschine-breit':.85,'t-bar-rudern-brustgestuetzt-maschine':.85,'smith-maschine-rudern':.9,'seal-row-bauchlage':.7,
+ 'kreuzheben':1.55,'sumo-kreuzheben':1.55,'rack-pulls':1.9,'rueckenstrecker-maschine':.8,
+ 'shrugs-langhantel':1.4,'shrugs-kurzhantel':.6,'shrug-maschine':1.4,'smith-maschine-shrugs':1.4,
+ 'schulterdruecken-langhantel':.65,'kurzhantel-schulterdruecken':.27,'arnold-press':.24,'schulterpresse-maschine':.7,'smith-maschine-schulterdruecken':.65,
+ 'seitheben-kurzhantel':.13,'seitheben-am-kabel':.09,'seitheben-maschine':.4,'einarmiges-seitheben-am-kabel':.09,
+ 'face-pulls':.4,'reverse-butterfly':.45,'reverse-flys-kurzhantel':.1,'kabel-rear-delt-fly':.1,
+ 'langhantel-curls':.5,'sz-curls':.5,'kurzhantel-curls':.22,'hammer-curls':.24,'scott-curls':.42,'kabel-curls':.45,'scott-curls-maschine':.45,'bizepsmaschine':.45,
+ 'enges-bankdruecken':.85,'trizepsdruecken-am-kabel':.5,'trizepsdruecken-mit-seil':.45,'french-press-skull-crushers':.4,'ueberkopf-trizepsstrecken-kabel':.45,
+ 'dips-trizepsfokus':1.4,'trizepsmaschine':.6,'dip-maschine-sitzend':1.1,
+ 'handgelenk-curls':.5,
+ 'kabel-crunches':.7,'bauchmaschine-crunch':.6,'holzhacker-am-kabel':.3,'rotationsmaschine-torso':.6,
+ 'kniebeuge':1.3,'frontkniebeuge':1.05,'smith-maschine-kniebeuge':1.3,'hackenschmidt-kniebeuge':1.6,'pendulum-squat':1.5,'v-squat-maschine':1.6,'belt-squat':1.5,
+ 'beinpresse':2.5,'horizontale-beinpresse':2.2,'einbeinige-beinpresse':1.2,'beinstrecker':.9,'bulgarian-split-squats':.35,
+ 'rumaenisches-kreuzheben':1.25,'kurzhantel-rdl':.55,'gestrecktes-kreuzheben':1.2,'beinbeuger-liegend':.6,'beinbeuger-sitzend':.7,
+ 'hip-thrust':1.5,'hip-thrust-maschine':1.5,'smith-maschine-hip-thrust':1.5,
+ 'wadenheben-stehend':1.3,'wadenheben-sitzend':.9,'smith-maschine-wadenheben':1.3,
+ 'abduktoren-maschine':.9,'adduktoren-maschine':.9,
 };
+/* Stufen relativ zu „Fortgeschritten“ (m = 1) und zugehörige SR: m 1,0 = Gold, 1,3 = Platin, 1,65 = Diamant … */
 const STD_N=['Einsteiger','Anfänger','Fortgeschritten','Erfahren','Elite'];
-const STD_SR=[60,250,500,850,1300];
-const STD_BY_LEAF={}; Object.entries(STD).forEach(([id,st])=>STD_BY_LEAF[st.leaf]=id);
-function strengthMap(){
- const out={}; if(!S.profile) return out; const bw=S.profile.weight||75, fem=S.profile.sex==='w';
- for(const [id,st] of Object.entries(STD)){ if(!EX[id]) continue; const h=history(id); if(!h.length) continue;
-  const best=Math.max(...h.map(x=>x.best)), ratio=best/bw;
-  const r=st.r.map(x=>fem?(st.bw?1+(x-1)*.6:x*.65):x);
-  let sr, lvl=-1;
-  if(ratio<r[0]) sr=STD_SR[0]*Math.max(0,ratio/r[0]);
-  else { lvl=0; for(let i=1;i<r.length;i++) if(ratio>=r[i]) lvl=i;
-   sr=lvl>=r.length-1?STD_SR[4]+(ratio-r[4])/r[4]*400:STD_SR[lvl]+(STD_SR[lvl+1]-STD_SR[lvl])*(ratio-r[lvl])/(r[lvl+1]-r[lvl]); }
-  out[st.leaf]={id,ratio,lvl,sr:Math.round(sr),next:lvl<4?r[lvl+1]:null};
+const STD_M=[.5,.75,1,1.3,1.65];
+const M_SR=[[0,0],[.5,150],[.75,400],[1,800],[1.3,1400],[1.65,2300],[2,3600],[2.3,5200],[2.6,7500]];
+const FORM_MAX=200;   /* Form-Bonus: regelmäßiges Training der letzten 4 Wochen, max. +200 SR */
+const SEC_CREDIT=.6;  /* mitarbeitende Unterkategorien bekommen 60 % der Stufe */
+const LOWER_PATS=new Set(['squat','lunge','deadlift','rdl','hipthrust','legpress','legext','legcurl','calf','abduct','kickback','stepup','goodmorning']);
+function stdRatio(id,bw,sex){ const base=STD[id]; if(!base) return null; const ex=EX[id]; const fem=sex==='w';
+ const ref=fem?60:80, k=fem?(LOWER_PATS.has(ex.pat)?.72:.6):1;
+ return base*k*Math.pow(bw/ref,-1/3); }
+function mToSR(m){ for(let i=1;i<M_SR.length;i++){ const [m0,s0]=M_SR[i-1],[m1,s1]=M_SR[i]; if(m<=m1) return s0+(s1-s0)*(m-m0)/(m1-m0); }
+ const [mA,sA]=M_SR[M_SR.length-2],[mB,sB]=M_SR[M_SR.length-1]; return sB+(m-mB)*(sB-sA)/(mB-mA); }
+const mLevel=m=>{ let l=-1; STD_M.forEach((x,i)=>{ if(m>=x) l=i; }); return l; };
+function bestLifts(list){ /* bestes e1RM pro Übung, aktuelle Form: letzte 180 Tage, älteres zählt zu 90 % */
+ const cut=addDays(today(),-180), out={};
+ for(const w of list){ for(const it of w.items){ const ex=EX[it.ex]; if(!ex||!STD[it.ex]||!(ex.kind==='w'||ex.kind==='bw')) continue;
+  const b=Math.max(0,...it.sets.filter(x=>num(x.r)>0&&num(x.r)<=15).map(x=>setScore(ex,x)))*(w.date>=cut?1:.9);
+  if(b>(out[it.ex]||0)) out[it.ex]=b; } }
+ return out; }
+function strengthMap(list){
+ const out={}; if(!S.profile) return out; const bw=S.profile.weight||75, sex=S.profile.sex;
+ const lifts=bestLifts(list||sortedW());
+ for(const [id,best] of Object.entries(lifts)){ const ex=EX[id], need=stdRatio(id,bw,sex); if(!need||!best) continue;
+  const ratio=best/bw, m=ratio/need;
+  const put=(leaf,mm,via)=>{ const sr=mToSR(mm); if(!out[leaf]||sr>out[leaf].sr) out[leaf]={id,ratio,m:mm,need,lvl:mLevel(mm),sr:Math.round(sr),via,e1rm:best,
+   next:mLevel(mm)<4?STD_M[mLevel(mm)+1]*need/(via?SEC_CREDIT:1):null}; };
+  put(ex.prim,m,false); ex.sec.forEach(l=>put(l,m*SEC_CREDIT,true));
  }
  return out;
 }
+function formMap(list){ /* Sätze der letzten 4 Wochen, pro Woche bis 10 zählend → 0…1 */
+ const out={}, wks={}; MKEYS.forEach(m=>out[m]=0); const cut=addDays(today(),-27);
+ for(const w of list){ if(w.date<cut) continue; const wk=weekKey(w.date);
+  for(const it of w.items){ const ex=EX[it.ex]; if(!ex) continue; const n=it.sets.filter(x=>num(x.r)>0).length;
+   const add=(m,v)=>{ const k=wk+m; wks[k]=(wks[k]||0)+v; }; add(ex.prim,n); ex.sec.forEach(m=>add(m,n*.5)); } }
+ Object.entries(wks).forEach(([k,v])=>{ const m=k.slice(10); if(out[m]!==undefined) out[m]+=Math.min(10,v)/40; });
+ MKEYS.forEach(m=>out[m]=Math.min(1,out[m])); return out; }
+const stdForLeaf=m=>Object.keys(STD).find(id=>EX[id]&&EX[id].prim===m)||null;
 
 /* Ranked-Saisons: ein Quartal, gezählt werden nur die SR aus dieser Saison */
 const SEASON_N=['Winter','Frühling','Sommer','Herbst'];
@@ -1741,7 +1785,7 @@ function heroFacts(ids){
 function greeting(){ const h=new Date().getHours(); return h<5?'Noch wach':h<11?'Guten Morgen':h<18?'Hallo':'Guten Abend'; }
 function renderHome(){
  const p=S.profile, np=nextPlan(), ids=planIds(np.key);
- const R=computeRanks(); const xp=totalXP(R.sr), lvl=levelOf(xp);
+ const R=computeRanks(); const xp=totalXP(R.xp), lvl=levelOf(xp);
  const wk=weekKey(today()); const wCount=S.workouts.filter(w=>weekKey(w.date)===wk).length;
  const tot=dayTotals(today()); const t=p.targets;
  const close=MKEYS.map(m=>({m,r:tierOf(R.sr[m])})).filter(x=>x.r.toNext>0).sort((a,b)=>a.r.toNext-b.r.toNext)[0];
@@ -1803,7 +1847,7 @@ function renderTrain(){
     ${(S.profile.plans||[]).length?(S.profile.plans||[]).map(pl=>`<div class="recent-row"><span style="min-width:0">${esc(pl.n)}<br><small class="muted">${pl.ex.filter(id=>EX[id]).length} Übungen</small></span><span class="row" style="gap:6px;flex-wrap:nowrap"><button class="btn sm ghost" data-act="planEdit" data-v="${pl.id}">Bearbeiten</button><button class="btn sm" data-act="planStart" data-v="${pl.id}">Starten</button></span></div>`).join(''):'<p class="muted">Stell dir eigene Trainingstage zusammen, z. B. „Brust isoliert“ oder „Arme & Schultern“.</p>'}
     <button class="btn ghost" data-act="startFree">Leeres Training starten</button></div>
    <div class="card stack"><h3>Letzte Einheiten</h3>
-   ${recent.length?`<div class="hist">${recent.map(w=>{const g=R.gains[w.id]||{};const pts=Object.values(g).reduce((a,b)=>a+b,0);return `<div class="recent-row"><span>${esc(w.name)}<br><small class="muted">${dLabel(w.date)}, ${w.items.length} Übungen</small></span><span class="tag p">+${fmt(pts)} SR</span></div>`}).join('')}</div>`:`<div class="empty">Noch kein Training. Dein erstes bringt dir direkt Rangpunkte.</div>`}</div>
+   ${recent.length?`<div class="hist">${recent.map(w=>{const g=R.gains[w.id]||{};const pts=Object.values(g).reduce((a,b)=>a+b,0);return `<div class="recent-row"><span>${esc(w.name)}<br><small class="muted">${dLabel(w.date)}, ${w.items.length} Übungen</small></span><span class="tag p">+${fmt(pts)} XP</span></div>`}).join('')}</div>`:`<div class="empty">Noch kein Training. Dein erstes bringt dir direkt Rangpunkte.</div>`}</div>
   </div></div>`;
 }
 function renderWorkout(){
@@ -2058,7 +2102,7 @@ function renderRanks(){
  const wk=weekSets(weekKey(today()));
  const pill=(m)=>{const r=tierOf(R.sr[m]);return `<span class="leafpill"><i style="background:${r.t.c2}"></i>${esc(MUSCLES[m])}<b>${r.t.n}${r.div?' '+r.div:''}</b></span>`};
  return `<div class="head"><div><h1>Deine Ränge</h1><p class="sub">${GROUPS.length} Muskelgruppen mit ${MKEYS.length} Unterkategorien. Jede klettert einzeln, von Eisen bis Legende.</p></div></div>
- <div class="grid g2"><div class="card overall">${emblem(avg,92)}<div style="min-width:0;flex:1"><div class="lbl">Gesamtrang</div><h2 style="font-size:1.75rem">${o.label}</h2><div class="muted"><span data-count="${Math.round(avg)}">${fmt(avg)}</span> SR im Schnitt. Level ${levelOf(totalXP(R.sr))}, ${fmt(totalXP(R.sr))} XP.</div>${o.toNext?`<div class="bar" style="margin-top:10px"><i style="width:${o.prog*100}%"></i></div><div class="muted" style="font-size:.875rem;margin-top:4px">Noch ${fmt(o.toNext)} SR bis ${o.nextLabel}</div>`:''}</div></div>
+ <div class="grid g2"><div class="card overall">${emblem(avg,92)}<div style="min-width:0;flex:1"><div class="lbl">Gesamtrang</div><h2 style="font-size:1.75rem">${o.label}</h2><div class="muted"><span data-count="${Math.round(avg)}">${fmt(avg)}</span> SR im Schnitt bei ${fmt(S.profile.weight,1)} kg Körpergewicht. Level ${levelOf(totalXP(R.xp))}, ${fmt(totalXP(R.xp))} XP.</div>${o.toNext?`<div class="bar" style="margin-top:10px"><i style="width:${o.prog*100}%"></i></div><div class="muted" style="font-size:.875rem;margin-top:4px">Noch ${fmt(o.toNext)} SR bis ${o.nextLabel}</div>`:''}</div></div>
  <div class="card stack"><h3>Rangkarte</h3><div class="maps">${muscleMap(m=>({c:tierOf(R.sr[m]).t.c2}))}</div></div></div>
  ${(()=>{const ss=seasonStats(R); const st=tierOf(ss.now.score);
   return `<div class="card season"><div class="row" style="gap:16px;flex-wrap:nowrap">${emblem(ss.now.score,64)}<div style="min-width:0;flex:1"><div class="lbl">Saison ${esc(ss.now.n)}, endet in ${ss.daysLeft} Tagen</div><h3>${st.label}</h3><div class="bar" style="height:6px;margin-top:6px"><i style="width:${st.prog*100}%;background:${st.t.c2}"></i></div><p class="muted" style="font-size:.875rem;margin-top:6px">Zählt nur SR aus dieser Saison. Am Saisonende bleibt dein Abzeichen in der Sammlung.</p></div></div>
@@ -2075,13 +2119,18 @@ function renderRanks(){
     return `<div class="leaf">${emblem(R.sr[m],40)}<div class="leaf-main"><div class="row between" style="flex-wrap:nowrap"><b>${esc(MUSCLES[m])}</b><span class="leaf-tier">${r.label}</span></div>
      <div class="bar" style="height:6px"><i style="width:${r.prog*100}%;background:${r.t.c2}"></i></div>
      <div class="leaf-meta"><span>${fmt(R.sr[m])} SR${r.toNext?`, noch ${r.toNext} bis ${r.nextLabel}`:''}</span><span class="${w>=WEEK_BONUS?'ok':''}">Woche ${fmt(w,1)}/${WEEK_BONUS} Sätze</span></div>
-     ${(()=>{const st=R.strength&&R.strength[m], sid=STD_BY_LEAF[m]; if(st) return `<div class="leaf-str"><b>Kraft:</b> ${esc(EX[st.id].n)} ${fmt(st.ratio,2)}× Körpergewicht, ${st.lvl>=0?STD_N[st.lvl]:'unter '+STD_N[0]}, +${fmt(st.sr)} SR${st.next?`. Nächste Stufe ab ${fmt(st.next,2)}×`:''}</div>`; return sid?`<div class="leaf-str muted">Kraft-Standard: Mach ${esc(EX[sid].n)} für bis zu +${fmt(STD_SR[4])} SR.</div>`:'';})()}</div>
+     ${(()=>{const st=R.strength&&R.strength[m], f=Math.round((R.form[m]||0)*FORM_MAX), sid=stdForLeaf(m);
+      if(st) return `<div class="leaf-str"><b>Kraft:</b> ${esc(EX[st.id].n)}, ${fmt(st.e1rm,1)} kg geschätztes 1RM = ${fmt(st.ratio,2)}× Körpergewicht${st.via?' (mitarbeitend)':''}. Stufe ${st.lvl>=0?STD_N[st.lvl]:'unter '+STD_N[0]}${st.next?`, nächste ab ${fmt(st.next,2)}× (${fmt(Math.ceil(st.next*S.profile.weight))} kg)`:''}. <span class="muted">Form +${f} SR</span></div>`;
+      return `<div class="leaf-str muted">Noch kein Kraftwert, nur Form +${fmt(Math.round((R.form[m]||0)*FORM_MAX*2.5))} SR.${sid?` Mach z. B. ${esc(EX[sid].n)}, dann zählt deine Kraft.`:''}</div>`;})()}</div>
      <button class="btn sm ghost" data-act="libFor" data-v="${m}">Übungen</button></div>`}).join('')}</div>`:''}
   </section>`}).join('')}</div>
  <div class="card"><h3>So steigst du auf</h3><div class="grid g2" style="margin-top:10px;font-size:.875rem">
-  <div><b>+10 SR</b> pro Arbeitssatz für die Ziel-Unterkategorie (z. B. obere Brust), <b>+4 SR</b> für mitarbeitende Muskeln. Gezählt werden bis zu ${WEEK_CAP} Sätze pro Unterkategorie und Woche.</div>
-  <div><b>Kraftbonus:</b> Für Leitübungen wie Bankdrücken, Kniebeuge oder Klimmzüge zählt dein bestes geschätztes 1RM im Verhältnis zum Körpergewicht. Je nach Stufe (Einsteiger bis Elite) gibt es +60 bis +1.300 SR. Richtwerte nach gängigen Kraftstandards, für Frauen angepasst.</div>
-  <div><b>+30 SR</b> Wochenbonus ab ${WEEK_BONUS} Sätzen pro Unterkategorie. Bei 2–3 Unterkategorien ergibt das die empfohlenen 10–20 Sätze pro Muskel (Schoenfeld et al., 2017). <b>+25 SR</b> für jeden neuen Bestwert. Der Rang einer Muskelgruppe ist der Schnitt ihrer Unterkategorien.</div></div>
+  <div><b>Kraft im Verhältnis zum Körpergewicht.</b> Dein Rang kommt vor allem aus dem besten geschätzten 1RM pro Unterkategorie, geteilt durch dein Körpergewicht. Bei 80 kg ist Bankdrücken mit dem eigenen Körpergewicht Stufe „Fortgeschritten“ und damit Gold. Richtwerte nach gängigen Kraftstandards (ExRx).</div>
+  <div><b>Fair für jedes Gewicht.</b> Schwerere Athleten heben absolut mehr, relativ aber weniger. Deshalb sinkt der nötige Faktor mit steigendem Körpergewicht (Kraft wächst etwa mit Gewicht hoch 2/3). Für Frauen gelten eigene Standards. Mitarbeitende Unterkategorien bekommen 60 % der Stufe.</div>
+  <div><b>Form-Bonus bis +${FORM_MAX} SR.</b> Regelmäßiges Training der letzten 4 Wochen, bis zu 10 Sätze pro Woche und Unterkategorie. Wer pausiert, verliert die Form wieder, die Kraft bleibt. Ohne Kraftwert zählt nur die Form (bis Silber).</div>
+  <div><b>XP und Level</b> sammelst du mit jedem Satz, Wochenbonus und Bestwert. Sie gehen nie verloren und zählen auch für die Saison.</div></div>
+  <div class="std-table">${(()=>{const bw=S.profile.weight, sx=S.profile.sex; return ['bankdruecken','kniebeuge','kreuzheben','schulterdruecken-langhantel'].filter(id=>EX[id]).map(id=>{const need=stdRatio(id,bw,sx); return `<div><b>${esc(EX[id].n)}</b>${STD_M.map((x,i)=>`<span title="${STD_N[i]}"><small><i style="background:${TIERS[i+1].c2}"></i>${TIERS[i+1].n}</small>${fmt(Math.round(need*x*bw/2.5)*2.5,1)}</span>`).join('')}</div>`}).join('')})()}
+  <p class="muted" style="font-size:.8125rem">Geschätztes 1RM in kg, das du bei ${fmt(S.profile.weight,1)} kg Körpergewicht für den jeweiligen Rang brauchst. Stufen: Einsteiger (Bronze), Anfänger (Silber), Fortgeschritten (Gold), Erfahren (Platin), Elite (Diamant).</p></div>
   <div class="chips" style="margin-top:14px">${TIERS.map(t=>`<span class="tag" style="gap:6px"><i style="width:9px;height:9px;border-radius:2px;background:${t.c2};display:inline-block"></i>${t.n} ab ${fmt(t.min)}</span>`).join('')}</div></div>`;
 }
 
@@ -2135,7 +2184,7 @@ function renderProgress(){
   ${avgR>=8.5?'<p class="off-note">Deine Einheiten sind im Schnitt sehr hart. Plane eine leichtere Woche ein, wenn die Leistung stagniert.</p>':''}</div>`})()}
  <div class="card"><h3>Trainingshistorie</h3>
  ${hist.length?`<div class="hist" style="margin-top:8px">${hist.map(w=>{const g=R.gains[w.id]||{};const pts=Object.values(g).reduce((a,b)=>a+b,0);const prs=R.prs[w.id]||[];
-  return `<details ${V.histOpen[w.id]?'open':''} data-hist="${w.id}"><summary><span>${esc(w.name)} <span class="muted">· ${dLabel(w.date)}</span>${w.rating?` <span class="tag ${w.rating.feel>=3?'t':''}">${FEELS[w.rating.feel-1].n}</span>`:''}${w.goals?` <span class="tag">${w.goals.hit}/${w.goals.total} Ziele</span>`:''}${prs.length?` <span class="tag p">${prs.length} Rekord${prs.length>1?'e':''}</span>`:''}</span><span class="tag">+${fmt(pts)} SR</span></summary>
+  return `<details ${V.histOpen[w.id]?'open':''} data-hist="${w.id}"><summary><span>${esc(w.name)} <span class="muted">· ${dLabel(w.date)}</span>${w.rating?` <span class="tag ${w.rating.feel>=3?'t':''}">${FEELS[w.rating.feel-1].n}</span>`:''}${w.goals?` <span class="tag">${w.goals.hit}/${w.goals.total} Ziele</span>`:''}${prs.length?` <span class="tag p">${prs.length} Rekord${prs.length>1?'e':''}</span>`:''}</span><span class="tag">+${fmt(pts)} XP</span></summary>
   <div class="stack" style="margin-top:8px;gap:6px">${w.items.map(it=>{const e=EX[it.ex];if(!e) return '';return `<div style="font-size:.875rem"><b>${esc(e.n)}</b> <span class="muted num">${it.sets.map(s=>e.kind==='t'?fmt(s.r)+' s':e.kind==='c'?fmt(s.r)+' min':`${fmt(s.w,2)}×${fmt(s.r)}`).join(', ')}</span></div>`}).join('')}
   <div><button class="btn sm ghost danger" data-act="delWo" data-v="${w.id}">${V.histOpen['del'+w.id]?'Wirklich löschen?':'Training löschen'}</button></div></div></details>`}).join('')}</div>`:`<div class="empty" style="margin-top:10px">Noch keine Trainings.</div>`}</div>`;
 }
@@ -2374,10 +2423,10 @@ function finishWorkout(rating){
  V.tab='home'; render(); haptic([10,40,18]);
  openSheet('summary',`<div class="row between"><h2>Training gespeichert</h2><button class="icon-btn" data-act="close" aria-label="Schließen">${I.x}</button></div>
   <div class="verdict ${vd.k}"><span class="muted">Trainingserfolg, ${goals.hit} von ${goals.total} Zielen${rating?`, Gefühl ${FEELS[rating.feel-1].n.toLowerCase()}, RPE ${rating.rpe}`:''}</span><b>${vd.n}</b><span>${vd.t}</span></div>
-  <div class="kpis"><div class="card kpi"><div class="lbl">Dauer</div><span class="v" data-count="${mins}">${mins}</span> min</div><div class="card kpi"><div class="lbl">Volumen</div><span class="v" data-count="${Math.round(vol)}">${fmt(vol)}</span> kg</div><div class="card kpi"><div class="lbl">Rangpunkte</div><span class="v" style="color:var(--accent-text)" data-count="${total}" data-prefix="+">+${fmt(total)}</span></div></div>
+  <div class="kpis"><div class="card kpi"><div class="lbl">Dauer</div><span class="v" data-count="${mins}">${mins}</span> min</div><div class="card kpi"><div class="lbl">Volumen</div><span class="v" data-count="${Math.round(vol)}">${fmt(vol)}</span> kg</div><div class="card kpi"><div class="lbl">XP</div><span class="v" style="color:var(--accent-text)" data-count="${total}" data-prefix="+">+${fmt(total)}</span></div></div>
   ${ups.map(m=>`<div class="rankup">${emblem(R.sr[m],60)}<div><h3>Aufstieg: ${MUSCLES[m]} ${tierOf(R.sr[m]).label}</h3><div class="muted">vorher ${tierOf(before[m]).label}</div></div></div>`).join('')}
   ${prs.length?`<div class="card"><div class="lbl">Neue Rekorde</div>${prs.map(id=>`<div style="margin-top:6px">${I.up.replace('<svg','<svg width="14" height="14" style="color:var(--accent)"')} ${esc(EX[id].n)}</div>`).join('')}</div>`:''}
-  <div class="stack" style="gap:6px">${Object.entries(g).sort((a,b)=>b[1]-a[1]).map(([m,v])=>`<div class="row between" style="font-size:.875rem;flex-wrap:nowrap"><span>${MUSCLES[m]}</span><span class="num">+${fmt(v)} SR, ${tierOf(R.sr[m]).label}</span></div>`).join('')}</div>
+  <div class="stack" style="gap:6px">${Object.entries(g).sort((a,b)=>b[1]-a[1]).map(([m,v])=>`<div class="row between" style="font-size:.875rem;flex-wrap:nowrap"><span>${MUSCLES[m]}</span><span class="num">+${fmt(v)} XP, ${tierOf(R.sr[m]).label}${Math.round(R.sr[m]-before[m])?` (${R.sr[m]>before[m]?'+':''}${fmt(R.sr[m]-before[m])} SR)`:''}</span></div>`).join('')}</div>
   <button class="btn pri" data-act="close">Weiter</button>`);
 }
 
