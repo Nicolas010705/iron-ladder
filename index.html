@@ -15,7 +15,7 @@
 <meta name="apple-mobile-web-app-title" content="Iron Ladder">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
-<script>window.IRON_STANDALONE=true;window.IRON_SB={"url": "https://jtgsloxpqbwexabnlodb.supabase.co", "key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp0Z3Nsb3hwcWJ3ZXhhYm5sb2RiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyNTEwMzcsImV4cCI6MjEwNzgyNzAzN30.9CLzqpNztL63VWNWdwVcf84FJWeHM-7pEsRuV0QQJXM"};</script>
+<script>window.IRON_STANDALONE=true;window.IRON_SB={"url": "https://jtgsloxpqbwexabnlodb.supabase.co", "key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp0Z3Nsb3hwcWJ3ZXhhYm5sb2RiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyNTEwMzcsImV4cCI6MjEwNzgyNzAzN30.9CLzqpNztL63VWNWdwVcf84FJWeHM-7pEsRuV0QQJXM"};window.IRON_3D="a18b8218";</script>
 </head>
 <body>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -352,6 +352,8 @@ input:focus,select:focus{outline:2px solid var(--accent);outline-offset:0;border
 .ex-top{display:grid;grid-template-columns:64px minmax(0,1fr) auto;gap:14px;align-items:center}
 .thumb{width:64px;height:64px;border-radius:var(--r-sm);background:var(--row);display:grid;place-items:center;overflow:hidden}
 .thumb svg{width:100%;height:100%}
+.fig3d{width:100%;height:100%;object-fit:contain;display:block;-webkit-user-drag:none} .fig-big .fig3d{max-height:220px} .lib-item .pics .fig3d{min-width:0}
+.v3d-wait{background:var(--row);border-radius:var(--r);aspect-ratio:4/3.3;max-height:min(62vh,460px);position:relative} .v3d-wait .v3d-load{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-size:.875rem;font-weight:600}
 .sugg{display:flex;gap:10px;align-items:flex-start;background:var(--accent-soft);border-radius:var(--r-sm);padding:12px 14px;font-size:1rem}
 .sugg svg{flex:none;width:18px;height:18px;color:var(--accent-text);margin-top:2px}
 .sugg b{color:var(--accent-text)}
@@ -774,6 +776,7 @@ const POSE_B={
 const HOLD_PATS=new Set(['plank','stretch','deepsquat','quad']);
 const ANIM_KEYS='keyTimes="0;.45;.55;1" calcMode="spline" keySplines=".45 0 .55 1;0 0 1 1;.45 0 .55 1" dur="2.6s" repeatCount="indefinite"';
 function figure(pat,cls='',anim=false){
+ if(window.IRON_3D&&P[pat]) return `<img class="fig3d ${cls}" src="/3d/thumbs/${pat}.webp?v=${window.IRON_3D}" alt="" loading="lazy" decoding="async" draggable="false">`;
  const A=P[pat]||P.ohp; const Bp=anim&&!REDUCED&&POSE_B[pat]?Object.assign({},A,POSE_B[pat]):null;
  const B=Bp||A; const moving=!!Bp;
  const av=(attr,a,b)=>moving&&(a!==b)?`<animate attributeName="${attr}" values="${a};${b};${b};${a}" ${ANIM_KEYS}/>`:'';
@@ -2084,7 +2087,7 @@ function renderExInfo(id){
  const ex=EX[id]; const [lo,hi]=repRange(ex); const h=history(id); const best=h.length?Math.max(...h.map(x=>x.best)):0; const s=suggestion(id);
  const moving=!HOLD_PATS.has(ex.pat)&&ex.kind!=='t'&&POSE_B[ex.pat];
  return `<div class="row between" style="flex-wrap:nowrap"><h2>${esc(ex.n)}</h2><button class="icon-btn" data-act="close" aria-label="Schließen">${I.x}</button></div>
- <div class="fig-big"><div class="fig-anim">${figure(ex.pat,'',!!moving)}<span class="fig-cap">${moving?(REDUCED?'Bewegung (Animation aus)':'Bewegungsablauf'):'Position halten'}</span></div>${exMap(ex)}</div>
+ ${window.IRON_3D?`<div class="v3d" data-v3d="${esc(ex.id)}"><div class="v3d-stage v3d-wait"><div class="v3d-load">3D-Modell wird geladen …</div></div></div>`:`<div class="fig-big"><div class="fig-anim">${figure(ex.pat,'',!!moving)}<span class="fig-cap">${moving?(REDUCED?'Bewegung (Animation aus)':'Bewegungsablauf'):'Position halten'}</span></div>${exMap(ex)}</div>`}
  ${renderGuide(ex)}
  <div class="row" style="gap:6px"><span class="tag p">Primär: ${MUSCLES[ex.prim]}</span>${ex.sec.map(m=>`<span class="tag">${MUSCLES[m]}</span>`).join('')}<span class="tag">${EQ[ex.eq]}</span><span class="tag">${ex.comp?'Grundübung':'Isolation'}</span></div>
  <div class="grid g2"><div class="card"><div class="lbl">Für dein Ziel</div><b class="num">${ex.kind==='t'?'30–60 s':ex.kind==='c'?'20–45 min':`${setCount(ex)} × ${lo}–${hi} Wdh.`}</b><div class="muted" style="font-size:.875rem">Pause ca. ${Math.round(restSec(ex))} s, 0–3 RIR</div></div>
@@ -2397,11 +2400,22 @@ function drawSheet(){
  const L=$('#layer'); if(!SHEET){L.innerHTML='';document.body.style.overflow='';document.body.classList.remove('sheet-open');return;}
  const html={account:renderAccount,lib:()=>renderLibSheet(false),pick:()=>renderLibSheet(true),info:()=>renderExInfo(SHEET.arg),customEx:renderCustomEx,alts:()=>renderAlts(SHEET.arg),planEdit:()=>renderPlanEdit(SHEET.arg),pickPlan:()=>renderLibSheet('plan'),scan:renderScan,phCmp:renderPhotoCompare,rate:renderRate,food:renderFoodSheet,customFood:renderCustomFood,settings:renderSettings,summary:()=>SHEET.arg}[SHEET.kind]();
  const ov=L.querySelector('.overlay:not(.closing)');
- if(ov){ const sh=ov.querySelector('.sheet'); sh.innerHTML=html; if(SHEET.kind==='summary') countUp(sh); return; }
+ if(ov){ const sh=ov.querySelector('.sheet'); sh.innerHTML=html; if(SHEET.kind==='summary') countUp(sh); mount3D(); return; }
  L.innerHTML=`<div class="overlay" data-act="overlay"><div class="sheet" role="dialog" aria-modal="true">${html}</div></div>`;
  document.documentElement.style.setProperty('--sheet-origin',(window.scrollY+window.innerHeight/2)+'px');
  document.body.style.overflow='hidden'; document.body.classList.add('sheet-open');
  if(SHEET.kind==='summary') countUp(L);
+ mount3D();
+}
+/* 3D-Übungsansicht (nur installierte Web-App): Modul und Modell werden erst beim ersten Öffnen geladen */
+let V3D_MOD=null;
+function mount3D(){
+ const el=document.querySelector('#layer .v3d[data-v3d]:not([data-on])'); if(!el||!window.IRON_3D) return;
+ el.dataset.on='1'; const ex=EX[el.dataset.v3d]; if(!ex) return;
+ const fallback=()=>{ if(!el.isConnected) return; const moving=!HOLD_PATS.has(ex.pat)&&ex.kind!=='t'&&POSE_B[ex.pat]; const v=window.IRON_3D; window.IRON_3D=null; el.outerHTML=`<div class="fig-big"><div class="fig-anim">${figure(ex.pat,'',!!moving)}<span class="fig-cap">${moving?'Bewegungsablauf':'Position halten'}</span></div>${exMap(ex)}</div>`; window.IRON_3D=v; };
+ const v=window.IRON_3D;
+ (V3D_MOD||(V3D_MOD=import(`/3d/iron3d.js?v=${v}`))).then(m=>m.mount(el,{pat:ex.pat,eq:ex.eq,prim:[ex.prim],sec:ex.sec.filter(m=>m!==ex.prim),names:MUSCLES,hold:HOLD_PATS.has(ex.pat)||ex.kind==='t',reduced:REDUCED,model:`/3d/body.glb?v=${v}`}))
+  .then(ok=>{ if(ok===false) fallback(); }).catch(e=>{ V3D_MOD=null; fallback(); });
 }
 function closeSheet(){
  if(!SHEET) return; if(SHEET.kind==='scan') stopScan(); if(SHEET.kind==='phCmp'){PH_SEL=[]; setTimeout(drawPhotos,0);} SHEET=null;
@@ -2890,7 +2904,7 @@ connect();
 </script>
 
 <script>
-if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=af4f5641').catch(()=>{}));}
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=dc4ff46d').catch(()=>{}));}
 </script>
 </body>
 </html>

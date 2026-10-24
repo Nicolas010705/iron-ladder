@@ -3,10 +3,18 @@ src=pathlib.Path('src-artifact.html').read_text()
 out=pathlib.Path('.')
 body=re.sub(r'<title>.*?</title>\s*','',src,count=1)
 body=re.sub(r'<meta name="claude:viewport-fit-sides"[^>]*>\s*','',body,count=1)
-ver=hashlib.sha1(src.encode()).hexdigest()[:8]
+
 sbf=out/'supabase.json'
 sbcfg=json.loads(sbf.read_text()) if sbf.exists() else {}
+d3=out/'3d'
+v3d=''
+if (d3/'iron3d.js').exists() and (d3/'body.glb').exists():
+    h=hashlib.sha1()
+    for f in sorted(d3.rglob('*')):
+        if f.is_file(): h.update(f.name.encode()); h.update(f.read_bytes())
+    v3d=h.hexdigest()[:8]
 sbjs=('window.IRON_SB='+json.dumps({'url':sbcfg.get('url',''),'key':sbcfg.get('key','')})+';') if sbcfg.get('url') else ''
+ver=hashlib.sha1((src+v3d).encode()).hexdigest()[:8]
 head=f'''<!doctype html>
 <html lang="de">
 <head>
@@ -24,7 +32,7 @@ head=f'''<!doctype html>
 <meta name="apple-mobile-web-app-title" content="Iron Ladder">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <style>:root{{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}}body{{margin:0;font:14px system-ui,sans-serif}}img{{max-width:100%}}[hidden]{{display:none!important}}</style>
-<script>window.IRON_STANDALONE=true;{sbjs}</script>
+<script>window.IRON_STANDALONE=true;{sbjs}{('window.IRON_3D='+json.dumps(v3d)+';') if v3d else ''}</script>
 </head>
 <body>
 '''

@@ -1,0 +1,7 @@
+{
+  "name": "iron-ladder-3d",
+  "private": true,
+  "type": "module",
+  "scripts": { "build": "node build.mjs" },
+  "devDependencies": { "three": "0.186.1", "esbuild": "^0.25.0", "@gltf-transform/cli": "^4.2.0" }
+}
