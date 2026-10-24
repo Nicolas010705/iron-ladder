@@ -2396,7 +2396,7 @@ function mount3D(){
  el.dataset.on='1'; const ex=EX[el.dataset.v3d]; if(!ex) return;
  const fallback=()=>{ if(!el.isConnected) return; const moving=!HOLD_PATS.has(ex.pat)&&ex.kind!=='t'&&POSE_B[ex.pat]; const v=window.IRON_3D; window.IRON_3D=null; el.outerHTML=`<div class="fig-big"><div class="fig-anim">${figure(ex.pat,'',!!moving)}<span class="fig-cap">${moving?'Bewegungsablauf':'Position halten'}</span></div>${exMap(ex)}</div>`; window.IRON_3D=v; };
  const v=window.IRON_3D;
- (V3D_MOD||(V3D_MOD=import(`/3d/iron3d.js?v=${v}`))).then(m=>m.mount(el,{pat:ex.pat,eq:ex.eq,prim:[ex.prim],sec:ex.sec.filter(m=>m!==ex.prim),names:MUSCLES,hold:HOLD_PATS.has(ex.pat)||ex.kind==='t',reduced:REDUCED,model:`/3d/body.glb?v=${v}`}))
+ (V3D_MOD||(V3D_MOD=import(`/3d/iron3d.js?v=${v}`))).then(m=>m.mount(el,{pat:ex.pat,eq:ex.eq,prim:[ex.prim],sec:ex.sec.filter(m=>m!==ex.prim),names:MUSCLES,hold:HOLD_PATS.has(ex.pat)||ex.kind==='t',reduced:REDUCED,ver:v,model:`/3d/body.glb?v=${v}`}))
   .then(ok=>{ if(ok===false) fallback(); }).catch(e=>{ V3D_MOD=null; fallback(); });
 }
 function closeSheet(){

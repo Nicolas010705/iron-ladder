@@ -15,7 +15,7 @@
 <meta name="apple-mobile-web-app-title" content="Iron Ladder">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
-<script>window.IRON_STANDALONE=true;window.IRON_SB={"url": "https://jtgsloxpqbwexabnlodb.supabase.co", "key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp0Z3Nsb3hwcWJ3ZXhhYm5sb2RiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyNTEwMzcsImV4cCI6MjEwNzgyNzAzN30.9CLzqpNztL63VWNWdwVcf84FJWeHM-7pEsRuV0QQJXM"};window.IRON_3D="a18b8218";</script>
+<script>window.IRON_STANDALONE=true;window.IRON_SB={"url": "https://jtgsloxpqbwexabnlodb.supabase.co", "key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp0Z3Nsb3hwcWJ3ZXhhYm5sb2RiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIyNTEwMzcsImV4cCI6MjEwNzgyNzAzN30.9CLzqpNztL63VWNWdwVcf84FJWeHM-7pEsRuV0QQJXM"};window.IRON_3D="a767b129";</script>
 </head>
 <body>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2414,7 +2414,7 @@ function mount3D(){
  el.dataset.on='1'; const ex=EX[el.dataset.v3d]; if(!ex) return;
  const fallback=()=>{ if(!el.isConnected) return; const moving=!HOLD_PATS.has(ex.pat)&&ex.kind!=='t'&&POSE_B[ex.pat]; const v=window.IRON_3D; window.IRON_3D=null; el.outerHTML=`<div class="fig-big"><div class="fig-anim">${figure(ex.pat,'',!!moving)}<span class="fig-cap">${moving?'Bewegungsablauf':'Position halten'}</span></div>${exMap(ex)}</div>`; window.IRON_3D=v; };
  const v=window.IRON_3D;
- (V3D_MOD||(V3D_MOD=import(`/3d/iron3d.js?v=${v}`))).then(m=>m.mount(el,{pat:ex.pat,eq:ex.eq,prim:[ex.prim],sec:ex.sec.filter(m=>m!==ex.prim),names:MUSCLES,hold:HOLD_PATS.has(ex.pat)||ex.kind==='t',reduced:REDUCED,model:`/3d/body.glb?v=${v}`}))
+ (V3D_MOD||(V3D_MOD=import(`/3d/iron3d.js?v=${v}`))).then(m=>m.mount(el,{pat:ex.pat,eq:ex.eq,prim:[ex.prim],sec:ex.sec.filter(m=>m!==ex.prim),names:MUSCLES,hold:HOLD_PATS.has(ex.pat)||ex.kind==='t',reduced:REDUCED,ver:v,model:`/3d/body.glb?v=${v}`}))
   .then(ok=>{ if(ok===false) fallback(); }).catch(e=>{ V3D_MOD=null; fallback(); });
 }
 function closeSheet(){
@@ -2904,7 +2904,7 @@ connect();
 </script>
 
 <script>
-if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=dc4ff46d').catch(()=>{}));}
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=6e2fa021').catch(()=>{}));}
 </script>
 </body>
 </html>
