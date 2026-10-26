@@ -156,12 +156,14 @@ function renderShop(){
  const dTot=dd.meals.reduce((a,[id])=>{const n=shopNut(shopRec(id),dd.f); a.k+=n.k; a.p+=n.p; return a},{k:0,p:0});
  const week=`<div class="card stack"><div class="row between"><h3>Wochenplan</h3><span class="muted num" style="font-size:.875rem">${fmt(dTot.k)} kcal · ${fmt(dTot.p)} g P</span></div>${dayTabs}<div class="stack" style="gap:8px">${meals}</div></div>`;
  const done=c.lines.filter(l=>pf.checked[l.pid]).length;
- const list=`<div class="card stack"><div class="row between"><h3>Einkaufsliste</h3><span class="tag">${done} / ${c.lines.length} im Wagen</span></div>
-  ${SHOP_CATS.map(cat=>{ const ls=c.lines.filter(l=>SHOP.prod[l.pid].cat===cat); if(!ls.length) return '';
+ const open=pf.listOpen!==false;
+ const list=`<div class="card stack shop-list${open?' open':''}"><button class="shop-lhead" data-act="shopList" aria-expanded="${open}" aria-controls="shop-lbody"><h3>Einkaufsliste</h3><span class="row" style="gap:8px;flex-wrap:nowrap"><span class="tag${done===c.lines.length?' t':''}">${done} / ${c.lines.length} im Wagen</span>${I.right.replace('<svg','<svg class="chev" width="16" height="16"')}</span></button>
+  ${open?'':`<div class="shop-lmini"><div class="bar"><i style="width:${c.lines.length?done/c.lines.length*100:0}%"></i></div><span class="muted" style="font-size:.85rem">${c.lines.length} Produkte · ${eur(c.total)}${done?` · noch ${eur(c.lines.filter(l=>!pf.checked[l.pid]).reduce((a,l)=>a+l.sum,0))} offen`:''}</span></div>`}
+  <div class="shop-lbody" id="shop-lbody" ${open?'':'hidden'}>${SHOP_CATS.map(cat=>{ const ls=c.lines.filter(l=>SHOP.prod[l.pid].cat===cat); if(!ls.length) return '';
    return `<div class="stack" style="gap:6px"><span class="lbl">${esc(cat)}</span>${ls.map(l=>{const p=SHOP.prod[l.pid], on=!!pf.checked[l.pid], own=pf.px[pf.store+':'+l.pid];
     return `<div class="shop-item${on?' done':''}"><button class="check" data-act="shopCheck" data-v="${l.pid}" aria-pressed="${on}" aria-label="${esc(p.n)} abhaken">${I.check}</button>
      <span style="min-width:0"><b>${esc(p.n)}</b><small>${l.packs>1?l.packs+' × ':''}${esc(p.pack)} · gebraucht ${gTxt(l.g)}</small></span>
-     <button class="shop-px num" data-act="shopPx" data-v="${l.pid}" aria-label="Preis für ${esc(p.n)} korrigieren">${eur(l.sum)}${own?'<i>eigener Preis</i>':l.packs>1?`<i>${eur(l.price)} / Pkg.</i>`:''}</button></div>`}).join('')}</div>`; }).join('')}
+     <button class="shop-px num" data-act="shopPx" data-v="${l.pid}" aria-label="Preis für ${esc(p.n)} korrigieren">${eur(l.sum)}${own?'<i>eigener Preis</i>':l.packs>1?`<i>${eur(l.price)} / Pkg.</i>`:''}</button></div>`}).join('')}</div>`; }).join('')}</div>
  </div>`;
  return intro+summary+`<div class="grid g2" style="align-items:start"><div class="stack" style="gap:14px">${week}${recipesCard}</div><div class="stack" style="gap:14px">${list}${compare}</div></div>`+setup+shopFoot();
 }
@@ -255,6 +257,7 @@ const SHOP_H={
  shopDiet:v=>{shopPrefs().diet=v;saveProfile();render()},
  shopPlan:()=>{const b=$('[data-shop-budget]'); if(b) shopPrefs().budget=+b.value; if(!shopGenerate()) return; haptic(10); render(); const pl=shopPrefs().plan; toast(`Plan steht: ${pl.m.length} Hauptgerichte, ${pl.b.length} Frühstücke`)},
  shopDay:v=>{SHOP.day=+v;render()},
+ shopList:()=>{const pf=shopPrefs(); pf.listOpen=pf.listOpen===false; haptic(6); saveProfile(); render()},
  shopCheck:v=>{const c=shopPrefs().checked; c[v]=!c[v]; if(!c[v]) delete c[v]; haptic(6); saveProfile(); render()},
  shopLog:v=>{const [di,slot]=v.split('.'); const pl=shopPrefs().plan, ev=shopPlanView(), day=ev.days[+di], m=day.meals.find(x=>x[1]===slot); if(!m) return;
   const r=shopRec(m[0]), n=shopNut(r,day.f), date=addDays(pl.start,+di);
