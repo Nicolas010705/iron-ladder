@@ -421,6 +421,38 @@ tr.done .check svg{opacity:1}
 .banner{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:var(--surface);box-shadow:var(--shadow);border-radius:var(--r);padding:12px 16px;font-size:1rem}
 .chart-box{overflow-x:auto}
 .chart-box svg{width:100%;min-width:320px;height:auto;display:block}
+.seg{display:inline-flex;gap:2px;padding:3px;border-radius:999px;background:var(--surface-2);align-self:flex-start;margin-bottom:2px}
+.seg button{all:unset;cursor:pointer;padding:8px 16px;border-radius:999px;font-weight:600;font-size:.9rem;color:var(--muted);transition:background-color .2s,color .2s}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--fg);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.lbl{display:block;font-size:.75rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.sdot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px;flex:none}
+.shop-total{font-size:2.75rem;line-height:1.05;letter-spacing:-.03em}
+.shop-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.shop-stats div{background:var(--row);border-radius:var(--r-sm);padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+.shop-stats span{font-size:.8rem;color:var(--muted)}
+.shop-days{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:0 -4px;padding:0 4px}
+.shop-days::-webkit-scrollbar{display:none}
+.shop-meal{background:var(--row);border-radius:var(--r-sm);padding:10px 12px}
+.shop-meal summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.shop-meal summary::-webkit-details-marker{display:none}
+.shop-meal summary b{display:block;margin-top:2px}
+.shop-meal summary small{display:block;color:var(--muted);font-size:.8rem;margin-top:2px}
+.shop-meal .chev{flex:none;color:var(--muted);transition:transform .25s}
+.shop-meal[open] .chev{transform:rotate(90deg)}
+.shop-ing{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:4px}
+.shop-ing li{display:flex;justify-content:space-between;gap:10px;font-size:.9rem;border-bottom:1px dashed var(--surface-2);padding-bottom:4px}
+.shop-item{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;padding:4px 4px 4px 0}
+.shop-item small{display:block;color:var(--muted);font-size:.8rem}
+.shop-item.done b{text-decoration:line-through;color:var(--muted)}
+.shop-item.done .check{background:var(--teal);color:#fff}
+.shop-item.done .check svg{opacity:1}
+.shop-px{all:unset;cursor:pointer;text-align:right;padding:6px 8px;border-radius:var(--r-sm)}
+.shop-px:hover{background:var(--surface-2)}
+.shop-px i{display:block;font-style:normal;font-weight:500;font-size:.75rem;color:var(--muted)}
+.shop-cmp{display:grid;gap:6px}
+.shop-cmp button{all:unset;cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-radius:var(--r-sm);background:var(--row)}
+.shop-cmp button[aria-pressed="true"]{outline:2px solid var(--accent)}
+.shop-cmp span{display:flex;align-items:center}
 .empty{padding:22px;text-align:center;color:var(--muted);background:var(--row);border-radius:var(--r)}
 .hist{display:flex;flex-direction:column;gap:6px}
 .hist details{background:var(--row);border-radius:var(--r-sm);padding:12px 14px}
@@ -1349,6 +1381,172 @@ async function offSearch(){
  o.busy=false; drawOff();
 }
 
+/* ============ Wocheneinkauf ============ */
+/* SHOP-DATA:START (erzeugt von tools/shop/seed.py) */
+const SHOP_SEED={"stand":"2026-10","stores":[{"id":"aldi","n":"Aldi","col":"#00a0e3"},{"id":"lidl","n":"Lidl","col":"#0050aa"},{"id":"penny","n":"Penny","col":"#cd1719"},{"id":"netto","n":"Netto","col":"#ffd500"},{"id":"kaufland","n":"Kaufland","col":"#e10915"},{"id":"rewe","n":"Rewe","col":"#cc071e"},{"id":"edeka","n":"Edeka","col":"#1e57a4"}],"products":[{"id":"haferflocken","n":"Haferflocken","food":"Haferflocken","g":500,"pack":"500 g","cat":"Getreide & Beilagen"},{"id":"reis","n":"Langkornreis","food":"Reis, roh","g":1000,"pack":"1 kg","cat":"Getreide & Beilagen"},{"id":"nudeln","n":"Spaghetti / Penne","food":"Nudeln, roh","g":500,"pack":"500 g","cat":"Getreide & Beilagen"},{"id":"vk-nudeln","n":"Vollkornnudeln","food":"Vollkornnudeln, roh","g":500,"pack":"500 g","cat":"Getreide & Beilagen"},{"id":"couscous","n":"Couscous","food":"Couscous, roh","g":500,"pack":"500 g","cat":"Getreide & Beilagen"},{"id":"kartoffeln","n":"Kartoffeln, festkochend","food":"Kartoffeln, gekocht","g":2500,"pack":"2,5 kg","cat":"Getreide & Beilagen"},{"id":"suesskartoffel","n":"Süßkartoffeln","food":"Süßkartoffel, gegart","g":1000,"pack":"1 kg","cat":"Getreide & Beilagen"},{"id":"vk-brot","n":"Vollkornbrot","food":"Vollkornbrot","g":500,"pack":"500 g","cat":"Getreide & Beilagen"},{"id":"wraps","n":"Weizen-Tortillas","food":"Weizen-Wraps","g":370,"pack":"6 Stück","cat":"Getreide & Beilagen"},{"id":"haehnchen","n":"Hähnchenbrustfilet","food":"Hähnchenbrust, roh","g":1000,"pack":"1 kg","cat":"Fleisch & Fisch"},{"id":"pute","n":"Putenbrustfilet","food":"Putenbrust, roh","g":400,"pack":"400 g","cat":"Fleisch & Fisch"},{"id":"hack-mager","n":"Rinderhack, mager","food":"Rinderhack 5 % Fett, roh","g":400,"pack":"400 g","cat":"Fleisch & Fisch"},{"id":"lachs","n":"Lachsfilet (TK)","food":"Lachs, roh","g":250,"pack":"2 × 125 g","cat":"Fleisch & Fisch"},{"id":"thunfisch","n":"Thunfisch im eigenen Saft","food":"Thunfisch (Dose, im eigenen Saft)","g":130,"pack":"Dose, 130 g abgetropft","cat":"Fleisch & Fisch"},{"id":"eier","n":"Eier, Größe M","food":"Ei (Größe M)","g":600,"pack":"10 Stück","cat":"Milch & Eier"},{"id":"magerquark","n":"Magerquark","food":"Magerquark","g":500,"pack":"500 g","cat":"Milch & Eier"},{"id":"skyr","n":"Skyr natur","food":"Skyr natur","g":450,"pack":"450 g","cat":"Milch & Eier"},{"id":"huettenkaese","n":"Hüttenkäse","food":"Hüttenkäse","g":200,"pack":"200 g","cat":"Milch & Eier"},{"id":"milch","n":"Milch 1,5 %","food":"Milch 1,5 %","g":1000,"pack":"1 l","cat":"Milch & Eier"},{"id":"joghurt","n":"Naturjoghurt 3,5 %","food":"Naturjoghurt 3,5 %","g":500,"pack":"500 g","cat":"Milch & Eier"},{"id":"feta","n":"Feta","food":"Feta","g":200,"pack":"200 g","cat":"Milch & Eier"},{"id":"pudding","n":"Proteinpudding","food":"Proteinpudding","g":200,"pack":"200 g","cat":"Milch & Eier"},{"id":"banane","n":"Bananen","food":"Banane","g":1000,"pack":"1 kg","cat":"Obst & Gemüse"},{"id":"apfel","n":"Äpfel","food":"Apfel","g":1000,"pack":"1 kg","cat":"Obst & Gemüse"},{"id":"beeren","n":"Heidelbeeren (TK)","food":"Heidelbeeren","g":500,"pack":"500 g","cat":"Obst & Gemüse"},{"id":"brokkoli","n":"Brokkoli (TK)","food":"Brokkoli","g":750,"pack":"750 g","cat":"Obst & Gemüse"},{"id":"spinat","n":"Blattspinat (TK)","food":"Spinat","g":750,"pack":"750 g","cat":"Obst & Gemüse"},{"id":"paprika","n":"Paprika-Mix","food":"Paprika","g":500,"pack":"3 Stück","cat":"Obst & Gemüse"},{"id":"tomaten","n":"Tomaten","food":"Tomate","g":500,"pack":"500 g","cat":"Obst & Gemüse"},{"id":"gurke","n":"Salatgurke","food":"Gurke","g":400,"pack":"1 Stück","cat":"Obst & Gemüse"},{"id":"karotten","n":"Karotten","food":"Karotte","g":1000,"pack":"1 kg","cat":"Obst & Gemüse"},{"id":"zwiebeln","n":"Zwiebeln","food":"Zwiebel","g":1000,"pack":"1 kg","cat":"Obst & Gemüse"},{"id":"kidney","n":"Kidneybohnen","food":"Kidneybohnen (Dose)","g":250,"pack":"Dose, 250 g abgetropft","cat":"Vorrat"},{"id":"mais","n":"Mais","food":"Mais (Dose)","g":285,"pack":"Dose, 285 g","cat":"Vorrat"},{"id":"linsen","n":"Rote Linsen","food":"Rote Linsen, roh","g":500,"pack":"500 g","cat":"Vorrat"},{"id":"passata","n":"Passierte Tomaten","food":"Tomatensauce","g":500,"pack":"500 g","cat":"Vorrat"},{"id":"tofu","n":"Tofu natur","food":"Tofu natur","g":400,"pack":"2 × 200 g","cat":"Vorrat"},{"id":"rapsoel","n":"Rapsöl","food":"Rapsöl","g":920,"pack":"1 l","cat":"Vorrat"},{"id":"olivenoel","n":"Olivenöl","food":"Olivenöl","g":690,"pack":"750 ml","cat":"Vorrat"},{"id":"erdnussbutter","n":"Erdnussbutter","food":"Erdnussbutter","g":350,"pack":"350 g","cat":"Vorrat"},{"id":"mandeln","n":"Mandeln","food":"Mandeln","g":200,"pack":"200 g","cat":"Vorrat"}],"prices":{"aldi":{"haferflocken":0.89,"reis":1.89,"nudeln":0.89,"vk-nudeln":1.09,"couscous":1.39,"kartoffeln":2.99,"suesskartoffel":2.59,"vk-brot":1.49,"wraps":1.49,"haehnchen":9.89,"pute":5.49,"hack-mager":4.79,"lachs":4.49,"thunfisch":1.59,"eier":2.69,"magerquark":1.19,"skyr":1.59,"huettenkaese":1.09,"milch":0.99,"joghurt":0.79,"feta":1.79,"pudding":1.09,"banane":1.49,"apfel":2.49,"beeren":2.99,"brokkoli":2.09,"spinat":1.49,"paprika":1.99,"tomaten":1.59,"gurke":0.79,"karotten":1.19,"zwiebeln":1.29,"kidney":0.79,"mais":0.89,"linsen":1.79,"passata":0.79,"tofu":1.99,"rapsoel":1.99,"olivenoel":7.89,"erdnussbutter":2.39,"mandeln":2.79},"lidl":{"haferflocken":0.99,"reis":1.79,"nudeln":0.89,"vk-nudeln":1.09,"couscous":1.29,"kartoffeln":2.99,"suesskartoffel":2.49,"vk-brot":1.59,"wraps":1.49,"haehnchen":10.19,"pute":5.49,"hack-mager":4.69,"lachs":4.59,"thunfisch":1.59,"eier":2.69,"magerquark":1.19,"skyr":1.59,"huettenkaese":0.99,"milch":0.99,"joghurt":0.79,"feta":1.69,"pudding":0.99,"banane":1.49,"apfel":2.49,"beeren":2.99,"brokkoli":1.99,"spinat":1.49,"paprika":2.09,"tomaten":1.49,"gurke":0.89,"karotten":1.19,"zwiebeln":1.29,"kidney":0.79,"mais":0.99,"linsen":1.79,"passata":0.69,"tofu":2.09,"rapsoel":2.09,"olivenoel":8.19,"erdnussbutter":2.39,"mandeln":2.79},"penny":{"haferflocken":0.99,"reis":1.89,"nudeln":0.99,"vk-nudeln":1.19,"couscous":1.29,"kartoffeln":3.19,"suesskartoffel":2.59,"vk-brot":1.49,"wraps":1.49,"haehnchen":10.49,"pute":5.69,"hack-mager":4.79,"lachs":4.79,"thunfisch":1.49,"eier":2.79,"magerquark":1.19,"skyr":1.59,"huettenkaese":1.09,"milch":1.09,"joghurt":0.79,"feta":1.79,"pudding":0.99,"banane":1.39,"apfel":2.49,"beeren":3.09,"brokkoli":2.09,"spinat":1.49,"paprika":1.99,"tomaten":1.59,"gurke":0.89,"karotten":1.29,"zwiebeln":1.39,"kidney":0.89,"mais":0.99,"linsen":1.89,"passata":0.79,"tofu":1.99,"rapsoel":2.09,"olivenoel":8.29,"erdnussbutter":2.49,"mandeln":2.89},"netto":{"haferflocken":0.89,"reis":1.89,"nudeln":0.89,"vk-nudeln":1.19,"couscous":1.39,"kartoffeln":3.09,"suesskartoffel":2.59,"vk-brot":1.59,"wraps":1.49,"haehnchen":10.29,"pute":5.49,"hack-mager":4.69,"lachs":4.49,"thunfisch":1.59,"eier":2.79,"magerquark":1.19,"skyr":1.59,"huettenkaese":0.99,"milch":1.09,"joghurt":0.79,"feta":1.79,"pudding":0.99,"banane":1.49,"apfel":2.59,"beeren":3.09,"brokkoli":2.19,"spinat":1.59,"paprika":2.19,"tomaten":1.49,"gurke":0.89,"karotten":1.29,"zwiebeln":1.29,"kidney":0.89,"mais":0.99,"linsen":1.89,"passata":0.79,"tofu":1.99,"rapsoel":1.99,"olivenoel":8.19,"erdnussbutter":2.39,"mandeln":2.79},"kaufland":{"haferflocken":0.99,"reis":1.89,"nudeln":0.99,"vk-nudeln":1.19,"couscous":1.39,"kartoffeln":3.19,"suesskartoffel":2.69,"vk-brot":1.59,"wraps":1.49,"haehnchen":10.59,"pute":5.59,"hack-mager":4.79,"lachs":4.49,"thunfisch":1.59,"eier":2.89,"magerquark":1.29,"skyr":1.59,"huettenkaese":0.99,"milch":0.99,"joghurt":0.79,"feta":1.79,"pudding":0.99,"banane":1.39,"apfel":2.59,"beeren":3.09,"brokkoli":2.09,"spinat":1.59,"paprika":2.19,"tomaten":1.59,"gurke":0.89,"karotten":1.29,"zwiebeln":1.39,"kidney":0.89,"mais":0.99,"linsen":1.79,"passata":0.69,"tofu":2.19,"rapsoel":2.19,"olivenoel":8.59,"erdnussbutter":2.39,"mandeln":2.89},"rewe":{"haferflocken":0.99,"reis":1.99,"nudeln":0.99,"vk-nudeln":1.19,"couscous":1.49,"kartoffeln":3.19,"suesskartoffel":2.59,"vk-brot":1.59,"wraps":1.69,"haehnchen":11.19,"pute":6.09,"hack-mager":5.39,"lachs":4.69,"thunfisch":1.69,"eier":2.89,"magerquark":1.29,"skyr":1.69,"huettenkaese":1.09,"milch":1.09,"joghurt":0.89,"feta":1.89,"pudding":1.09,"banane":1.49,"apfel":2.69,"beeren":3.19,"brokkoli":2.19,"spinat":1.69,"paprika":2.09,"tomaten":1.59,"gurke":0.89,"karotten":1.29,"zwiebeln":1.39,"kidney":0.89,"mais":0.99,"linsen":1.89,"passata":0.79,"tofu":2.19,"rapsoel":2.19,"olivenoel":8.69,"erdnussbutter":2.49,"mandeln":2.99},"edeka":{"haferflocken":0.99,"reis":1.99,"nudeln":1.09,"vk-nudeln":1.29,"couscous":1.49,"kartoffeln":3.39,"suesskartoffel":2.79,"vk-brot":1.69,"wraps":1.69,"haehnchen":11.29,"pute":5.89,"hack-mager":5.39,"lachs":4.89,"thunfisch":1.59,"eier":2.99,"magerquark":1.29,"skyr":1.69,"huettenkaese":1.09,"milch":1.09,"joghurt":0.89,"feta":1.89,"pudding":1.09,"banane":1.59,"apfel":2.89,"beeren":3.39,"brokkoli":2.19,"spinat":1.69,"paprika":2.19,"tomaten":1.69,"gurke":0.89,"karotten":1.39,"zwiebeln":1.49,"kidney":0.89,"mais":0.99,"linsen":2.09,"passata":0.79,"tofu":2.19,"rapsoel":2.19,"olivenoel":8.59,"erdnussbutter":2.59,"mandeln":3.09}}};
+/* SHOP-DATA:END */
+/* Rezepte für den Wocheneinkauf: Zutaten je 1 Portion in Gramm, Produkt-IDs aus der Preistabelle. m: b=Frühstück, m=Hauptgericht, s=Snack */
+const SHOP_RECIPES=[
+ {id:'oats',n:'Overnight Oats mit Skyr & Beeren',m:'b',veg:1,min:5,i:[['haferflocken',80],['skyr',200],['beeren',100],['milch',150]],st:'Alles am Abend in ein Glas schichten, umrühren, über Nacht in den Kühlschrank.'},
+ {id:'ruehrei',n:'Rührei mit Vollkornbrot & Tomate',m:'b',veg:1,min:10,i:[['eier',180],['vk-brot',100],['tomaten',100],['rapsoel',5]],st:'3 Eier verquirlen, in Öl bei mittlerer Hitze stocken lassen. Mit Brot und Tomate servieren.'},
+ {id:'quarkbowl',n:'Quark-Bowl mit Banane & Erdnussbutter',m:'b',veg:1,min:5,i:[['magerquark',250],['banane',120],['haferflocken',40],['erdnussbutter',15]],st:'Quark mit etwas Milch oder Wasser cremig rühren, Banane und Haferflocken drauf, Erdnussbutter darüber.'},
+ {id:'porridge',n:'Protein-Porridge mit Banane',m:'b',veg:1,min:8,i:[['haferflocken',80],['milch',300],['banane',120],['magerquark',125]],st:'Haferflocken in Milch 4 Minuten köcheln, vom Herd nehmen, Quark unterrühren, Banane in Scheiben drauf.'},
+ {id:'hrb',n:'Hähnchen, Reis & Brokkoli',m:'m',min:25,i:[['haehnchen',200],['reis',90],['brokkoli',250],['rapsoel',10]],st:'Reis kochen. Hähnchen würfeln, in Öl scharf anbraten, würzen. Brokkoli 6 Minuten dämpfen. Ideal zum Vorkochen für 3 Tage.'},
+ {id:'chili',n:'Chili con Carne mit Reis',m:'m',min:30,i:[['hack-mager',150],['kidney',125],['mais',70],['passata',200],['zwiebeln',50],['paprika',75],['reis',70]],st:'Zwiebel und Hack anbraten, Paprika dazu, mit Passata ablöschen. Bohnen und Mais rein, 15 Minuten köcheln, mit Chili, Kreuzkümmel, Salz würzen.'},
+ {id:'bolo',n:'Spaghetti Bolognese (mager)',m:'m',min:25,i:[['nudeln',110],['hack-mager',150],['passata',200],['zwiebeln',50],['karotten',50],['olivenoel',5]],st:'Zwiebel und Karotte fein würfeln, mit Hack anbraten, Passata dazu und 15 Minuten köcheln. Nudeln kochen.'},
+ {id:'lachs',n:'Lachs mit Süßkartoffel & Spinat',m:'m',min:30,i:[['lachs',125],['suesskartoffel',300],['spinat',150],['olivenoel',5]],st:'Süßkartoffel würfeln, 25 Minuten bei 200 °C backen. Lachs die letzten 12 Minuten dazu. Spinat in der Pfanne zusammenfallen lassen.'},
+ {id:'wraps',n:'Puten-Wraps mit Joghurt-Dip',m:'m',min:15,i:[['wraps',120],['pute',150],['paprika',75],['gurke',75],['joghurt',60]],st:'Pute in Streifen braten. Joghurt mit Salz und Knoblauch würzen. Wraps mit Pute, Gemüse und Dip füllen.'},
+ {id:'curry',n:'Rote-Linsen-Curry mit Reis',m:'m',veg:1,min:25,i:[['linsen',90],['reis',60],['spinat',100],['passata',150],['zwiebeln',50],['rapsoel',10]],st:'Zwiebel in Öl anschwitzen, Currypulver kurz mitrösten. Linsen, Passata und 300 ml Wasser dazu, 15 Minuten köcheln, Spinat unterrühren. Mit Reis.'},
+ {id:'tunapasta',n:'Thunfisch-Pasta mit Tomatensauce',m:'m',min:15,i:[['vk-nudeln',100],['thunfisch',130],['passata',200],['zwiebeln',50],['olivenoel',5]],st:'Nudeln kochen. Zwiebel in Öl anbraten, Passata dazu, 5 Minuten köcheln, Thunfisch unterheben.'},
+ {id:'ofenkartoffel',n:'Ofenkartoffeln mit Kräuterquark',m:'m',veg:1,min:40,i:[['kartoffeln',400],['magerquark',250],['gurke',100],['rapsoel',5]],st:'Kartoffeln halbieren, mit Öl 35 Minuten bei 200 °C backen. Quark mit Kräutern, Salz und geriebener Gurke anrühren.'},
+ {id:'couscous',n:'Hähnchen-Couscous-Salat mit Feta',m:'m',min:15,i:[['couscous',80],['haehnchen',150],['gurke',100],['tomaten',100],['feta',40],['olivenoel',10]],st:'Couscous mit kochendem Wasser übergießen, 5 Minuten quellen lassen. Hähnchen braten, Gemüse würfeln, alles mit Feta, Öl und Zitrone mischen.'},
+ {id:'tofupfanne',n:'Tofu-Gemüse-Pfanne mit Reis',m:'m',veg:1,min:25,i:[['tofu',200],['reis',80],['paprika',100],['brokkoli',150],['rapsoel',10]],st:'Tofu würfeln und knusprig braten. Gemüse dazu, mit Sojasauce ablöschen. Mit Reis servieren.'},
+ {id:'shakshuka',n:'Shakshuka mit Feta & Brot',m:'m',veg:1,min:20,i:[['eier',180],['passata',200],['paprika',100],['zwiebeln',50],['vk-brot',100],['feta',30]],st:'Zwiebel und Paprika anbraten, Passata dazu, würzen. Mulden machen, Eier hineinschlagen, zugedeckt 8 Minuten stocken lassen. Feta drüber.'},
+ {id:'skyrapfel',n:'Skyr mit Apfel',m:'s',veg:1,min:2,i:[['skyr',250],['apfel',150]],st:'Apfel klein schneiden, über den Skyr geben, Zimt drauf.'},
+ {id:'huettenbrot',n:'Hüttenkäse-Brot mit Tomate',m:'s',veg:1,min:3,i:[['vk-brot',100],['huettenkaese',100],['tomaten',100]],st:'Brot mit Hüttenkäse bestreichen, Tomate drauf, salzen und pfeffern.'},
+ {id:'mandelbanane',n:'Mandeln & Banane',m:'s',veg:1,min:1,i:[['mandeln',30],['banane',120]],st:'Fertig. Gut für unterwegs.'},
+ {id:'pudding',n:'Proteinpudding',m:'s',veg:1,min:1,i:[['pudding',200]],st:'Becher auf, Löffel rein.'},
+];
+/* Preise: Supabase (shop_*-Tabellen) wenn vorhanden, sonst eingebaute Richtpreise. Nährwerte: App-Datenbank (FOODS). */
+const SHOP_SLOTS=[['b','Frühstück','b'],['l','Mittagessen','m'],['d','Abendessen','m'],['s','Snack','s']];
+const SHOP_CATS=['Obst & Gemüse','Fleisch & Fisch','Milch & Eier','Getreide & Beilagen','Vorrat'];
+let SHOP={src:'seed',stand:SHOP_SEED.stand,stores:SHOP_SEED.stores,prod:{},prices:SHOP_SEED.prices,loading:false,day:0,dirty:false};
+function shopIndex(products){ SHOP.prod={}; products.forEach(p=>SHOP.prod[p.id]=p); }
+shopIndex(SHOP_SEED.products);
+try{ const c=JSON.parse(localStorage.getItem('ironladder.shop')||'null'); if(c&&c.stores&&c.products){ Object.assign(SHOP,{src:'cloud',stand:c.stand,stores:c.stores,prices:c.prices}); shopIndex(c.products); } }catch(e){}
+async function shopLoad(){
+ if(!SBC||SHOP.loading||SHOP.fresh) return; SHOP.loading=true;
+ try{
+  const h={apikey:SBC.key,Authorization:'Bearer '+SBC.key};
+  const g=t=>fetch(SBC.url+'/rest/v1/'+t,{headers:h}).then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); });
+  const [st,pr,px]=await Promise.all([g('shop_stores?select=id,name,color'),g('shop_products?select=id,name,food,pack_g,pack_label,category,off_code'),g('shop_prices?select=store_id,product_id,price,updated_at')]);
+  if(!st.length||!pr.length||!px.length) throw new Error('leer');
+  const prices={}; let last='';
+  px.forEach(r=>{ (prices[r.store_id]=prices[r.store_id]||{})[r.product_id]=+r.price; if(r.updated_at>last) last=r.updated_at; });
+  const c={stand:last.slice(0,10),stores:st.map(s=>({id:s.id,n:s.name,col:s.color})),products:pr.map(p=>({id:p.id,n:p.name,food:p.food,g:+p.pack_g,pack:p.pack_label,cat:p.category,off:p.off_code})),prices};
+  Object.assign(SHOP,{src:'cloud',stand:c.stand,stores:c.stores,prices}); shopIndex(c.products); SHOP.fresh=true;
+  try{ localStorage.setItem('ironladder.shop',JSON.stringify(c)); }catch(e){}
+  if(V.tab==='food'&&V.foodView==='shop') render();
+ }catch(e){ SHOP.fresh=true; /* Tabellen noch nicht angelegt: eingebaute Preise */ }
+ SHOP.loading=false;
+}
+const shopPrefs=()=>{ const p=S.profile; p.shop=p.shop||{store:'lidl',budget:50,diet:'all',checked:{},px:{}}; p.shop.checked=p.shop.checked||{}; p.shop.px=p.shop.px||{}; return p.shop; };
+const shopStore=id=>SHOP.stores.find(s=>s.id===id)||SHOP.stores[0];
+function shopPrice(store,pid){ const o=shopPrefs().px[store+':'+pid]; if(o) return o; return (SHOP.prices[store]||{})[pid]??null; }
+const shopFoodCache={};
+function shopFood(pid){
+ const pr=SHOP.prod[pid]; if(!pr) return null;
+ return shopFoodCache[pr.food]||(shopFoodCache[pr.food]=FOODS.find(f=>f.n===pr.food&&!f.dish&&!f.own&&!f.off)||null);
+}
+const shopRec=id=>SHOP_RECIPES.find(r=>r.id===id);
+function shopNut(r,f=1){ const t={k:0,p:0,c:0,f:0,g:0}; r.i.forEach(([pid,g])=>{ const fd=shopFood(pid); if(!fd) return; const x=g*f; t.k+=fd.k*x/100; t.p+=fd.p*x/100; t.c+=fd.c*x/100; t.f+=fd.f*x/100; t.g+=x; }); return t; }
+/* Kosten mit echten Packungsgrößen: was an der Kasse bezahlt wird, und was davon in der Woche verbraucht wird */
+function shopCost(needs,store){
+ let total=0, used=0, missing=0; const lines=[];
+ for(const pid in needs){ const pr=SHOP.prod[pid], price=shopPrice(store,pid), g=needs[pid];
+  if(!pr) continue; if(price==null){ missing++; continue; }
+  const packs=Math.max(1,Math.ceil(g/pr.g-0.03)); total+=packs*price; used+=Math.min(1,g/(packs*pr.g))*packs*price;
+  lines.push({pid,g,packs,price,sum:packs*price}); }
+ return {total,used,lines,missing};
+}
+function shopDays(combo){ // feste Rotation: Frühstück im Wechsel, Mittag und Abend aus den Hauptgerichten (Vorkochen!)
+ const {b,m,s}=combo;
+ return Array.from({length:7},(_,d)=>{ const r=[[b[d%b.length],'b'],[m[d%m.length],'l'],[m[(d+1)%m.length],'d']]; if(s.length) r.push([s[d%s.length],'s']); return r; });
+}
+function shopEval(combo,t,store,budget){
+ const days=shopDays(combo), needs={}; let pSum=0, kErr=0;
+ const out=days.map(day=>{
+  const base=day.reduce((a,[id])=>{const n=shopNut(shopRec(id)); a.k+=n.k; a.p+=n.p; return a},{k:0,p:0});
+  const f=Math.min(1.6,Math.max(0.7,Math.round(t.kcal/base.k*20)/20));
+  kErr+=Math.abs(base.k*f-t.kcal)/t.kcal; pSum+=base.p*f;
+  day.forEach(([id])=>shopRec(id).i.forEach(([pid,g])=>needs[pid]=(needs[pid]||0)+g*f));
+  return {f,meals:day};
+ });
+ const cost=shopCost(needs,store), pAvg=pSum/7;
+ const short=Math.max(0,1-pAvg/t.p), over=Math.max(0,cost.total-budget);
+ const score=over*8+short*200+kErr/7*160+cost.total*(over?0.15:0.04)-(combo.m.length>3?1.5:0)+cost.missing*20;
+ return {score,days:out,cost,pAvg,needs};
+}
+const combos=(arr,k)=>{ const r=[]; const go=(i,acc)=>{ if(acc.length===k){r.push(acc.slice());return} for(let j=i;j<arr.length;j++){acc.push(arr[j]);go(j+1,acc);acc.pop()} }; go(0,[]); return r; };
+function shopGenerate(){
+ const pf=shopPrefs(), t=S.profile.targets, ok=r=>pf.diet!=='veg'||r.veg;
+ const ids=m=>SHOP_RECIPES.filter(r=>r.m===m&&ok(r)).map(r=>r.id);
+ const B=combos(ids('b'),2), M=combos(ids('m'),3).concat(combos(ids('m'),4)), Sn=[[]].concat(combos(ids('s'),1),combos(ids('s'),2));
+ const res=[];
+ B.forEach(b=>M.forEach(m=>Sn.forEach(s=>{ const e=shopEval({b,m,s},t,pf.store,pf.budget); res.push({b,m,s,score:e.score,cost:e.cost.total,pOk:e.pAvg>=t.p*.95}); })));
+ res.sort((a,b)=>a.score-b.score);
+ const prev=pf.plan?JSON.stringify([pf.plan.b,pf.plan.m,pf.plan.s]):'';
+ const top=res.slice(0,12).filter(x=>JSON.stringify([x.b,x.m,x.s])!==prev);
+ const pick=top[Math.floor(Math.random()*Math.min(6,top.length))]||res[0];
+ pf.plan={b:pick.b,m:pick.m,s:pick.s,start:today(),store:pf.store,budget:pf.budget,diet:pf.diet,kcal:t.kcal,p:t.p,cheapest:res.reduce((a,x)=>Math.min(a,x.cost),1e9),cheapP:res.reduce((a,x)=>x.pOk?Math.min(a,x.cost):a,1e9)};
+ pf.checked={}; SHOP.day=0; SHOP.dirty=false; saveProfile();
+}
+function shopPlanView(){
+ const pf=shopPrefs(), pl=pf.plan; if(!pl) return null;
+ if(!pl.b.concat(pl.m,pl.s).every(shopRec)) return null;
+ return shopEval(pl,{kcal:pl.kcal,p:pl.p},pf.store,pf.budget);
+}
+const eur=v=>Number(v||0).toLocaleString('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
+const gTxt=g=>g>=1000?fmt(g/1000,1).replace(/,0$/,'')+' kg':fmt(Math.round(g/5)*5)+' g';
+function renderShop(){
+ const pf=shopPrefs(), t=S.profile.targets, ev=shopPlanView(), pl=pf.plan, st=shopStore(pf.store);
+ shopLoad();
+ const setup=`<div class="card stack shop-setup">
+  <div class="stack" style="gap:8px"><span class="lbl">Supermarkt</span><div class="chips">${SHOP.stores.map(s=>`<button class="chip" data-act="shopStore" data-v="${s.id}" aria-pressed="${pf.store===s.id}"><i class="sdot" style="background:${esc(s.col||'var(--muted)')}"></i>${esc(s.n)}</button>`).join('')}</div></div>
+  <div class="stack" style="gap:6px"><div class="row between"><span class="lbl">Budget pro Woche</span><b class="num" id="shop-bv">${fmt(pf.budget)} €</b></div>
+   <input type="range" class="rpe" min="20" max="120" step="5" value="${pf.budget}" data-shop-budget aria-label="Budget pro Woche in Euro"></div>
+  <div class="row between"><div class="chips">${[['all','Alles'],['veg','Vegetarisch']].map(([k,n])=>`<button class="chip" data-act="shopDiet" data-v="${k}" aria-pressed="${pf.diet===k}">${n}</button>`).join('')}</div>
+   <span class="muted" style="font-size:.875rem">Ziel: <b class="num">${fmt(t.kcal)}</b> kcal · <b class="num">${fmt(t.p)}</b> g Protein / Tag</span></div>
+  <button class="btn pri" data-act="shopPlan">${pl?'Neuen Plan erstellen':'Wochenplan erstellen'}</button>
+  ${pl&&(SHOP.dirty||pl.budget!==pf.budget||pl.diet!==pf.diet||pl.kcal!==t.kcal)?`<p class="off-note">Einstellungen geändert. Erstelle einen neuen Plan, damit er dazu passt.</p>`:''}
+ </div>`;
+ const intro=`<div class="head"><div><h1>Wocheneinkauf</h1><p class="muted" style="margin-top:4px">Ein Einkauf, sieben Tage Essen, passend zu deinem Ziel und Budget.</p></div></div>`;
+ if(!ev) return intro+setup+`<div class="empty">Wähle Supermarkt und Budget. Die App stellt aus ${SHOP_RECIPES.length} Rezepten den Plan zusammen, der dein Kalorien- und Proteinziel am günstigsten trifft, und rechnet mit echten Packungsgrößen.</div>`+shopFoot();
+ const c=ev.cost, over=c.total>pf.budget, left=c.total-c.used, kAvg=ev.days.reduce((a,d)=>a+d.meals.reduce((x,[id])=>x+shopNut(shopRec(id),d.f).k,0),0)/7;
+ const summary=`<div class="card stack shop-sum"><div class="row between" style="align-items:flex-end">
+   <div><span class="lbl">An der Kasse bei ${esc(st.n)}</span><div class="shop-total num">${eur(c.total)}</div></div>
+   <span class="tag ${over?'':'t'}">${over?`${eur(c.total-pf.budget)} über Budget`:`${eur(pf.budget-c.total)} unter Budget`}</span></div>
+  <div class="bar"><i style="width:${Math.min(100,c.total/pf.budget*100)}%;background:${over?'var(--bad)':'var(--accent)'}"></i></div>
+  <div class="shop-stats"><div><b class="num">${eur(c.total/7)}</b><span>pro Tag</span></div><div><b class="num">${fmt(kAvg)}</b><span>kcal / Tag</span></div><div><b class="num">${fmt(ev.pAvg)} g</b><span>Protein / Tag</span></div></div>
+  ${left>0.5?`<p class="off-note">Davon bleiben Reste im Wert von ${eur(left)} für nächste Woche (angebrochene Packungen, z. B. Öl, Reis).</p>`:''}
+  ${over&&pl.cheapest>pf.budget?`<p class="off-err">Mit ${fmt(pf.budget)} € ist dein Ziel bei ${esc(st.n)} kaum machbar. Der günstigste Plan liegt bei etwa ${eur(pl.cheapest)}.</p>`:''}
+  ${ev.pAvg<pl.p*.9?`<p class="off-note">Protein liegt bei ${fmt(ev.pAvg)} von ${fmt(pl.p)} g. ${pl.cheapP<1e8?`Mit etwa ${eur(Math.ceil(pl.cheapP))} Budget schafft der Plan dein Proteinziel.`:'Ein Proteinpudding oder Skyr als Snack schließt die Lücke.'}</p>`:''}
+ </div>`;
+ const cmp=SHOP.stores.map(s=>({s,c:shopCost(ev.needs,s.id)})).filter(x=>!x.c.missing).sort((a,b)=>a.c.total-b.c.total);
+ const best=cmp[0];
+ const compare=`<div class="card stack"><div class="row between"><h3>Gleicher Plan, anderer Markt</h3>${best&&best.s.id!==pf.store&&best.c.total<c.total-0.005?`<span class="tag t">${esc(best.s.n)} spart ${eur(c.total-best.c.total)}</span>`:'<span class="tag t">Du bist schon am günstigsten</span>'}</div>
+  <div class="shop-cmp">${cmp.map(x=>`<button data-act="shopStore" data-v="${x.s.id}" aria-pressed="${x.s.id===pf.store}"><span><i class="sdot" style="background:${esc(x.s.col)}"></i>${esc(x.s.n)}</span><b class="num">${eur(x.c.total)}</b></button>`).join('')}</div></div>`;
+ const di=Math.min(SHOP.day,6), dd=ev.days[di], date=addDays(pl.start,di);
+ const dayTabs=`<div class="chips shop-days">${ev.days.map((d,i)=>{const dt=addDays(pl.start,i); return `<button class="chip" data-act="shopDay" data-v="${i}" aria-pressed="${i===di}">${dt===today()?'Heute':new Date(dt+'T12:00:00').toLocaleDateString('de-DE',{weekday:'short',day:'numeric'})}</button>`}).join('')}</div>`;
+ const logged=new Set((S.food[date]||[]).map(e=>e.fid));
+ const meals=dd.meals.map(([id,slot])=>{ const r=shopRec(id), n=shopNut(r,dd.f), sl=SHOP_SLOTS.find(x=>x[0]===slot)[1];
+  return `<details class="shop-meal"><summary><span style="min-width:0"><span class="lbl">${sl} · ${r.min} Min.</span><b>${esc(r.n)}</b><small>${dd.f!==1?fmt(dd.f,2)+' Portionen · ':''}${fmt(n.k)} kcal · P ${fmt(n.p)} g · KH ${fmt(n.c)} g · F ${fmt(n.f)} g</small></span>${I.right.replace('<svg','<svg class="chev" width="16" height="16"')}</summary>
+   <div class="stack" style="gap:10px;padding:4px 4px 2px"><ul class="shop-ing">${r.i.map(([pid,g])=>`<li><span>${esc(SHOP.prod[pid]?.n||pid)}</span><span class="num">${gTxt(g*dd.f)}</span></li>`).join('')}</ul>
+   <p class="muted" style="font-size:.9rem">${esc(r.st)}</p>
+   ${logged.has('shop-'+id+'-'+slot)?`<span class="off-note">${I.check.replace('<svg','<svg width="14" height="14"')} Im Tagebuch eingetragen</span>`:`<button class="btn sm" data-act="shopLog" data-v="${di}.${slot}">${I.plus.replace('<svg','<svg width="14" height="14"')} ${date===today()?'Heute':'Am '+dLabel(date)} eintragen</button>`}</div></details>`; }).join('');
+ const dTot=dd.meals.reduce((a,[id])=>{const n=shopNut(shopRec(id),dd.f); a.k+=n.k; a.p+=n.p; return a},{k:0,p:0});
+ const week=`<div class="card stack"><div class="row between"><h3>Wochenplan</h3><span class="muted num" style="font-size:.875rem">${fmt(dTot.k)} kcal · ${fmt(dTot.p)} g P</span></div>${dayTabs}<div class="stack" style="gap:8px">${meals}</div></div>`;
+ const done=c.lines.filter(l=>pf.checked[l.pid]).length;
+ const list=`<div class="card stack"><div class="row between"><h3>Einkaufsliste</h3><span class="tag">${done} / ${c.lines.length} im Wagen</span></div>
+  ${SHOP_CATS.map(cat=>{ const ls=c.lines.filter(l=>SHOP.prod[l.pid].cat===cat); if(!ls.length) return '';
+   return `<div class="stack" style="gap:6px"><span class="lbl">${esc(cat)}</span>${ls.map(l=>{const p=SHOP.prod[l.pid], on=!!pf.checked[l.pid], own=pf.px[pf.store+':'+l.pid];
+    return `<div class="shop-item${on?' done':''}"><button class="check" data-act="shopCheck" data-v="${l.pid}" aria-pressed="${on}" aria-label="${esc(p.n)} abhaken">${I.check}</button>
+     <span style="min-width:0"><b>${esc(p.n)}</b><small>${l.packs>1?l.packs+' × ':''}${esc(p.pack)} · gebraucht ${gTxt(l.g)}</small></span>
+     <button class="shop-px num" data-act="shopPx" data-v="${l.pid}" aria-label="Preis für ${esc(p.n)} korrigieren">${eur(l.sum)}${own?'<i>eigener Preis</i>':l.packs>1?`<i>${eur(l.price)} / Pkg.</i>`:''}</button></div>`}).join('')}</div>`; }).join('')}
+ </div>`;
+ return intro+summary+`<div class="grid g2" style="align-items:start">${week}<div class="stack" style="gap:14px">${list}${compare}</div></div>`+setup+shopFoot();
+}
+function shopFoot(){
+ return `<p class="muted" style="font-size:.875rem;margin:0">${SHOP.src==='cloud'?'Preise aus der Iron-Ladder-Preisdatenbank':'Eingebaute Richtpreise'} (Eigenmarken, ohne Angebote, Stand ${esc(SHOP.stand)}). Echte Preise schwanken je Filiale und Woche: tippe auf einen Preis, um ihn zu korrigieren. Nährwerte aus der Iron-Ladder-Lebensmitteldatenbank.</p>`;
+}
+function renderShopPx(pid){
+ const pf=shopPrefs(), p=SHOP.prod[pid], st=shopStore(pf.store), base=(SHOP.prices[pf.store]||{})[pid], own=pf.px[pf.store+':'+pid];
+ return `<div class="row between"><h2>Preis korrigieren</h2><button class="icon-btn" data-act="close" aria-label="Schließen">${I.x}</button></div>
+ <p class="muted">${esc(p.n)}, ${esc(p.pack)} bei ${esc(st.n)}. Richtpreis: ${base!=null?eur(base):'keiner'}.</p>
+ <div class="field"><label for="shop-px">Preis pro Packung (€)</label><input id="shop-px" type="text" inputmode="decimal" value="${own!=null?fmt(own,2):base!=null?fmt(base,2):''}"></div>
+ <div class="row"><button class="btn pri" data-act="shopPxSave" data-v="${pid}">Speichern</button>${own!=null?`<button class="btn ghost" data-act="shopPxReset" data-v="${pid}">Richtpreis nutzen</button>`:''}</div>`;
+}
+
 /* Wissenschaftliche Tipps */
 const TIPS=[
  {t:'Progressive Overload ist der Motor',b:'Muskeln wachsen, wenn die Belastung über Wochen steigt: mehr Wiederholungen bei gleichem Gewicht, dann mehr Gewicht. Iron Ladder nutzt dafür die doppelte Progression.',s:'ACSM Position Stand (2009); Plotkin et al. (2022)'},
@@ -1368,7 +1566,7 @@ const TIPS=[
 /* ============ Zustand & Speicher ============ */
 const LS='ironladder.v1';
 let S={profile:null,workouts:[],food:{},draft:null,demo:false};
-let V={tab:'home',libQ:'',libM:'all',progEx:null,foodDate:today(),ob:null,histOpen:{},sync:'lokal'};
+let V={tab:'home',libQ:'',libM:'all',progEx:null,foodDate:today(),foodView:'diary',ob:null,histOpen:{},sync:'lokal'};
 function cacheSave(){ if(S.demo) return; try{localStorage.setItem(LS,JSON.stringify({profile:S.profile,workouts:S.workouts,food:S.food}))}catch(e){} }
 function draftSave(){ if(S.demo) return; try{ S.draft?localStorage.setItem(LS+'.draft',JSON.stringify(S.draft)):localStorage.removeItem(LS+'.draft')}catch(e){} }
 function cacheLoad(){ try{const d=JSON.parse(localStorage.getItem(LS)||'null'); if(d){S.profile=d.profile;S.workouts=d.workouts||[];S.food=d.food||{}} S.draft=JSON.parse(localStorage.getItem(LS+'.draft')||'null')}catch(e){} }
@@ -2184,12 +2382,14 @@ function tdeeCard(){
   <p class="muted">Berechnet aus ${a.days} Tagen: Ø ${fmt(a.intake)} kcal gegessen, Gewicht ${a.perWeek>=0?'+':'−'}${fmt(Math.abs(a.perWeek),2)} kg pro Woche. Die Formel schätzt deinen Startbedarf nur, das hier misst ihn.</p>
   ${Math.abs(diff)>=80?`<button class="btn" data-act="applyTdee" data-v="${goalK}">Ziel auf ${fmt(goalK)} kcal anpassen (${diff>0?'+':''}${fmt(diff)})</button>`:'<p class="off-note">Dein Ziel passt schon zu deinem echten Verbrauch.</p>'}</div>`;
 }
+const foodSeg=()=>`<div class="seg" role="group" aria-label="Ansicht">${[['diary','Tagebuch'],['shop','Wocheneinkauf']].map(([k,n])=>`<button data-act="foodView" data-v="${k}" aria-pressed="${V.foodView===k}">${n}</button>`).join('')}</div>`;
 function renderFood(){
+ if(V.foodView==='shop') return foodSeg()+renderShop();
  const d=V.foodDate, t=S.profile.targets, tot=dayTotals(d), list=S.food[d]||[];
  const isToday=d===today();
  const hitDays=[0,1,2,3,4,5,6].map(i=>addDays(weekKey(today()),i)).filter(x=>x<=today()&&dayTotals(x).p>=t.p*.9).length;
  const macro=(n,v,max,col)=>`<div class="macro"><span>${n}</span><div class="bar"><i style="width:${Math.min(100,v/max*100)}%;background:${col}"></i></div><span class="num">${fmt(v)} / ${fmt(max)} g</span></div>`;
- return `<div class="head"><div><h1>${isToday?'Ernährung heute':'Ernährung am '+dLabel(d)}</h1></div>
+ return foodSeg()+`<div class="head"><div><h1>${isToday?'Ernährung heute':'Ernährung am '+dLabel(d)}</h1></div>
  <div class="row"><button class="icon-btn" data-act="foodDay" data-v="-1" aria-label="Vorheriger Tag">${I.left}</button><input type="date" value="${d}" data-food-date style="width:auto"><button class="icon-btn" data-act="foodDay" data-v="1" aria-label="Nächster Tag">${I.right}</button></div></div>
  <div class="card ring-wrap">${ring(tot.k,t.kcal)}<div class="stack" style="min-width:0;width:100%">
   <div class="row between"><span><b class="num">${fmt(tot.k)}</b> <span class="muted">von ${fmt(t.kcal)} kcal</span></span><span class="tag t">Protein-Ziel ${hitDays}/7 Tage diese Woche</span></div>
@@ -2398,7 +2598,7 @@ let SHEET_TOK=0;
 function openSheet(kind,arg){ if(SHEET&&SHEET.kind==='scan'&&kind!=='scan') stopScan(); SHEET_TOK++; const fresh=!SHEET; SHEET={kind,arg}; drawSheet(); if(fresh) haptic(6); }
 function drawSheet(){
  const L=$('#layer'); if(!SHEET){L.innerHTML='';document.body.style.overflow='';document.body.classList.remove('sheet-open');return;}
- const html={account:renderAccount,lib:()=>renderLibSheet(false),pick:()=>renderLibSheet(true),info:()=>renderExInfo(SHEET.arg),customEx:renderCustomEx,alts:()=>renderAlts(SHEET.arg),planEdit:()=>renderPlanEdit(SHEET.arg),pickPlan:()=>renderLibSheet('plan'),scan:renderScan,phCmp:renderPhotoCompare,rate:renderRate,food:renderFoodSheet,customFood:renderCustomFood,settings:renderSettings,summary:()=>SHEET.arg}[SHEET.kind]();
+ const html={account:renderAccount,lib:()=>renderLibSheet(false),pick:()=>renderLibSheet(true),info:()=>renderExInfo(SHEET.arg),customEx:renderCustomEx,alts:()=>renderAlts(SHEET.arg),planEdit:()=>renderPlanEdit(SHEET.arg),pickPlan:()=>renderLibSheet('plan'),scan:renderScan,phCmp:renderPhotoCompare,rate:renderRate,food:renderFoodSheet,customFood:renderCustomFood,shopPx:()=>renderShopPx(SHEET.arg),settings:renderSettings,summary:()=>SHEET.arg}[SHEET.kind]();
  const ov=L.querySelector('.overlay:not(.closing)');
  if(ov){ const sh=ov.querySelector('.sheet'); sh.innerHTML=html; if(SHEET.kind==='summary') countUp(sh); mount3D(); return; }
  L.innerHTML=`<div class="overlay" data-act="overlay"><div class="sheet" role="dialog" aria-modal="true">${html}</div></div>`;
@@ -2839,6 +3039,18 @@ document.addEventListener('click',e=>{
    if(S.draft){S.draft.items.push(makeItem(c.id));draftSave();closeSheet();render()} else openSheet('info',c.id); toast('Übung gespeichert')},
   delCustomEx:()=>{S.profile.customEx=S.profile.customEx.filter(c=>c.id!==v); buildEx(); saveProfile(); closeSheet(); render()},
   foodDay:()=>{V.foodDate=addDays(V.foodDate,+v);render()},
+  foodView:()=>{V.foodView=v;haptic(6);render();window.scrollTo(0,0)},
+  shopStore:()=>{shopPrefs().store=v;saveProfile();render()},
+  shopDiet:()=>{shopPrefs().diet=v;saveProfile();render()},
+  shopPlan:()=>{const b=$('[data-shop-budget]'); if(b) shopPrefs().budget=+b.value; shopGenerate(); haptic(10); render(); const pl=shopPrefs().plan; toast(`Plan steht: ${pl.m.length} Hauptgerichte, ${pl.b.length} Frühstücke`)},
+  shopDay:()=>{SHOP.day=+v;render()},
+  shopCheck:()=>{const c=shopPrefs().checked; c[v]=!c[v]; if(!c[v]) delete c[v]; haptic(6); saveProfile(); render()},
+  shopLog:()=>{const [di,slot]=v.split('.'); const pl=shopPrefs().plan, ev=shopPlanView(), day=ev.days[+di], m=day.meals.find(x=>x[1]===slot); if(!m) return;
+   const r=shopRec(m[0]), n=shopNut(r,day.f), date=addDays(pl.start,+di);
+   (S.food[date]=S.food[date]||[]).push({id:uid(),fid:'shop-'+r.id+'-'+slot,n:r.n,g:Math.round(n.g),meal:slot,k:n.k,p:n.p,c:n.c,f:n.f}); saveDay(date); render(); toast(`${r.n} eingetragen (${fmt(n.k)} kcal)`)},
+  shopPx:()=>openSheet('shopPx',v),
+  shopPxSave:()=>{const x=num($('#shop-px').value); if(!(x>0&&x<200)){toast('Gib einen Preis in Euro ein.');return} const pf=shopPrefs(); pf.px[pf.store+':'+v]=Math.round(x*100)/100; saveProfile(); closeSheet(); render(); toast('Preis gespeichert')},
+  shopPxReset:()=>{const pf=shopPrefs(); delete pf.px[pf.store+':'+v]; saveProfile(); closeSheet(); render()},
   addFood:()=>{FS={meal:v,q:'',cat:'all',sel:null,g:100,off:offState()};openSheet('food')},
   foodCat:()=>{FS.cat=v;FS.sel=null;drawSheet(); if(v==='off') setTimeout(()=>{const el=$('#off-brand'); if(el&&!FS.off.done) el.focus()},30)},
   toOff:()=>{FS.cat='off'; FS.sel=null; if(FS.q&&!FS.off.q&&!FS.off.brand) FS.off.q=FS.q; drawSheet(); setTimeout(()=>{const el=$('#off-brand'); if(el) el.focus()},30)},
@@ -2875,6 +3087,7 @@ document.addEventListener('input',e=>{
  if(t.dataset.ob){ V.ob[t.dataset.ob]=t.dataset.ob==='name'?t.value:num(t.value); return; }
  if(t.dataset.set){ const [i,j,k]=t.dataset.set.split('.'); const s=S.draft.items[+i].sets[+j]; s[k]=k==='w'?t.value.replace(',','.'):t.value; clearTimeout(window._ds); window._ds=setTimeout(draftSave,400); return; }
  if(t.dataset.lib!==undefined){ V.libQ=t.value; $('#lib-res').innerHTML=libResults(SHEET.kind==='pickPlan'?'plan':SHEET.kind==='pick'); return; }
+ if(t.dataset.shopBudget!==undefined){ shopPrefs().budget=+t.value; const o=$('#shop-bv'); if(o) o.textContent=t.value+' €'; clearTimeout(window._sb); window._sb=setTimeout(()=>{saveProfile(); SHOP.dirty=!!shopPrefs().plan&&shopPrefs().plan.budget!==+t.value; render()},500); return; }
  if(t.dataset.fq!==undefined){ FS.q=t.value; $('#food-res').innerHTML=foodList(foodResults()); return; }
  if(t.dataset.off){ FS.off[t.dataset.off]=t.value; return; }
  if(t.dataset.planName){ const pl=(S.profile.plans||[]).find(x=>x.id===t.dataset.planName); if(pl){pl.n=t.value; clearTimeout(window._pn); window._pn=setTimeout(saveProfile,500);} return; }
@@ -2904,7 +3117,7 @@ connect();
 </script>
 
 <script>
-if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=6e2fa021').catch(()=>{}));}
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js?v=e5ee4be2').catch(()=>{}));}
 </script>
 </body>
 </html>

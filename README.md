@@ -28,6 +28,13 @@ Neu bauen:
 
 Posen je Bewegungsmuster (in Weltkoordinaten, mit Geräten und Varianten je Equipment): `tools/3d/poses.js`, IK: `tools/3d/figure.js`, Szene: `tools/3d/scene.js`. Lizenzen: `3d/CREDITS.md`.
 
+## Wocheneinkauf
+Ernährung → „Wocheneinkauf“: Supermarkt und Budget wählen, die App stellt aus 19 Rezepten einen 7-Tage-Plan zusammen,
+der Kalorien- und Proteinziel trifft, rechnet die Einkaufsliste mit echten Packungsgrößen und vergleicht alle Märkte.
+- Supabase speichert nur Märkte, Produkte und Preise (`supabase/shop.sql`, ~300 Zeilen, ein paar KB). Nährwerte kommen aus der App-Datenbank.
+- Ohne die Tabellen nutzt die App eingebaute Richtpreise. Preise pflegen: `tools/shop/seed.py` anpassen, ausführen, `shop.sql` im Supabase-SQL-Editor laufen lassen.
+- Nutzer können Preise in der App korrigieren (pro Markt, im Profil gespeichert).
+
 ## Daten
 Auf Vercel speichert die App im Browser (localStorage) – pro Gerät, ohne Synchronisierung.
 Nächster Schritt für geräteübergreifende Daten: Supabase.
