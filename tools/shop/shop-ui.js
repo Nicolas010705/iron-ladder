@@ -149,7 +149,8 @@ function renderShop(){
  const meals=dd.meals.map(([id,slot])=>{ const r=shopRec(id), n=shopNut(r,dd.f), sl=SHOP_SLOTS.find(x=>x[0]===slot)[1], times=[...pl.b,...pl.m,...pl.s].includes(id)?ev.days.reduce((a,d)=>a+d.meals.filter(m=>m[0]===id).length,0):0;
   return `<details class="shop-meal"><summary><span style="min-width:0"><span class="lbl">${sl} · ${r.min||'?'} Min.${r.own?' · eigenes':''}</span><b>${esc(r.n)}</b><small>${dd.f!==1?fmt(dd.f,2)+' Portionen · ':''}${fmt(n.k)} kcal · P ${fmt(n.p)} g · KH ${fmt(n.c)} g · F ${fmt(n.f)} g</small></span>${I.right.replace('<svg','<svg class="chev" width="16" height="16"')}</summary>
    <div class="stack" style="gap:10px;padding:4px 4px 2px"><ul class="shop-ing">${r.i.map(([pid,g])=>`<li><span>${esc(SHOP.prod[pid]?.n||pid)}</span><span class="num">${gTxt(g*dd.f)}</span></li>`).join('')}</ul>
-   ${r.st?`<p class="muted" style="font-size:.9rem">${esc(r.st)}</p>`:''}
+   <button class="btn ck-go" data-act="ckStart" data-v="${id}|${dd.f}|${di}.${slot}">${CK_PLAY} Kochmodus: Schritt für Schritt mit Timer</button>
+   ${shopStepsHTML(r)}
    <div class="row">${logged.has('shop-'+id+'-'+slot)?`<span class="off-note">${I.check.replace('<svg','<svg width="14" height="14"')} Im Tagebuch eingetragen</span>`:`<button class="btn sm" data-act="shopLog" data-v="${di}.${slot}">${I.plus.replace('<svg','<svg width="14" height="14"')} ${date===today()?'Heute':'Am '+dLabel(date)} eintragen</button>`}
    <button class="btn sm ghost" data-act="shopSwap" data-v="${id}">Tauschen${times>1?` (${times}× diese Woche)`:''}</button>${r.own?`<button class="btn sm ghost" data-act="shopEdit" data-v="${id}">Bearbeiten</button>`:''}</div></div></details>`; }).join('');
  const dTot=dd.meals.reduce((a,[id])=>{const n=shopNut(shopRec(id),dd.f); a.k+=n.k; a.p+=n.p; return a},{k:0,p:0});
@@ -208,7 +209,8 @@ function renderShopView(id){
  <div class="row" style="gap:6px"><span class="tag">${shopKindN(r.m)}</span>${r.min?`<span class="tag">${r.min} Min.</span>`:''}${shopVeg(r)?'<span class="tag">Vegetarisch</span>':''}${r.own?'<span class="tag t">Eigenes Rezept</span>':''}${inPlan?'<span class="tag t">Diese Woche im Plan</span>':''}</div>
  <div class="shop-stats"><div><b class="num">${fmt(n.k)}</b><span>kcal / Portion</span></div><div><b class="num">${fmt(n.p)} g</b><span>Protein</span></div><div><b class="num">${eur(shopPortion(r,pf.store))}</b><span>bei ${esc(shopStore(pf.store).n)}</span></div></div>
  <ul class="shop-ing">${r.i.map(([pid,g])=>`<li><span>${esc(SHOP.prod[pid]?.n||pid)}</span><span class="num">${gTxt(g)}</span></li>`).join('')}</ul>
- ${r.st?`<p class="muted">${esc(r.st)}</p>`:''}
+ <button class="btn pri" data-act="ckStart" data-v="${id}|1|">${CK_PLAY} Kochmodus starten</button>
+ ${shopStepsHTML(r)}
  <button class="btn ${pin?'':'ghost'}" data-act="shopPin" data-v="${id}" aria-pressed="${pin}">${pin?I.check.replace('<svg','<svg width="14" height="14"')+' Wird immer eingeplant':'Immer einplanen'}</button>
  <div class="row">${r.own?`<button class="btn" data-act="shopEdit" data-v="${id}">Bearbeiten</button><button class="btn ghost danger" data-act="shopDel" data-v="${id}">${SHOP.delAsk===id?'Wirklich löschen?':'Löschen'}</button>`:`<button class="btn" data-act="shopCopy" data-v="${id}">Kopieren & anpassen</button>`}</div>`;
 }
@@ -233,7 +235,7 @@ function renderShopEdit(){
   <button class="btn sm ghost" data-act="reAdd" style="align-self:flex-start">${I.plus.replace('<svg','<svg width="14" height="14"')} Zutat</button>
   <p class="off-note">Zutaten kommen aus der Preisliste, damit Preis und Einkaufsliste stimmen. Gewürze, Salz und Kräuter brauchst du nicht eintragen.</p></div>
  <div id="re-sum">${shopReSum()}</div>
- <div class="field"><label for="re-st">Zubereitung (optional)</label><textarea id="re-st" rows="3" data-re="st" class="re-ta">${esc(RE.st||'')}</textarea></div>
+ <div class="field"><label for="re-st">Zubereitung: jede Zeile ein Schritt</label><textarea id="re-st" rows="5" data-re="st" class="re-ta" placeholder="Reis 15 Minuten kochen.&#10;Hähnchen würfeln und scharf anbraten.&#10;Alles mischen und servieren.">${esc(RE.st||'')}</textarea><p class="off-note">Zeiten wie „10 Minuten“ werden im Kochmodus automatisch zum Timer, die Animation passt die App dem Arbeitsschritt an.</p></div>
  <button class="btn pri" data-act="reSave">${RE.swap?'Speichern & in den Plan tauschen':'Speichern'}</button>`;
 }
 function shopInput(t){
@@ -283,3 +285,61 @@ const SHOP_H={
   const swap=RE.swap; RE=null; if(swap) shopSwapIn(swap,r.id); saveProfile(); closeSheet(); render(); haptic(10);
   toast(swap?`${r.n} ist jetzt im Plan`:k>=0?'Rezept gespeichert':`${r.n} gespeichert, wird ab jetzt mitgeplant`)},
 };
+/* ============ Anleitungen & Kochmodus ============ */
+const CK_PLAY='<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>';
+const CK_ART={
+ prep:`<svg viewBox="0 0 64 64" class="ck ck-prep" aria-hidden="true"><circle class="ck-a ck-b1" cx="22" cy="27" r="7"/><circle class="ck-w ck-b2" cx="34" cy="24" r="8"/><circle class="ck-a2 ck-b3" cx="45" cy="28" r="6"/><path class="ck-l" d="M9 32h46l-5 20H14z"/><path class="ck-l" d="M22 39v6M32 39v6M42 39v6"/></svg>`,
+ cut:`<svg viewBox="0 0 64 64" class="ck ck-cut" aria-hidden="true"><rect class="ck-s" x="5" y="46" width="54" height="9" rx="4"/><g class="ck-pieces"><rect class="ck-a" x="10" y="38" width="6" height="8" rx="2"/><rect class="ck-a" x="18" y="38" width="6" height="8" rx="2"/><rect class="ck-a" x="26" y="38" width="6" height="8" rx="2"/></g><rect class="ck-a ck-whole" x="34" y="36" width="16" height="10" rx="4"/><g class="ck-knife"><path class="ck-blade" d="M30 14h6v26l-6 2z"/><rect class="ck-handle" x="30" y="4" width="6" height="11" rx="2"/></g></svg>`,
+ pan:`<svg viewBox="0 0 64 64" class="ck ck-pan" aria-hidden="true"><g class="ck-sizzle"><path class="ck-m s1" d="M20 22c-2-3 2-5 0-8"/><path class="ck-m s2" d="M30 20c-2-3 2-5 0-8"/><path class="ck-m s3" d="M40 22c-2-3 2-5 0-8"/></g><g class="ck-panbody"><circle class="ck-a ck-f1" cx="22" cy="38" r="4"/><circle class="ck-w ck-f2" cx="32" cy="36" r="4.5"/><circle class="ck-a ck-f3" cx="41" cy="38" r="3.5"/><path class="ck-l" d="M8 40h46c0 8-6 12-13 12H21c-7 0-13-4-13-12z"/><path class="ck-l" d="M54 42l8-3"/></g><path class="ck-flame" d="M24 60c2-4 4-4 4-7 2 3 3 4 3 7zM34 60c2-4 4-4 4-7 2 3 3 4 3 7z"/></svg>`,
+ pot:`<svg viewBox="0 0 64 64" class="ck ck-pot" aria-hidden="true"><g><path class="ck-m st1" d="M22 18c-3-3 3-6 0-10"/><path class="ck-m st2" d="M32 16c-3-3 3-6 0-10"/><path class="ck-m st3" d="M42 18c-3-3 3-6 0-10"/></g><g class="ck-lid"><path class="ck-l" d="M12 27h40"/><path class="ck-l" d="M29 23h6"/></g><path class="ck-l" d="M14 31h36v16c0 6-4 9-9 9H23c-5 0-9-3-9-9z"/><path class="ck-l" d="M14 35H8M50 35h6"/><path class="ck-bub b1" d="M24 44a2 2 0 1 0 0.1 0z"/><path class="ck-bub b2" d="M34 46a2.5 2.5 0 1 0 0.1 0z"/><path class="ck-bub b3" d="M41 43a1.8 1.8 0 1 0 0.1 0z"/></svg>`,
+ oven:`<svg viewBox="0 0 64 64" class="ck ck-oven" aria-hidden="true"><g><path class="ck-m h1" d="M20 12c-2-2 2-4 0-6"/><path class="ck-m h2" d="M32 12c-2-2 2-4 0-6"/><path class="ck-m h3" d="M44 12c-2-2 2-4 0-6"/></g><rect class="ck-l" x="8" y="16" width="48" height="42" rx="6"/><path class="ck-l" d="M8 26h48"/><circle class="ck-knob" cx="16" cy="21" r="1.8"/><circle class="ck-knob" cx="24" cy="21" r="1.8"/><rect class="ck-glow" x="15" y="32" width="34" height="19" rx="3"/><rect class="ck-l" x="15" y="32" width="34" height="19" rx="3"/><path class="ck-l" d="M22 44h20"/></svg>`,
+ mix:`<svg viewBox="0 0 64 64" class="ck ck-mix" aria-hidden="true"><path class="ck-s" d="M12 34h40c0 12-9 20-20 20s-20-8-20-20z"/><g class="ck-spoon"><path class="ck-l" d="M34 36L46 8"/><circle class="ck-a" cx="33.5" cy="38" r="4.5"/></g><path class="ck-l" d="M10 34h44c0 13-10 21-22 21S10 47 10 34z"/><path class="ck-swirl" d="M22 40c4 3 16 3 20 0"/></svg>`,
+ blend:`<svg viewBox="0 0 64 64" class="ck ck-blend" aria-hidden="true"><g class="ck-jar"><path class="ck-s" d="M18 14h28l-4 30H22z"/><g class="ck-whirl"><path class="ck-a" d="M32 26c6 0 8 4 6 8-3-3-7-3-10 0-2-4 0-8 4-8z"/></g><path class="ck-l" d="M18 12h28l-4 32H22z"/><path class="ck-l" d="M16 12h32"/></g><rect class="ck-l" x="18" y="46" width="28" height="12" rx="3"/><circle class="ck-knob" cx="32" cy="52" r="2.2"/></svg>`,
+ rest:`<svg viewBox="0 0 64 64" class="ck ck-rest" aria-hidden="true"><circle class="ck-s" cx="32" cy="35" r="21"/><circle class="ck-l" cx="32" cy="35" r="21"/><path class="ck-l" d="M27 10h10M32 10v4"/><path class="ck-l ck-hand" d="M32 35V22"/><path class="ck-l ck-hand2" d="M32 35h8"/><circle class="ck-knob" cx="32" cy="35" r="2.4"/></svg>`,
+ plate:`<svg viewBox="0 0 64 64" class="ck ck-plate" aria-hidden="true"><path class="ck-star p1" d="M14 14l1.5 4 4 1.5-4 1.5-1.5 4-1.5-4-4-1.5 4-1.5z"/><path class="ck-star p2" d="M50 10l1.2 3 3 1.2-3 1.2-1.2 3-1.2-3-3-1.2 3-1.2z"/><path class="ck-star p3" d="M54 30l1 2.5 2.5 1-2.5 1-1 2.5-1-2.5-2.5-1 2.5-1z"/><g class="ck-food"><path class="ck-a" d="M18 42c0-9 6-14 14-14s14 5 14 14z"/><circle class="ck-w" cx="27" cy="34" r="3"/><circle class="ck-a2" cx="37" cy="33" r="2.5"/></g><ellipse class="ck-l" cx="32" cy="45" rx="25" ry="7"/><ellipse class="ck-l" cx="32" cy="45" rx="15" ry="3.5"/></svg>`,
+};
+function shopSteps(r){
+ if(SHOP_STEPS[r.id]) return SHOP_STEPS[r.id];
+ const raw=String(r.st||'').trim(); if(!raw) return [['plate','Alles zubereiten und anrichten.']];
+ const parts=(raw.includes('\n')?raw.split(/\n+/):raw.split(/(?<=[.!])\s+(?=[A-ZÄÖÜ])/)).map(x=>x.replace(/^\s*(\d+[.)]|[-•])\s*/,'').trim()).filter(Boolean);
+ const type=t=>/über nacht|ziehen|ruhen|quellen|abkühl|kühlschrank|auftau/i.test(t)?'rest':/ofen|back|°c|grill/i.test(t)?'oven':/brat|pfanne|röst|anbrat|dünst/i.test(t)?'pan':/koch|köchel|sied|wasser|dämpf|topf/i.test(t)?'pot':/püri|mix/i.test(t)?'blend':/schneid|würfel|hack|reib|schäl|streifen|scheiben/i.test(t)?'cut':/rühr|misch|verquirl|knet|heb/i.test(t)?'mix':/anricht|servier|garnier|drüber|darüber/i.test(t)?'plate':'prep';
+ return parts.map(t=>{ const m=t.match(/(\d+)\s*(min|minuten)\b/i); return [type(t),t,m?+m[1]:0]; });
+}
+function shopStepsHTML(r){
+ return `<ol class="ck-steps">${shopSteps(r).map((s,i)=>`<li><span class="ck-ic">${CK_ART[s[0]]||CK_ART.prep}</span><div><span class="lbl">Schritt ${i+1}${s[2]?` · ${s[2]} Min.`:''}</span><p>${esc(s[1])}</p>${s[3]?`<p class="ck-tip"><b>Tipp:</b> ${esc(s[3])}</p>`:''}</div></li>`).join('')}</ol>`;
+}
+let COOK=null;
+const mmss=s=>`${Math.floor(s/60)}:${String(Math.max(0,s%60)).padStart(2,'0')}`;
+function renderCook(){
+ const r=COOK&&shopRec(COOK.id); if(!r) return `<div class="row between"><h2>Kochmodus</h2>${shopX}</div>`;
+ const steps=shopSteps(r), total=steps.length+1, i=COOK.step, last=i===total-1, s=i?steps[i-1]:null;
+ const logged=COOK.log&&(S.food[COOK.date]||[]).some(e=>e.fid==='shop-'+r.id+'-'+COOK.log.split('.')[1]);
+ const tRun=COOK.tEnd&&COOK.tStep===i, left=tRun?Math.ceil((COOK.tEnd-Date.now())/1000):0;
+ const body=i===0?`<div class="ck-big">${CK_ART.prep}</div><span class="lbl ck-c">Vorbereitung · alles bereitlegen</span>
+   <ul class="shop-ing ck-ing">${r.i.map(([pid,g])=>`<li><span>${esc(SHOP.prod[pid]?.n||pid)}</span><span class="num">${gTxt(g*COOK.f)}</span></li>`).join('')}</ul>
+   <p class="off-note ck-c">${COOK.f!==1?`Mengen für ${fmt(COOK.f,2)} Portionen, passend zu deinem Tagesziel. `:''}Dazu Salz, Pfeffer und die Gewürze aus dem Rezept.</p>`
+  :`<div class="ck-big">${CK_ART[s[0]]||CK_ART.prep}</div><span class="lbl ck-c">Schritt ${i} von ${total-1}</span><p class="ck-text">${esc(s[1])}</p>${s[3]?`<p class="ck-tip"><b>Tipp:</b> ${esc(s[3])}</p>`:''}
+   ${s[2]?`<div class="ck-timer">${tRun?`<b class="num" id="ck-t">${mmss(left)}</b><button class="btn sm ghost" data-act="ckTimer" data-v="stop">Stopp</button>`:`<button class="btn" data-act="ckTimer" data-v="${s[2]}">${I.clock||''} Timer ${s[2]}:00 starten</button>`}</div>`:''}`;
+ return `<div class="row between" style="flex-wrap:nowrap;align-items:flex-start"><div style="min-width:0;flex:1"><span class="lbl">Kochmodus${r.min?` · ca. ${r.min} Min.`:''}</span><h2>${esc(r.n)}</h2></div>${shopX}</div>
+ <div class="ck-prog" aria-hidden="true">${Array.from({length:total},(_,k)=>`<i class="${k<=i?'on':''}"></i>`).join('')}</div>
+ <div class="ck-stage ${COOK.dir<0?'back':''}">${body}</div>
+ <div class="ck-nav"><button class="btn" data-act="ckPrev" ${i===0?'disabled':''}>${I.left.replace('<svg','<svg width="16" height="16"')} Zurück</button><button class="btn pri" data-act="ckNext">${last?(COOK.log&&!logged?'Fertig & eintragen':'Fertig'):'Weiter'} ${last?'':I.right.replace('<svg','<svg width="16" height="16"')}</button></div>`;
+}
+function ckTick(){
+ if(!COOK) return;
+ if(COOK.tEnd){ const left=Math.ceil((COOK.tEnd-Date.now())/1000); const el=$('#ck-t'); if(el) el.textContent=mmss(left);
+  if(left<=0){ const st=COOK.tStep; COOK.tEnd=null; COOK.tStep=null; haptic(40); setTimeout(()=>haptic(40),250); toast(`Timer fertig: Schritt ${st}`); if(SHEET&&SHEET.kind==='cook') drawSheet(); } }
+ if(!(SHEET&&SHEET.kind==='cook')&&!COOK.tEnd){ clearInterval(COOK.int); try{COOK.lock&&COOK.lock.release()}catch(e){} COOK=null; }
+}
+Object.assign(SHOP_H,{
+ ckStart:v=>{ const [id,f,log]=v.split('|'); if(COOK){clearInterval(COOK.int); try{COOK.lock&&COOK.lock.release()}catch(e){}}
+  const pl=shopPrefs().plan; COOK={id,f:+f||1,log:log||null,date:log&&pl?addDays(pl.start,+log.split('.')[0]):null,step:0,dir:1,tEnd:null,tStep:null,lock:null};
+  COOK.int=setInterval(ckTick,1000); try{ navigator.wakeLock&&navigator.wakeLock.request('screen').then(l=>{ if(COOK) COOK.lock=l; }).catch(()=>{}); }catch(e){}
+  openSheet('cook')},
+ ckNext:()=>{ const r=shopRec(COOK.id), total=shopSteps(r).length+1;
+  if(COOK.step<total-1){ COOK.step++; COOK.dir=1; haptic(6); drawSheet(); $('#layer .sheet')?.scrollTo?.({top:0,behavior:'smooth'}); return; }
+  const log=COOK.log, logged=log&&(S.food[COOK.date]||[]).some(e=>e.fid==='shop-'+r.id+'-'+log.split('.')[1]);
+  closeSheet(); if(log&&!logged) SHOP_H.shopLog(log); else toast('Guten Appetit!'); },
+ ckPrev:()=>{ if(COOK.step>0){ COOK.step--; COOK.dir=-1; drawSheet(); } },
+ ckTimer:v=>{ if(v==='stop'){ COOK.tEnd=null; COOK.tStep=null; } else { COOK.tEnd=Date.now()+(+v)*60000; COOK.tStep=COOK.step; haptic(10); } drawSheet(); },
+});

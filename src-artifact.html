@@ -441,6 +441,73 @@ tr.done .check svg{opacity:1}
 .shop-rrow b{display:block;font-weight:600}
 .shop-rrow small{display:block;color:var(--muted);font-size:.8rem;margin-top:2px}
 .re-row{display:grid;grid-template-columns:minmax(0,1fr) 76px auto auto;gap:8px;align-items:center}
+.ck{width:100%;height:100%;display:block;overflow:visible}
+.ck *{transform-box:fill-box;transform-origin:center}
+.ck-l{fill:none;stroke:var(--fg);stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.ck-m{fill:none;stroke:var(--muted);stroke-width:2.4;stroke-linecap:round}
+.ck-a{fill:var(--accent)}.ck-a2{fill:var(--teal);opacity:.6}.ck-w{fill:var(--warn)}.ck-s{fill:var(--accent-soft)}
+.ck-blade{fill:var(--muted);opacity:.55}.ck-handle,.ck-knob{fill:var(--fg)}
+.ck-flame{fill:var(--warn);animation:ckFlame .5s ease-in-out infinite alternate}
+.ck-glow{fill:var(--warn);animation:ckGlow 1.6s ease-in-out infinite}
+.ck-bub{fill:none;stroke:var(--accent);stroke-width:1.8;animation:ckBub 1.4s ease-in infinite}
+.ck-bub.b2{animation-delay:.45s}.ck-bub.b3{animation-delay:.9s}
+.ck-swirl{fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-dasharray:4 4;animation:ckDash 1s linear infinite}
+.ck-star{fill:var(--warn);animation:ckTwinkle 1.4s ease-in-out infinite}
+.ck-star.p2{animation-delay:.45s}.ck-star.p3{animation-delay:.9s}
+.ck-knife{animation:ckChop .55s ease-in-out infinite alternate}
+.ck-pieces{animation:ckSlide 1.1s ease-in-out infinite alternate}
+.ck-whole{animation:ckShrink 1.1s ease-in-out infinite alternate;transform-origin:left center}
+.ck-panbody{animation:ckToss 1.2s ease-in-out infinite}
+.ck-f1,.ck-f2,.ck-f3{animation:ckHop 1.2s ease-in-out infinite}.ck-f2{animation-delay:.12s}.ck-f3{animation-delay:.24s}
+.ck-sizzle .ck-m,.ck-pot .ck-m,.ck-oven .ck-m{animation:ckSteam 1.6s ease-out infinite}
+.ck .s2,.ck .st2,.ck .h2{animation-delay:.5s!important}.ck .s3,.ck .st3,.ck .h3{animation-delay:1s!important}
+.ck-lid{animation:ckLid .7s ease-in-out infinite}
+.ck-spoon{animation:ckStir 1.4s linear infinite}
+.ck-jar{animation:ckShake .18s linear infinite alternate}
+.ck-whirl{animation:ckSpin .6s linear infinite}
+.ck-hand{transform-box:view-box;transform-origin:32px 35px;animation:ckSpin 2.4s linear infinite}
+.ck-hand2{transform-box:view-box;transform-origin:32px 35px;animation:ckSpin 28.8s linear infinite}
+.ck-b1,.ck-b2,.ck-b3{animation:ckHop .9s ease-in-out infinite}.ck-b2{animation-delay:.15s}.ck-b3{animation-delay:.3s}
+.ck-food{animation:ckPresent 2s ease-in-out infinite}
+@keyframes ckChop{from{transform:translateY(-9px) rotate(-4deg)}to{transform:translateY(0) rotate(0)}}
+@keyframes ckSlide{from{transform:translateX(0)}to{transform:translateX(-3px)}}
+@keyframes ckShrink{from{transform:scaleX(1)}to{transform:scaleX(.82)}}
+@keyframes ckToss{0%,70%,100%{transform:translate(0,0) rotate(0)}80%{transform:translate(-2px,-2px) rotate(-3deg)}90%{transform:translate(1px,0) rotate(1deg)}}
+@keyframes ckHop{0%,60%,100%{transform:translateY(0)}75%{transform:translateY(-7px)}}
+@keyframes ckSteam{0%{opacity:0;transform:translateY(6px)}30%{opacity:1}100%{opacity:0;transform:translateY(-8px)}}
+@keyframes ckLid{0%,100%{transform:translateY(0) rotate(0)}25%{transform:translateY(-2px) rotate(-3deg)}75%{transform:translateY(-1px) rotate(2deg)}}
+@keyframes ckBub{0%{opacity:0;transform:translateY(4px) scale(.6)}40%{opacity:1}100%{opacity:0;transform:translateY(-6px) scale(1.1)}}
+@keyframes ckGlow{0%,100%{opacity:.25}50%{opacity:.7}}
+@keyframes ckFlame{from{transform:scaleY(.8)}to{transform:scaleY(1.15)}}
+@keyframes ckStir{0%{transform:translate(-5px,0)}25%{transform:translate(0,3px)}50%{transform:translate(5px,0)}75%{transform:translate(0,-3px)}100%{transform:translate(-5px,0)}}
+@keyframes ckDash{to{stroke-dashoffset:-16}}
+@keyframes ckShake{from{transform:translateX(-1px)}to{transform:translateX(1px)}}
+@keyframes ckSpin{to{transform:rotate(360deg)}}
+@keyframes ckTwinkle{0%,100%{opacity:.15;transform:scale(.6)}50%{opacity:1;transform:scale(1.15)}}
+@keyframes ckPresent{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+@keyframes ckIn{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:none}}
+@keyframes ckInBack{from{opacity:0;transform:translateX(-28px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.ck *,.ck-stage{animation:none!important}}
+.ck-steps{list-style:none;margin:4px 0 0;padding:0;display:grid;gap:10px}
+.ck-steps li{display:grid;grid-template-columns:44px minmax(0,1fr);gap:12px;align-items:start}
+.ck-steps p{margin:2px 0 0;font-size:.92rem;line-height:1.45}
+.ck-ic{width:44px;height:44px;border-radius:13px;background:var(--surface-2);padding:7px;box-sizing:border-box;display:block}
+.ck-tip{color:var(--accent-text);background:var(--accent-soft);border-radius:var(--r-sm);padding:8px 10px;font-size:.875rem!important;margin-top:6px!important}
+.ck-go{background:var(--accent);color:var(--accent-ink)}
+.ck-go:hover{background:var(--accent);opacity:.9}
+.ck-prog{display:flex;gap:4px}
+.ck-prog i{flex:1;height:5px;border-radius:9px;background:var(--surface-2);transition:background-color .3s}
+.ck-prog i.on{background:var(--accent)}
+.ck-stage{display:flex;flex-direction:column;gap:12px;min-height:300px;animation:ckIn .38s cubic-bezier(.2,.9,.3,1.2)}
+.ck-stage.back{animation-name:ckInBack}
+.ck-big{width:150px;height:150px;margin:6px auto 0;padding:20px;border-radius:36px;background:var(--surface-2);box-sizing:border-box}
+.ck-c{text-align:center}
+.ck-text{font-size:1.2rem;line-height:1.5;text-align:center;text-wrap:pretty}
+.ck-ing{max-width:420px;margin:0 auto;width:100%}
+.ck-timer{display:flex;justify-content:center;align-items:center;gap:12px}
+.ck-timer b{font-size:2.2rem;letter-spacing:-.02em}
+.ck-nav{display:grid;grid-template-columns:1fr 1.6fr;gap:10px}
+.ck-nav .btn[disabled]{opacity:.4;pointer-events:none}
 .re-ta{width:100%;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);padding:10px 12px;font:inherit;color:inherit;resize:vertical}
 .empty{padding:22px;text-align:center;color:var(--muted);background:var(--row);border-radius:var(--r)}
 .hist{display:flex;flex-direction:column;gap:6px}
@@ -1430,6 +1497,244 @@ const SHOP_RECIPES=[
  {id:'bananenbrot',n:'Erdnussbutter-Bananen-Brot',m:'s',veg:1,min:3,i:[['vk-brot',50],['banane',100],['erdnussbutter',15]],st:'Brot mit Erdnussbutter bestreichen, Bananenscheiben drauf.'},
  {id:'griechnuss',n:'Griechischer Joghurt mit Walnüssen & Honig',m:'s',veg:1,min:2,i:[['griech',150],['walnuesse',20],['honig',10]],st:'Joghurt in eine Schale, Walnüsse grob hacken, drüberstreuen, Honig drüber.'},
 ];
+/* Schritt-für-Schritt-Anleitungen: [Animation, Text, Timer-Minuten, Tipp]
+   Animationen: prep, cut, pan, pot, oven, mix, blend, rest, plate */
+const SHOP_STEPS={
+ oats:[['mix','Haferflocken in ein großes Glas oder eine Dose geben, Milch dazugießen und gut umrühren, damit keine trockenen Nester bleiben.'],
+  ['mix','Skyr darauf schichten. Wer es süßer mag: ein paar Tropfen Süßstoff oder etwas Zimt unterrühren.'],
+  ['rest','Abgedeckt über Nacht in den Kühlschrank stellen. Die Flocken saugen die Milch auf und werden cremig.',0,'Mindestens 4 Stunden, dann ist die Konsistenz richtig.'],
+  ['plate','Morgens die Beeren darauf geben. Gefrorene Beeren kannst du direkt am Abend mit ins Glas legen, sie tauen über Nacht auf.']],
+ ruehrei:[['mix','Eier in eine Schüssel schlagen, eine Prise Salz und Pfeffer dazu und mit einer Gabel kräftig verquirlen, bis keine Schlieren mehr da sind.'],
+  ['pan','Öl in einer beschichteten Pfanne bei mittlerer Hitze warm werden lassen. Eier hineingeben und kurz stehen lassen, bis der Rand stockt.',1],
+  ['pan','Mit einem Pfannenwender langsam vom Rand zur Mitte schieben. So entstehen große, saftige Flocken. Vom Herd nehmen, solange es noch leicht glänzt.',2,'Rührei gart auf dem Teller nach. Zu lange in der Pfanne wird es trocken.'],
+  ['cut','Tomate in Scheiben schneiden, Brot nach Wunsch toasten.'],
+  ['plate','Rührei auf das Brot geben, Tomaten daneben, mit Schnittlauch oder Pfeffer bestreuen.']],
+ quarkbowl:[['mix','Magerquark mit 2 bis 3 EL Milch oder Wasser glatt rühren. So wird er cremig statt bröselig.'],
+  ['cut','Banane schälen und in Scheiben schneiden.'],
+  ['plate','Quark in eine Schale geben, Bananenscheiben und Haferflocken darauf verteilen.'],
+  ['plate','Erdnussbutter kurz in der Mikrowelle (10 Sekunden) flüssig machen und in Streifen darüber ziehen.',0,'Eine Prise Zimt passt perfekt zu Banane und Erdnuss.']],
+ porridge:[['pot','Haferflocken mit der Milch und einer Prise Salz in einen kleinen Topf geben und bei mittlerer Hitze aufkochen.'],
+  ['pot','Hitze reduzieren und 4 Minuten unter Rühren köcheln lassen, bis ein dicker Brei entsteht.',4,'Ständig rühren, Milch brennt schnell an.'],
+  ['mix','Topf vom Herd nehmen und den Magerquark unterrühren. Nicht mehr kochen lassen, sonst flockt der Quark aus.'],
+  ['cut','Banane in Scheiben schneiden.'],
+  ['plate','Porridge in eine Schale füllen, Banane darauf legen. Optional mit Zimt bestreuen.']],
+ bircher:[['mix','Haferflocken, Joghurt und Milch in einer Schüssel verrühren.'],
+  ['cut','Apfel waschen und mit Schale grob in die Schüssel reiben, das Kerngehäuse weglassen. Sofort unterrühren, damit er nicht braun wird.'],
+  ['rest','Abgedeckt über Nacht im Kühlschrank ziehen lassen.',0,'Ein Spritzer Zitrone hält den Apfel frisch.'],
+  ['cut','Walnüsse grob hacken.'],
+  ['plate','Müsli umrühren, bei Bedarf einen Schuss Milch dazu, Walnüsse darüberstreuen.']],
+ pancakes:[['blend','Haferflocken, Eier, Magerquark und die Hälfte der Banane in einen Mixer geben und zu einem glatten Teig pürieren.',0,'Ohne Mixer: Banane zerdrücken, Haferflocken 5 Minuten im Teig quellen lassen.'],
+  ['rest','Teig 5 Minuten stehen lassen, damit die Haferflocken quellen und die Pancakes nicht zerfallen.',5],
+  ['pan','Wenig Öl in einer beschichteten Pfanne bei mittlerer Hitze erhitzen. Pro Pancake etwa 2 EL Teig hineingeben.'],
+  ['pan','Wenden, wenn sich oben Bläschen bilden und der Rand fest ist, nach etwa 2 Minuten. Die zweite Seite 1 Minute braten.',3,'Nicht zu heiß braten, Haferteig verbrennt schnell.'],
+  ['plate','Pancakes stapeln, restliche Banane in Scheiben darauf legen.']],
+ avotoast:[['oven','Brotscheiben toasten, bis sie goldbraun und knusprig sind.'],
+  ['mix','Avocado halbieren, Kern entfernen, Fruchtfleisch mit einem Löffel herauslösen und mit einer Gabel zerdrücken. Mit Salz, Pfeffer und etwas Zitrone würzen.'],
+  ['pan','Eier in eine heiße, leicht geölte Pfanne schlagen und bei mittlerer Hitze braten, bis das Eiweiß fest und das Eigelb noch flüssig ist.',3],
+  ['cut','Tomate in Scheiben schneiden.'],
+  ['plate','Avocado auf das Brot streichen, Tomate und Spiegelei darauf legen. Mit Chiliflocken bestreuen.']],
+ griechbowl:[['rest','Gefrorene Erdbeeren am Abend vorher in den Kühlschrank stellen oder 2 Minuten in der Mikrowelle antauen.'],
+  ['cut','Erdbeeren halbieren.'],
+  ['plate','Joghurt in eine Schale geben, Erdbeeren und Haferflocken darauf verteilen.'],
+  ['plate','Honig in dünnen Fäden darüber ziehen.',0,'Leicht angeröstete Haferflocken (2 Min. trockene Pfanne) schmecken nussiger.']],
+ schinkentoast:[['prep','Zwei Toastscheiben mit Schinken und Käse belegen, mit den anderen beiden Scheiben zuklappen.'],
+  ['pan','In einer Pfanne ohne Fett bei mittlerer Hitze von jeder Seite 2 bis 3 Minuten rösten. Mit einem Teller leicht andrücken, damit der Käse schmilzt.',5,'Im Sandwichmaker geht es in 3 Minuten.'],
+  ['cut','Tomate in Spalten schneiden.'],
+  ['plate','Toasts diagonal halbieren und mit der Tomate servieren.']],
+ chiapudding:[['mix','Chiasamen in die Milch rühren und 10 Minuten stehen lassen.',10],
+  ['mix','Noch einmal kräftig umrühren. Das verhindert Klümpchen, weil die Samen sonst am Boden zusammenkleben.'],
+  ['rest','Über Nacht im Kühlschrank quellen lassen, bis eine puddingartige Konsistenz entsteht.'],
+  ['plate','In ein Glas abwechselnd Chia-Pudding, Skyr und aufgetaute Erdbeeren schichten.']],
+ hrb:[['pot','Reis mit der doppelten Menge Salzwasser aufkochen, dann zugedeckt bei kleiner Hitze 15 Minuten garen.',15,'Reis vorher in einem Sieb abspülen, dann klebt er nicht.'],
+  ['cut','Hähnchen trocken tupfen und in mundgerechte Würfel schneiden. Mit Salz, Pfeffer und Paprikapulver würzen.'],
+  ['pan','Öl in einer Pfanne stark erhitzen. Hähnchen hineingeben und 2 Minuten nicht bewegen, dann rundherum anbraten, bis es innen nicht mehr rosa ist.',7,'Nicht zu viel auf einmal in die Pfanne, sonst kocht das Fleisch statt zu bräunen.'],
+  ['pot','Brokkoli in einem Topf mit wenig Wasser zugedeckt 5 bis 6 Minuten dämpfen. Er soll knackig und grün bleiben.',6],
+  ['plate','Alles auf Teller oder in Meal-Prep-Boxen verteilen. Hält im Kühlschrank 3 Tage.']],
+ chili:[['cut','Zwiebel fein würfeln, Paprika entkernen und in kleine Würfel schneiden. Bohnen und Mais in einem Sieb abspülen.'],
+  ['pot','Reis aufsetzen: mit doppelter Menge Salzwasser aufkochen, zugedeckt 15 Minuten bei kleiner Hitze garen.',15],
+  ['pan','Hack in einem großen Topf ohne Öl krümelig anbraten, bis es braun ist. Zwiebel dazugeben und 2 Minuten mitbraten.',6],
+  ['pan','Paprika dazu, mit Chili, Kreuzkümmel, Paprikapulver, Salz würzen und kurz mitrösten.'],
+  ['pot','Passata, Bohnen und Mais einrühren und offen 15 Minuten köcheln lassen, bis es sämig ist.',15,'Ein Stück Zartbitterschokolade am Ende macht den Geschmack runder.'],
+  ['plate','Chili mit dem Reis servieren. Schmeckt aufgewärmt am nächsten Tag noch besser.']],
+ bolo:[['cut','Zwiebel und Karotte schälen und sehr fein würfeln.'],
+  ['pan','Öl in einem Topf erhitzen, Hack darin krümelig und kräftig braun anbraten.',5],
+  ['pan','Zwiebel und Karotte dazugeben und 3 Minuten mitbraten, bis die Zwiebel glasig ist.',3],
+  ['pot','Passata dazugießen, mit Salz, Pfeffer und Oregano würzen. Bei kleiner Hitze 15 Minuten köcheln lassen.',15],
+  ['pot','Währenddessen Nudeln in reichlich Salzwasser nach Packungsangabe bissfest kochen.',9],
+  ['plate','Nudeln abgießen, mit der Sauce mischen und servieren.']],
+ lachs:[['oven','Backofen auf 200 °C Umluft vorheizen.'],
+  ['cut','Süßkartoffel schälen und in 2 cm große Würfel schneiden, mit der Hälfte des Öls, Salz und Paprikapulver mischen.'],
+  ['oven','Süßkartoffeln auf einem Blech verteilen und 13 Minuten backen.',13],
+  ['oven','Lachs salzen, auf das Blech legen und alles weitere 12 Minuten backen. Der Lachs ist fertig, wenn er sich leicht in Lamellen teilen lässt.',12,'Gefrorenen Lachs vorher über Nacht im Kühlschrank auftauen.'],
+  ['pan','Spinat mit dem restlichen Öl in einer Pfanne zusammenfallen lassen, mit Salz, Pfeffer und Muskat würzen.',3],
+  ['plate','Alles zusammen anrichten, mit einem Spritzer Zitrone.']],
+ wraps:[['cut','Pute in dünne Streifen schneiden, Paprika und Gurke in feine Stifte.'],
+  ['mix','Joghurt mit Salz, Pfeffer und einer gepressten Knoblauchzehe verrühren.'],
+  ['pan','Pute in einer heißen Pfanne mit etwas Öl 5 Minuten rundherum braten, mit Paprikapulver würzen.',5],
+  ['pan','Wraps kurz in der trockenen Pfanne erwärmen (je 20 Sekunden), dann lassen sie sich ohne Reißen rollen.'],
+  ['plate','Dip auf die Wraps streichen, Pute und Gemüse darauf verteilen, Seiten einklappen und fest aufrollen.']],
+ curry:[['cut','Zwiebel fein würfeln. Linsen in einem Sieb abspülen, bis das Wasser klar ist.'],
+  ['pot','Reis aufsetzen: mit doppelter Menge Salzwasser aufkochen und zugedeckt 15 Minuten garen.',15],
+  ['pan','Öl im Topf erhitzen, Zwiebel 3 Minuten glasig dünsten. 1 bis 2 TL Currypulver kurz mitrösten, bis es duftet.',3],
+  ['pot','Linsen, Passata und 300 ml Wasser dazu. Aufkochen und 15 Minuten köcheln lassen, bis die Linsen weich zerfallen.',15,'Bei Bedarf Wasser nachgießen, rote Linsen saugen viel auf.'],
+  ['mix','Spinat unterrühren und 2 Minuten mitziehen lassen. Mit Salz und etwas Zitrone abschmecken.'],
+  ['plate','Mit Reis servieren.']],
+ tunapasta:[['pot','Nudeln in reichlich Salzwasser nach Packungsangabe bissfest kochen.',10],
+  ['cut','Zwiebel fein würfeln, Thunfisch abtropfen lassen.'],
+  ['pan','Öl in einer Pfanne erhitzen, Zwiebel 3 Minuten anbraten.',3],
+  ['pot','Passata dazu, mit Salz, Pfeffer und Oregano würzen und 5 Minuten köcheln lassen.',5],
+  ['mix','Thunfisch zerpflücken und unterheben, nur noch kurz erwärmen.'],
+  ['plate','Nudeln abgießen, mit der Sauce mischen und servieren.']],
+ ofenkartoffel:[['oven','Backofen auf 200 °C Umluft vorheizen.'],
+  ['cut','Kartoffeln gründlich waschen und längs halbieren. Mit Öl, Salz und Rosmarin einreiben.'],
+  ['oven','Mit der Schnittfläche nach unten aufs Blech legen und 35 Minuten backen, bis sie goldbraun und innen weich sind.',35,'Mit einer Gabel testen: Sie muss leicht hineingleiten.'],
+  ['mix','Gurke fein reiben und leicht ausdrücken. Mit dem Quark, Salz, Pfeffer und Kräutern verrühren.'],
+  ['plate','Kartoffeln mit dem Kräuterquark servieren.']],
+ couscous:[['pot','Wasser aufkochen. Couscous in eine Schüssel geben, mit der gleichen Menge kochendem Wasser übergießen, salzen und abgedeckt 5 Minuten quellen lassen.',5],
+  ['cut','Hähnchen in Streifen schneiden, Gurke und Tomaten würfeln, Feta zerbröseln.'],
+  ['pan','Hähnchen in einer heißen Pfanne mit etwas Öl 6 bis 7 Minuten braten, bis es durch ist.',7],
+  ['mix','Couscous mit einer Gabel auflockern. Mit Gemüse, Hähnchen, restlichem Öl, Zitronensaft, Salz und Pfeffer mischen.'],
+  ['plate','Feta darüber streuen. Schmeckt warm und kalt, ideal zum Mitnehmen.']],
+ tofupfanne:[['pot','Reis aufsetzen und 15 Minuten garen.',15],
+  ['cut','Tofu in ein Küchentuch wickeln und kräftig ausdrücken. Dann in Würfel schneiden. Paprika in Streifen, Brokkoli in kleine Röschen.'],
+  ['pan','Öl stark erhitzen, Tofu darin 6 bis 8 Minuten rundherum knusprig braten, herausnehmen.',8,'Je trockener der Tofu, desto knuspriger wird er.'],
+  ['pan','Gemüse in derselben Pfanne 5 Minuten bissfest braten.',5],
+  ['mix','Tofu zurück in die Pfanne, mit 2 EL Sojasauce ablöschen und alles kurz schwenken.'],
+  ['plate','Mit Reis servieren, optional Sesam darüber.']],
+ shakshuka:[['cut','Zwiebel und Paprika in feine Streifen schneiden.'],
+  ['pan','In einer Pfanne mit etwas Öl 5 Minuten weich braten.',5],
+  ['pot','Passata dazugeben, mit Kreuzkümmel, Paprikapulver, Salz und Pfeffer würzen und 5 Minuten köcheln lassen.',5],
+  ['pan','Mit einem Löffel Mulden in die Sauce drücken und je ein Ei hineinschlagen. Deckel drauf und bei kleiner Hitze 8 Minuten stocken lassen.',8,'Eigelb soll noch weich sein, wenn das Eiweiß fest ist.'],
+  ['plate','Feta darüber bröseln und direkt aus der Pfanne mit dem Brot zum Dippen essen.']],
+ bulgurpfanne:[['pot','Bulgur mit der doppelten Menge Salzwasser aufkochen und 10 Minuten bei kleiner Hitze garen.',10],
+  ['cut','Hähnchen in Streifen schneiden, Zucchini und Paprika in mundgerechte Stücke.'],
+  ['pan','Öl erhitzen, Hähnchen 5 Minuten scharf anbraten, mit Salz und Paprikapulver würzen.',5],
+  ['pan','Gemüse dazu und weitere 5 Minuten braten, bis es leicht gebräunt, aber noch bissfest ist.',5],
+  ['mix','Bulgur unterheben und alles 1 Minute durchschwenken.'],
+  ['plate','Anrichten, mit etwas Joghurt oder Zitrone servieren.']],
+ pestopasta:[['pot','Nudeln in reichlich Salzwasser bissfest kochen. Vor dem Abgießen eine Tasse Nudelwasser aufheben.',10],
+  ['cut','Hähnchen in Streifen schneiden, Tomaten halbieren.'],
+  ['pan','Hähnchen in einer heißen Pfanne mit wenig Öl 6 Minuten goldbraun braten, salzen.',6],
+  ['mix','Nudeln, Hähnchen und Pesto in der Pfanne mischen. Mit einem Schuss Nudelwasser wird das Pesto cremig.',0,'Pesto nie mitkochen, nur unterheben, sonst wird es bitter.'],
+  ['plate','Tomaten unterheben und sofort servieren.']],
+ geschnetzeltes:[['pot','Reis aufsetzen und 15 Minuten garen.',15],
+  ['cut','Pute in feine Streifen schneiden, Pilze in Scheiben, Zwiebel fein würfeln.'],
+  ['pan','Öl stark erhitzen, Pute 4 Minuten scharf anbraten, salzen und herausnehmen.',4],
+  ['pan','Zwiebel und Pilze in derselben Pfanne 5 Minuten braten, bis die Pilze Farbe bekommen.',5],
+  ['pot','Mit der Milch ablöschen, 1 TL Speisestärke in etwas kaltem Wasser verrühren und einrühren. 2 Minuten einköcheln lassen.',2],
+  ['mix','Pute zurück in die Sauce geben, mit Salz, Pfeffer und Paprika abschmecken.'],
+  ['plate','Mit Reis anrichten, mit Petersilie bestreuen.']],
+ schweinefilet:[['pot','Kartoffeln schälen, halbieren und in Salzwasser 20 Minuten kochen.',20],
+  ['cut','Schweinefilet von Sehnen befreien und in 3 cm dicke Medaillons schneiden, leicht flach drücken.'],
+  ['pan','Pfanne mit etwas Öl stark erhitzen. Medaillons von jeder Seite 3 Minuten braten, salzen und pfeffern.',6,'Innen darf es leicht rosa sein, dann bleibt es saftig.'],
+  ['rest','Fleisch 3 Minuten auf einem Teller ruhen lassen, damit der Saft sich verteilt.',3],
+  ['pot','Erbsen mit der Butter und einem Schluck Wasser 3 Minuten erwärmen.',3],
+  ['plate','Alles zusammen anrichten.']],
+ burritobowl:[['pot','Reis aufsetzen und 15 Minuten garen.',15],
+  ['cut','Paprika würfeln. Bohnen und Mais abspülen.'],
+  ['pan','Hack krümelig anbraten, Paprika dazu. Mit Kreuzkümmel, Chili, Paprikapulver und Salz würzen.',7],
+  ['pot','Bohnen und Mais in einem kleinen Topf oder der Mikrowelle erwärmen.'],
+  ['plate','Reis in eine Schüssel geben, Hack, Bohnen und Mais nebeneinander darauf anrichten, einen Klecks Joghurt obendrauf.',0,'Limette und Koriander machen es richtig mexikanisch.']],
+ kabeljau:[['rest','Gefrorenen Fisch über Nacht im Kühlschrank auftauen und vor dem Braten gründlich trocken tupfen.'],
+  ['pot','Kartoffeln schälen und in Salzwasser 20 Minuten kochen.',20],
+  ['pan','Butter in einer beschichteten Pfanne bei mittlerer Hitze schmelzen. Fisch salzen und 4 Minuten je Seite braten.',8,'Erst wenden, wenn sich der Fisch von selbst vom Pfannenboden löst.'],
+  ['pan','Fisch herausnehmen, Spinat in die Pfanne geben und zusammenfallen lassen. Mit Salz und Muskat würzen.',3],
+  ['plate','Mit Kartoffeln und einem Spritzer Zitrone servieren.']],
+ garnelen:[['pot','Reis aufsetzen und 15 Minuten garen.',15],
+  ['rest','Garnelen in einem Sieb unter kaltem Wasser auftauen und trocken tupfen.'],
+  ['cut','Zucchini in halbe Scheiben schneiden, eine Knoblauchzehe fein hacken.'],
+  ['pan','Öl erhitzen, Zucchini 4 Minuten braten. Garnelen und Knoblauch dazu und 3 Minuten mitbraten, bis die Garnelen rosa sind.',7],
+  ['plate','Mit Salz, Pfeffer und Zitronensaft abschmecken und mit Reis servieren.']],
+ hackbaellchen:[['mix','Hack mit Ei, Parmesan, Salz, Pfeffer und Oregano mit den Händen verkneten.'],
+  ['prep','Mit feuchten Händen walnussgroße Bällchen formen.'],
+  ['pan','Bällchen in einer Pfanne mit wenig Öl rundherum 5 Minuten anbraten.',5],
+  ['pot','Gewürfelte Zwiebel dazu, kurz mitbraten, dann Passata angießen. Zugedeckt 15 Minuten köcheln lassen.',15],
+  ['pot','Währenddessen Nudeln bissfest kochen.',10],
+  ['plate','Nudeln mit Bällchen und Sauce anrichten.']],
+ lachspasta:[['pot','Nudeln in Salzwasser bissfest kochen, eine Tasse Nudelwasser aufheben.',10],
+  ['cut','Lachs (aufgetaut) in Würfel schneiden.'],
+  ['pan','Lachs in einer Pfanne mit etwas Öl 3 Minuten anbraten.',3],
+  ['pan','Spinat dazu und zusammenfallen lassen.',2],
+  ['mix','Frischkäse und einen Schuss Nudelwasser einrühren, bis eine cremige Sauce entsteht. Mit Salz, Pfeffer und Zitrone würzen.'],
+  ['plate','Nudeln unterheben und servieren.']],
+ kichercurry:[['pot','Reis aufsetzen und 15 Minuten garen.',15],
+  ['cut','Zwiebel fein würfeln, Kichererbsen abspülen.'],
+  ['pan','Öl erhitzen, Zwiebel glasig dünsten, dann 1 bis 2 TL Currypulver kurz mitrösten.',3],
+  ['pot','Passata und Kichererbsen dazu, 10 Minuten köcheln lassen.',10],
+  ['mix','Spinat unterrühren, mit Salz und Zitrone abschmecken.'],
+  ['plate','Mit Reis servieren.']],
+ omelett:[['cut','Paprika würfeln, Pilze in Scheiben schneiden.'],
+  ['pan','Gemüse in einer Pfanne mit etwas Öl 4 Minuten anbraten.',4],
+  ['mix','Eier mit Salz und Pfeffer verquirlen.'],
+  ['pan','Eier über das Gemüse gießen, Käse darüber streuen. Deckel drauf und bei kleiner Hitze 5 Minuten stocken lassen.',5,'Kleine Hitze ist der Trick: Unten wird es goldbraun, oben fest, ohne zu verbrennen.'],
+  ['plate','Omelett zusammenklappen und mit dem Brot servieren.']],
+ caprese:[['pot','Nudeln in Salzwasser bissfest kochen.',10],
+  ['cut','Tomaten würfeln, Mozzarella in kleine Stücke zupfen.'],
+  ['mix','Tomaten mit Öl, Salz, Pfeffer und Basilikum in einer großen Schüssel mischen.'],
+  ['mix','Heiße Nudeln dazugeben und mit dem Mozzarella vermengen. Die Hitze lässt den Käse leicht schmelzen.'],
+  ['plate','Sofort servieren, nach Wunsch mit Balsamico.']],
+ quinoabowl:[['pot','Quinoa in einem Sieb gründlich abspülen, mit der doppelten Menge Salzwasser 15 Minuten köcheln.',15,'Abspülen entfernt die Bitterstoffe.'],
+  ['pan','Kichererbsen abtropfen, trocken tupfen und in einer trockenen Pfanne 5 Minuten rösten, mit Paprikapulver würzen.',5],
+  ['cut','Gurke und Tomate würfeln, Feta zerbröseln.'],
+  ['mix','Dressing aus Öl, Zitronensaft, Salz und Pfeffer anrühren.'],
+  ['plate','Alles in einer Schüssel anrichten und mit dem Dressing beträufeln.']],
+ paprikagefuellt:[['oven','Backofen auf 180 °C Umluft vorheizen.'],
+  ['pot','Reis 10 Minuten vorkochen, er gart im Ofen fertig.',10],
+  ['pan','Hack krümelig anbraten, mit Salz, Pfeffer und Paprika würzen, mit dem Reis mischen.',6],
+  ['cut','Von den Paprika einen Deckel abschneiden und die Kerne entfernen.'],
+  ['prep','Füllung in die Paprika geben, in eine Auflaufform mit der Passata setzen, Käse darauf.'],
+  ['oven','30 Minuten backen, bis die Paprika weich und der Käse goldbraun ist.',30],
+  ['plate','Mit der Tomatensauce aus der Form servieren.']],
+ caesarwrap:[['pan','Hähnchen salzen, pfeffern und in einer Pfanne mit etwas Öl 6 Minuten je Seite braten.',12],
+  ['cut','Hähnchen in Streifen schneiden, Salat in feine Streifen.'],
+  ['mix','Joghurt mit Parmesan, einem Spritzer Zitrone, etwas Senf, Salz und Pfeffer zu einem Dressing verrühren.'],
+  ['plate','Wraps mit Salat, Hähnchen und Dressing füllen und fest aufrollen.']],
+ linsenbolo:[['cut','Zwiebel und Karotte sehr fein würfeln.'],
+  ['pan','Öl erhitzen, Zwiebel und Karotte 4 Minuten anbraten.',4],
+  ['pot','Linsen, Passata und 250 ml Wasser dazu. 15 Minuten köcheln lassen, bis die Linsen weich sind. Mit Salz, Pfeffer und Oregano würzen.',15],
+  ['pot','Nudeln in Salzwasser bissfest kochen.',10],
+  ['plate','Nudeln mit der Linsen-Bolognese servieren, nach Wunsch mit etwas Hartkäse.']],
+ tofucurry:[['pot','Reis aufsetzen und 15 Minuten garen.',15],
+  ['cut','Tofu ausdrücken und würfeln.'],
+  ['pan','Tofu in Öl 6 Minuten rundherum anbraten, 1 bis 2 TL Currypulver dazu.',6],
+  ['pot','Passata und Erbsen dazu, 10 Minuten köcheln lassen.',10],
+  ['plate','Mit Salz abschmecken und mit dem Reis servieren.']],
+ thunreis:[['pot','Reis kochen und auf einem Teller ausbreiten, damit er schnell abkühlt.',15],
+  ['cut','Paprika würfeln, Thunfisch abtropfen lassen.'],
+  ['mix','Reis mit Thunfisch, Mais, Paprika und Joghurt mischen.'],
+  ['mix','Mit Salz, Pfeffer und Zitronensaft abschmecken.'],
+  ['rest','Mindestens 15 Minuten im Kühlschrank durchziehen lassen. Hält 3 Tage.',15]],
+ gyros:[['cut','Schweinefilet in dünne Streifen, Zwiebel in Ringe schneiden.'],
+  ['mix','Fleisch mit Gyrosgewürz und etwas Öl mischen.'],
+  ['pot','Reis aufsetzen und 15 Minuten garen.',15],
+  ['mix','Gurke fein reiben, ausdrücken und mit dem Joghurt, Salz und einer gepressten Knoblauchzehe verrühren.'],
+  ['pan','Fleisch in einer sehr heißen Pfanne in 2 Portionen je 4 Minuten scharf braten, Zwiebeln zum Schluss kurz mitbraten.',8,'Sehr heiß und nicht zu voll braten, dann wird es knusprig wie vom Spieß.'],
+  ['plate','Gyros mit Reis und Tzatziki servieren.']],
+ skyrapfel:[['cut','Apfel waschen, entkernen und in kleine Würfel schneiden.'],
+  ['plate','Skyr in eine Schale geben, Apfel darauf verteilen und mit Zimt bestreuen.']],
+ huettenbrot:[['cut','Tomate in Scheiben schneiden.'],
+  ['plate','Brot mit Hüttenkäse bestreichen, Tomate darauf legen, mit Salz und Pfeffer würzen.']],
+ mandelbanane:[['prep','Mandeln in eine kleine Dose füllen, Banane dazupacken.'],
+  ['plate','Fertig. Perfekter Snack für unterwegs oder vor dem Training.']],
+ pudding:[['plate','Becher öffnen und genießen. Gekühlt schmeckt er am besten.']],
+ quarkbeeren:[['rest','Erdbeeren 2 Minuten in der Mikrowelle antauen oder am Vorabend in den Kühlschrank stellen.'],
+  ['mix','Quark mit etwas Wasser cremig rühren, Erdbeeren unterheben und leicht zerdrücken.'],
+  ['plate','Nach Wunsch mit Süßstoff süßen.']],
+ eiergurke:[['pot','Eier in kochendes Wasser legen und 9 Minuten kochen.',9],
+  ['rest','In kaltem Wasser abschrecken, dann lassen sie sich leicht schälen.'],
+  ['cut','Gurke in Sticks schneiden.'],
+  ['plate','Eier halbieren, mit Salz und Pfeffer würzen und mit der Gurke essen.']],
+ schinkenroellchen:[['cut','Gurke in lange, dünne Streifen schneiden.'],
+  ['prep','Schinkenscheiben mit Frischkäse bestreichen, je einen Gurkenstreifen darauf legen und aufrollen.'],
+  ['plate','Mit Pfeffer bestreuen.']],
+ thuntoast:[['oven','Toast goldbraun toasten.'],
+  ['mix','Thunfisch abtropfen lassen und mit Joghurt, Salz und Pfeffer verrühren.'],
+  ['plate','Creme auf den Toast streichen.']],
+ bananenbrot:[['cut','Banane in Scheiben schneiden.'],
+  ['plate','Brot mit Erdnussbutter bestreichen und mit den Bananenscheiben belegen.']],
+ griechnuss:[['cut','Walnüsse grob hacken.'],
+  ['plate','Joghurt in eine Schale geben, Walnüsse darüber streuen und mit Honig beträufeln.']],
+};
 /* Preise: Supabase (shop_*-Tabellen) wenn vorhanden, sonst eingebaute Richtpreise. Nährwerte: App-Datenbank (FOODS). */
 const SHOP_SLOTS=[['b','Frühstück','b'],['l','Mittagessen','m'],['d','Abendessen','m'],['s','Snack','s']];
 const SHOP_KINDS=[['b','Frühstück'],['m','Hauptgericht'],['s','Snack']];
@@ -1581,7 +1886,8 @@ function renderShop(){
  const meals=dd.meals.map(([id,slot])=>{ const r=shopRec(id), n=shopNut(r,dd.f), sl=SHOP_SLOTS.find(x=>x[0]===slot)[1], times=[...pl.b,...pl.m,...pl.s].includes(id)?ev.days.reduce((a,d)=>a+d.meals.filter(m=>m[0]===id).length,0):0;
   return `<details class="shop-meal"><summary><span style="min-width:0"><span class="lbl">${sl} · ${r.min||'?'} Min.${r.own?' · eigenes':''}</span><b>${esc(r.n)}</b><small>${dd.f!==1?fmt(dd.f,2)+' Portionen · ':''}${fmt(n.k)} kcal · P ${fmt(n.p)} g · KH ${fmt(n.c)} g · F ${fmt(n.f)} g</small></span>${I.right.replace('<svg','<svg class="chev" width="16" height="16"')}</summary>
    <div class="stack" style="gap:10px;padding:4px 4px 2px"><ul class="shop-ing">${r.i.map(([pid,g])=>`<li><span>${esc(SHOP.prod[pid]?.n||pid)}</span><span class="num">${gTxt(g*dd.f)}</span></li>`).join('')}</ul>
-   ${r.st?`<p class="muted" style="font-size:.9rem">${esc(r.st)}</p>`:''}
+   <button class="btn ck-go" data-act="ckStart" data-v="${id}|${dd.f}|${di}.${slot}">${CK_PLAY} Kochmodus: Schritt für Schritt mit Timer</button>
+   ${shopStepsHTML(r)}
    <div class="row">${logged.has('shop-'+id+'-'+slot)?`<span class="off-note">${I.check.replace('<svg','<svg width="14" height="14"')} Im Tagebuch eingetragen</span>`:`<button class="btn sm" data-act="shopLog" data-v="${di}.${slot}">${I.plus.replace('<svg','<svg width="14" height="14"')} ${date===today()?'Heute':'Am '+dLabel(date)} eintragen</button>`}
    <button class="btn sm ghost" data-act="shopSwap" data-v="${id}">Tauschen${times>1?` (${times}× diese Woche)`:''}</button>${r.own?`<button class="btn sm ghost" data-act="shopEdit" data-v="${id}">Bearbeiten</button>`:''}</div></div></details>`; }).join('');
  const dTot=dd.meals.reduce((a,[id])=>{const n=shopNut(shopRec(id),dd.f); a.k+=n.k; a.p+=n.p; return a},{k:0,p:0});
@@ -1640,7 +1946,8 @@ function renderShopView(id){
  <div class="row" style="gap:6px"><span class="tag">${shopKindN(r.m)}</span>${r.min?`<span class="tag">${r.min} Min.</span>`:''}${shopVeg(r)?'<span class="tag">Vegetarisch</span>':''}${r.own?'<span class="tag t">Eigenes Rezept</span>':''}${inPlan?'<span class="tag t">Diese Woche im Plan</span>':''}</div>
  <div class="shop-stats"><div><b class="num">${fmt(n.k)}</b><span>kcal / Portion</span></div><div><b class="num">${fmt(n.p)} g</b><span>Protein</span></div><div><b class="num">${eur(shopPortion(r,pf.store))}</b><span>bei ${esc(shopStore(pf.store).n)}</span></div></div>
  <ul class="shop-ing">${r.i.map(([pid,g])=>`<li><span>${esc(SHOP.prod[pid]?.n||pid)}</span><span class="num">${gTxt(g)}</span></li>`).join('')}</ul>
- ${r.st?`<p class="muted">${esc(r.st)}</p>`:''}
+ <button class="btn pri" data-act="ckStart" data-v="${id}|1|">${CK_PLAY} Kochmodus starten</button>
+ ${shopStepsHTML(r)}
  <button class="btn ${pin?'':'ghost'}" data-act="shopPin" data-v="${id}" aria-pressed="${pin}">${pin?I.check.replace('<svg','<svg width="14" height="14"')+' Wird immer eingeplant':'Immer einplanen'}</button>
  <div class="row">${r.own?`<button class="btn" data-act="shopEdit" data-v="${id}">Bearbeiten</button><button class="btn ghost danger" data-act="shopDel" data-v="${id}">${SHOP.delAsk===id?'Wirklich löschen?':'Löschen'}</button>`:`<button class="btn" data-act="shopCopy" data-v="${id}">Kopieren & anpassen</button>`}</div>`;
 }
@@ -1665,7 +1972,7 @@ function renderShopEdit(){
   <button class="btn sm ghost" data-act="reAdd" style="align-self:flex-start">${I.plus.replace('<svg','<svg width="14" height="14"')} Zutat</button>
   <p class="off-note">Zutaten kommen aus der Preisliste, damit Preis und Einkaufsliste stimmen. Gewürze, Salz und Kräuter brauchst du nicht eintragen.</p></div>
  <div id="re-sum">${shopReSum()}</div>
- <div class="field"><label for="re-st">Zubereitung (optional)</label><textarea id="re-st" rows="3" data-re="st" class="re-ta">${esc(RE.st||'')}</textarea></div>
+ <div class="field"><label for="re-st">Zubereitung: jede Zeile ein Schritt</label><textarea id="re-st" rows="5" data-re="st" class="re-ta" placeholder="Reis 15 Minuten kochen.&#10;Hähnchen würfeln und scharf anbraten.&#10;Alles mischen und servieren.">${esc(RE.st||'')}</textarea><p class="off-note">Zeiten wie „10 Minuten“ werden im Kochmodus automatisch zum Timer, die Animation passt die App dem Arbeitsschritt an.</p></div>
  <button class="btn pri" data-act="reSave">${RE.swap?'Speichern & in den Plan tauschen':'Speichern'}</button>`;
 }
 function shopInput(t){
@@ -1715,6 +2022,64 @@ const SHOP_H={
   const swap=RE.swap; RE=null; if(swap) shopSwapIn(swap,r.id); saveProfile(); closeSheet(); render(); haptic(10);
   toast(swap?`${r.n} ist jetzt im Plan`:k>=0?'Rezept gespeichert':`${r.n} gespeichert, wird ab jetzt mitgeplant`)},
 };
+/* ============ Anleitungen & Kochmodus ============ */
+const CK_PLAY='<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>';
+const CK_ART={
+ prep:`<svg viewBox="0 0 64 64" class="ck ck-prep" aria-hidden="true"><circle class="ck-a ck-b1" cx="22" cy="27" r="7"/><circle class="ck-w ck-b2" cx="34" cy="24" r="8"/><circle class="ck-a2 ck-b3" cx="45" cy="28" r="6"/><path class="ck-l" d="M9 32h46l-5 20H14z"/><path class="ck-l" d="M22 39v6M32 39v6M42 39v6"/></svg>`,
+ cut:`<svg viewBox="0 0 64 64" class="ck ck-cut" aria-hidden="true"><rect class="ck-s" x="5" y="46" width="54" height="9" rx="4"/><g class="ck-pieces"><rect class="ck-a" x="10" y="38" width="6" height="8" rx="2"/><rect class="ck-a" x="18" y="38" width="6" height="8" rx="2"/><rect class="ck-a" x="26" y="38" width="6" height="8" rx="2"/></g><rect class="ck-a ck-whole" x="34" y="36" width="16" height="10" rx="4"/><g class="ck-knife"><path class="ck-blade" d="M30 14h6v26l-6 2z"/><rect class="ck-handle" x="30" y="4" width="6" height="11" rx="2"/></g></svg>`,
+ pan:`<svg viewBox="0 0 64 64" class="ck ck-pan" aria-hidden="true"><g class="ck-sizzle"><path class="ck-m s1" d="M20 22c-2-3 2-5 0-8"/><path class="ck-m s2" d="M30 20c-2-3 2-5 0-8"/><path class="ck-m s3" d="M40 22c-2-3 2-5 0-8"/></g><g class="ck-panbody"><circle class="ck-a ck-f1" cx="22" cy="38" r="4"/><circle class="ck-w ck-f2" cx="32" cy="36" r="4.5"/><circle class="ck-a ck-f3" cx="41" cy="38" r="3.5"/><path class="ck-l" d="M8 40h46c0 8-6 12-13 12H21c-7 0-13-4-13-12z"/><path class="ck-l" d="M54 42l8-3"/></g><path class="ck-flame" d="M24 60c2-4 4-4 4-7 2 3 3 4 3 7zM34 60c2-4 4-4 4-7 2 3 3 4 3 7z"/></svg>`,
+ pot:`<svg viewBox="0 0 64 64" class="ck ck-pot" aria-hidden="true"><g><path class="ck-m st1" d="M22 18c-3-3 3-6 0-10"/><path class="ck-m st2" d="M32 16c-3-3 3-6 0-10"/><path class="ck-m st3" d="M42 18c-3-3 3-6 0-10"/></g><g class="ck-lid"><path class="ck-l" d="M12 27h40"/><path class="ck-l" d="M29 23h6"/></g><path class="ck-l" d="M14 31h36v16c0 6-4 9-9 9H23c-5 0-9-3-9-9z"/><path class="ck-l" d="M14 35H8M50 35h6"/><path class="ck-bub b1" d="M24 44a2 2 0 1 0 0.1 0z"/><path class="ck-bub b2" d="M34 46a2.5 2.5 0 1 0 0.1 0z"/><path class="ck-bub b3" d="M41 43a1.8 1.8 0 1 0 0.1 0z"/></svg>`,
+ oven:`<svg viewBox="0 0 64 64" class="ck ck-oven" aria-hidden="true"><g><path class="ck-m h1" d="M20 12c-2-2 2-4 0-6"/><path class="ck-m h2" d="M32 12c-2-2 2-4 0-6"/><path class="ck-m h3" d="M44 12c-2-2 2-4 0-6"/></g><rect class="ck-l" x="8" y="16" width="48" height="42" rx="6"/><path class="ck-l" d="M8 26h48"/><circle class="ck-knob" cx="16" cy="21" r="1.8"/><circle class="ck-knob" cx="24" cy="21" r="1.8"/><rect class="ck-glow" x="15" y="32" width="34" height="19" rx="3"/><rect class="ck-l" x="15" y="32" width="34" height="19" rx="3"/><path class="ck-l" d="M22 44h20"/></svg>`,
+ mix:`<svg viewBox="0 0 64 64" class="ck ck-mix" aria-hidden="true"><path class="ck-s" d="M12 34h40c0 12-9 20-20 20s-20-8-20-20z"/><g class="ck-spoon"><path class="ck-l" d="M34 36L46 8"/><circle class="ck-a" cx="33.5" cy="38" r="4.5"/></g><path class="ck-l" d="M10 34h44c0 13-10 21-22 21S10 47 10 34z"/><path class="ck-swirl" d="M22 40c4 3 16 3 20 0"/></svg>`,
+ blend:`<svg viewBox="0 0 64 64" class="ck ck-blend" aria-hidden="true"><g class="ck-jar"><path class="ck-s" d="M18 14h28l-4 30H22z"/><g class="ck-whirl"><path class="ck-a" d="M32 26c6 0 8 4 6 8-3-3-7-3-10 0-2-4 0-8 4-8z"/></g><path class="ck-l" d="M18 12h28l-4 32H22z"/><path class="ck-l" d="M16 12h32"/></g><rect class="ck-l" x="18" y="46" width="28" height="12" rx="3"/><circle class="ck-knob" cx="32" cy="52" r="2.2"/></svg>`,
+ rest:`<svg viewBox="0 0 64 64" class="ck ck-rest" aria-hidden="true"><circle class="ck-s" cx="32" cy="35" r="21"/><circle class="ck-l" cx="32" cy="35" r="21"/><path class="ck-l" d="M27 10h10M32 10v4"/><path class="ck-l ck-hand" d="M32 35V22"/><path class="ck-l ck-hand2" d="M32 35h8"/><circle class="ck-knob" cx="32" cy="35" r="2.4"/></svg>`,
+ plate:`<svg viewBox="0 0 64 64" class="ck ck-plate" aria-hidden="true"><path class="ck-star p1" d="M14 14l1.5 4 4 1.5-4 1.5-1.5 4-1.5-4-4-1.5 4-1.5z"/><path class="ck-star p2" d="M50 10l1.2 3 3 1.2-3 1.2-1.2 3-1.2-3-3-1.2 3-1.2z"/><path class="ck-star p3" d="M54 30l1 2.5 2.5 1-2.5 1-1 2.5-1-2.5-2.5-1 2.5-1z"/><g class="ck-food"><path class="ck-a" d="M18 42c0-9 6-14 14-14s14 5 14 14z"/><circle class="ck-w" cx="27" cy="34" r="3"/><circle class="ck-a2" cx="37" cy="33" r="2.5"/></g><ellipse class="ck-l" cx="32" cy="45" rx="25" ry="7"/><ellipse class="ck-l" cx="32" cy="45" rx="15" ry="3.5"/></svg>`,
+};
+function shopSteps(r){
+ if(SHOP_STEPS[r.id]) return SHOP_STEPS[r.id];
+ const raw=String(r.st||'').trim(); if(!raw) return [['plate','Alles zubereiten und anrichten.']];
+ const parts=(raw.includes('\n')?raw.split(/\n+/):raw.split(/(?<=[.!])\s+(?=[A-ZÄÖÜ])/)).map(x=>x.replace(/^\s*(\d+[.)]|[-•])\s*/,'').trim()).filter(Boolean);
+ const type=t=>/über nacht|ziehen|ruhen|quellen|abkühl|kühlschrank|auftau/i.test(t)?'rest':/ofen|back|°c|grill/i.test(t)?'oven':/brat|pfanne|röst|anbrat|dünst/i.test(t)?'pan':/koch|köchel|sied|wasser|dämpf|topf/i.test(t)?'pot':/püri|mix/i.test(t)?'blend':/schneid|würfel|hack|reib|schäl|streifen|scheiben/i.test(t)?'cut':/rühr|misch|verquirl|knet|heb/i.test(t)?'mix':/anricht|servier|garnier|drüber|darüber/i.test(t)?'plate':'prep';
+ return parts.map(t=>{ const m=t.match(/(\d+)\s*(min|minuten)\b/i); return [type(t),t,m?+m[1]:0]; });
+}
+function shopStepsHTML(r){
+ return `<ol class="ck-steps">${shopSteps(r).map((s,i)=>`<li><span class="ck-ic">${CK_ART[s[0]]||CK_ART.prep}</span><div><span class="lbl">Schritt ${i+1}${s[2]?` · ${s[2]} Min.`:''}</span><p>${esc(s[1])}</p>${s[3]?`<p class="ck-tip"><b>Tipp:</b> ${esc(s[3])}</p>`:''}</div></li>`).join('')}</ol>`;
+}
+let COOK=null;
+const mmss=s=>`${Math.floor(s/60)}:${String(Math.max(0,s%60)).padStart(2,'0')}`;
+function renderCook(){
+ const r=COOK&&shopRec(COOK.id); if(!r) return `<div class="row between"><h2>Kochmodus</h2>${shopX}</div>`;
+ const steps=shopSteps(r), total=steps.length+1, i=COOK.step, last=i===total-1, s=i?steps[i-1]:null;
+ const logged=COOK.log&&(S.food[COOK.date]||[]).some(e=>e.fid==='shop-'+r.id+'-'+COOK.log.split('.')[1]);
+ const tRun=COOK.tEnd&&COOK.tStep===i, left=tRun?Math.ceil((COOK.tEnd-Date.now())/1000):0;
+ const body=i===0?`<div class="ck-big">${CK_ART.prep}</div><span class="lbl ck-c">Vorbereitung · alles bereitlegen</span>
+   <ul class="shop-ing ck-ing">${r.i.map(([pid,g])=>`<li><span>${esc(SHOP.prod[pid]?.n||pid)}</span><span class="num">${gTxt(g*COOK.f)}</span></li>`).join('')}</ul>
+   <p class="off-note ck-c">${COOK.f!==1?`Mengen für ${fmt(COOK.f,2)} Portionen, passend zu deinem Tagesziel. `:''}Dazu Salz, Pfeffer und die Gewürze aus dem Rezept.</p>`
+  :`<div class="ck-big">${CK_ART[s[0]]||CK_ART.prep}</div><span class="lbl ck-c">Schritt ${i} von ${total-1}</span><p class="ck-text">${esc(s[1])}</p>${s[3]?`<p class="ck-tip"><b>Tipp:</b> ${esc(s[3])}</p>`:''}
+   ${s[2]?`<div class="ck-timer">${tRun?`<b class="num" id="ck-t">${mmss(left)}</b><button class="btn sm ghost" data-act="ckTimer" data-v="stop">Stopp</button>`:`<button class="btn" data-act="ckTimer" data-v="${s[2]}">${I.clock||''} Timer ${s[2]}:00 starten</button>`}</div>`:''}`;
+ return `<div class="row between" style="flex-wrap:nowrap;align-items:flex-start"><div style="min-width:0;flex:1"><span class="lbl">Kochmodus${r.min?` · ca. ${r.min} Min.`:''}</span><h2>${esc(r.n)}</h2></div>${shopX}</div>
+ <div class="ck-prog" aria-hidden="true">${Array.from({length:total},(_,k)=>`<i class="${k<=i?'on':''}"></i>`).join('')}</div>
+ <div class="ck-stage ${COOK.dir<0?'back':''}">${body}</div>
+ <div class="ck-nav"><button class="btn" data-act="ckPrev" ${i===0?'disabled':''}>${I.left.replace('<svg','<svg width="16" height="16"')} Zurück</button><button class="btn pri" data-act="ckNext">${last?(COOK.log&&!logged?'Fertig & eintragen':'Fertig'):'Weiter'} ${last?'':I.right.replace('<svg','<svg width="16" height="16"')}</button></div>`;
+}
+function ckTick(){
+ if(!COOK) return;
+ if(COOK.tEnd){ const left=Math.ceil((COOK.tEnd-Date.now())/1000); const el=$('#ck-t'); if(el) el.textContent=mmss(left);
+  if(left<=0){ const st=COOK.tStep; COOK.tEnd=null; COOK.tStep=null; haptic(40); setTimeout(()=>haptic(40),250); toast(`Timer fertig: Schritt ${st}`); if(SHEET&&SHEET.kind==='cook') drawSheet(); } }
+ if(!(SHEET&&SHEET.kind==='cook')&&!COOK.tEnd){ clearInterval(COOK.int); try{COOK.lock&&COOK.lock.release()}catch(e){} COOK=null; }
+}
+Object.assign(SHOP_H,{
+ ckStart:v=>{ const [id,f,log]=v.split('|'); if(COOK){clearInterval(COOK.int); try{COOK.lock&&COOK.lock.release()}catch(e){}}
+  const pl=shopPrefs().plan; COOK={id,f:+f||1,log:log||null,date:log&&pl?addDays(pl.start,+log.split('.')[0]):null,step:0,dir:1,tEnd:null,tStep:null,lock:null};
+  COOK.int=setInterval(ckTick,1000); try{ navigator.wakeLock&&navigator.wakeLock.request('screen').then(l=>{ if(COOK) COOK.lock=l; }).catch(()=>{}); }catch(e){}
+  openSheet('cook')},
+ ckNext:()=>{ const r=shopRec(COOK.id), total=shopSteps(r).length+1;
+  if(COOK.step<total-1){ COOK.step++; COOK.dir=1; haptic(6); drawSheet(); $('#layer .sheet')?.scrollTo?.({top:0,behavior:'smooth'}); return; }
+  const log=COOK.log, logged=log&&(S.food[COOK.date]||[]).some(e=>e.fid==='shop-'+r.id+'-'+log.split('.')[1]);
+  closeSheet(); if(log&&!logged) SHOP_H.shopLog(log); else toast('Guten Appetit!'); },
+ ckPrev:()=>{ if(COOK.step>0){ COOK.step--; COOK.dir=-1; drawSheet(); } },
+ ckTimer:v=>{ if(v==='stop'){ COOK.tEnd=null; COOK.tStep=null; } else { COOK.tEnd=Date.now()+(+v)*60000; COOK.tStep=COOK.step; haptic(10); } drawSheet(); },
+});
 
 /* Wissenschaftliche Tipps */
 const TIPS=[
@@ -2767,7 +3132,7 @@ let SHEET_TOK=0;
 function openSheet(kind,arg){ if(SHEET&&SHEET.kind==='scan'&&kind!=='scan') stopScan(); SHEET_TOK++; const fresh=!SHEET; SHEET={kind,arg}; drawSheet(); if(fresh) haptic(6); }
 function drawSheet(){
  const L=$('#layer'); if(!SHEET){L.innerHTML='';document.body.style.overflow='';document.body.classList.remove('sheet-open');return;}
- const html={account:renderAccount,lib:()=>renderLibSheet(false),pick:()=>renderLibSheet(true),info:()=>renderExInfo(SHEET.arg),customEx:renderCustomEx,alts:()=>renderAlts(SHEET.arg),planEdit:()=>renderPlanEdit(SHEET.arg),pickPlan:()=>renderLibSheet('plan'),scan:renderScan,phCmp:renderPhotoCompare,rate:renderRate,food:renderFoodSheet,customFood:renderCustomFood,shopPx:()=>renderShopPx(SHEET.arg),shopSwap:()=>renderShopSwap(SHEET.arg),shopRecipes:renderShopRecipes,shopView:()=>renderShopView(SHEET.arg),shopEdit:renderShopEdit,settings:renderSettings,summary:()=>SHEET.arg}[SHEET.kind]();
+ const html={account:renderAccount,lib:()=>renderLibSheet(false),pick:()=>renderLibSheet(true),info:()=>renderExInfo(SHEET.arg),customEx:renderCustomEx,alts:()=>renderAlts(SHEET.arg),planEdit:()=>renderPlanEdit(SHEET.arg),pickPlan:()=>renderLibSheet('plan'),scan:renderScan,phCmp:renderPhotoCompare,rate:renderRate,food:renderFoodSheet,customFood:renderCustomFood,shopPx:()=>renderShopPx(SHEET.arg),shopSwap:()=>renderShopSwap(SHEET.arg),shopRecipes:renderShopRecipes,shopView:()=>renderShopView(SHEET.arg),shopEdit:renderShopEdit,cook:renderCook,settings:renderSettings,summary:()=>SHEET.arg}[SHEET.kind]();
  const ov=L.querySelector('.overlay:not(.closing)');
  if(ov){ const sh=ov.querySelector('.sheet'); sh.innerHTML=html; if(SHEET.kind==='summary') countUp(sh); mount3D(); return; }
  L.innerHTML=`<div class="overlay" data-act="overlay"><div class="sheet" role="dialog" aria-modal="true">${html}</div></div>`;

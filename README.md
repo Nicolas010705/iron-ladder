@@ -35,6 +35,7 @@ der Kalorien- und Proteinziel trifft, rechnet die Einkaufsliste mit echten Packu
 - Ohne die Tabellen nutzt die App eingebaute Richtpreise. Preise pflegen: `tools/shop/seed.py` anpassen, ausführen, `shop.sql` im Supabase-SQL-Editor laufen lassen.
 - Nutzer können Preise in der App korrigieren (pro Markt, im Profil gespeichert).
 - Eigene Rezepte aus Produkten der Preisliste anlegen (im Profil, synchronisiert). Sie werden mitgeplant, lassen sich fest einplanen und ersetzen per „Tauschen“ ein Gericht im Wochenplan.
+- Jedes Rezept hat eine Schritt-für-Schritt-Anleitung mit animiertem Symbol je Arbeitsschritt (Schneiden, Braten, Kochen, Backen, Rühren, Mixen, Ruhen, Anrichten) und Tipps. Kochmodus: ein Schritt pro Seite, Mengen passend zur Portion, Timer, Bildschirm bleibt an, am Ende ins Tagebuch eintragen.
 - Rezepte: `tools/shop/recipes.js`, Logik und Oberfläche: `tools/shop/shop-ui.js` (beides in `src-artifact.html` eingebettet).
 
 ## Daten
