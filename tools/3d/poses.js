@@ -10,6 +10,9 @@
  * eq: [{m: Modell, p, ry, back (Lehnenwinkel), car (Höhe Seilrolle), id, sled, arm, pads, stack, ratio}]
  * hold: barbell | barbell2 | ezbar | db2 | dbL | dbMid | kb | smith | abwheel
  * cable: {from:{id, node, p}, handle, each, ankle, wide}
+ * Hände bewegen sich auf Bögen um die Schulter, wenn der Rumpf in a und b gleich bleibt oder beide Ziele am Brustkorb hängen ('c');
+ * arc: true erzwingt den Bogen (Swing), line: true die gerade Linie.
+ * Handdrehung (Kurzhantel, Griffe, freie Hand) wird relativ zum Unterarm gemischt, bei Stangen nur mit relHand: true.
  */
 const STAND = { p: [0, 0.92, -0.05], fit: { legs: 1, k: 0.992 }, foot: { L: { p: [0.12, 0, 0], f: [0.12, 0, 1] } } };
 const WIDE = { L: { p: [0.17, 0, 0], f: [0.32, 0, 1] } };
@@ -54,7 +57,7 @@ export const PATTERNS = {
     view: 'side',
     a: { r: [70, 0, 0], p: [0, 0.45, -0.42], fit: { legs: 1, k: 0.995 }, hand: { L: { p: [0.2, 0.0, 0.0], n: [0, -1, 0], t: [-1, 0, 0.3], k: 'f' } },
       foot: { L: { p: [0.09, 0, -1.25], f: [0, -0.85, 0.5], u: [0, 0.5, 0.85], piv: 'ball' } }, apole: [0.6, 0.1, -1], hd: 5 },
-    b: { r: [84, 0, 0], p: [0, 0.2, -0.32], apole: [0.8, 0.3, -1] },
+    b: { r: [84, 0, 0], p: [0, 0.2, -0.36], apole: [0.8, 0.3, -1] },
   },
   dip: {
     view: 'tq', eq: [{ m: 'power_tower', p: [0, 0, 0] }],
@@ -164,7 +167,7 @@ export const PATTERNS = {
   },
   lunge: {
     view: 'side', hold: 'db2',
-    a: { p: [0, 0.9, -0.02], fit: { legs: 1, k: 0.995, side: 'L' }, foot: { L: { p: [0.12, 0, 0.36], f: [0.08, 0, 1] }, R: { p: [-0.12, 0, -0.4], f: [0, -0.7, 0.7], u: [0, 0.7, 0.7], piv: 'ball' } },
+    a: { p: [0, 0.9, -0.02], fit: { legs: 1, k: 0.995, side: 'L' }, foot: { L: { p: [0.12, 0, 0.36], f: [0.08, 0, 1] }, R: { p: [-0.12, 0, -0.38], f: [0, -0.7, 0.7], u: [0, 0.7, 0.7], piv: 'ball' } },
       hand: HANG_L(0.8, 0.04, 0.25), lpole: [0.1, 0, 1] },
     b: { p: [0, 0.5, -0.04], fit: null },
     v: {
@@ -175,13 +178,13 @@ export const PATTERNS = {
   deadlift: {
     view: 'tq', hold: 'barbell2',
     a: S({ r: [57, 0, 0], p: [0, 0.56, -0.17], fit: null, hd: -18, bar: { c: [0, 0.225, 0.07], w: 0.25, n: [0, 0, -1] }, apole: [0.3, 0, -1], lpole: [0.25, 0, 1] }),
-    b: { r: [-3, 0, 0], p: [0, 0.92, -0.05], fit: { legs: 1, k: 0.995 }, hd: 0, bar: { c: [0, 0.76, 0.12], w: 0.25, n: [0, 0, -1] } },
+    b: { r: [-3, 0, 0], p: [0, 0.92, -0.05], fit: { legs: 1, k: 0.995 }, hd: 0, bar: { c: [0, 0.775, 0.12], w: 0.25, n: [0, 0, -1] } },
   },
   rdl: {
     view: 'tq', hold: 'barbell',
-    a: S({ bar: { c: [0, 0.76, 0.12], w: 0.25, n: [0, 0, -1] }, apole: [0.3, 0, -1] }),
-    b: { r: [70, 0, 0], p: [0, 0.86, -0.25], fit: null, hd: -20, bar: { c: [0, 0.42, 0.13], w: 0.25, n: [0, 0, -1] } },
-    v: { KH: { hold: 'db2', a: { bar: null, hand: { L: { p: [0.17, 0.77, 0.12], n: [0, 0, -1], t: [-1, 0, 0] } } }, b: { bar: null, hand: { L: { p: [0.17, 0.43, 0.14], n: [0, 0, -1], t: [-1, 0, 0] } } } } },
+    a: S({ bar: { c: [0, 0.775, 0.12], w: 0.25, n: [0, 0, -1] }, apole: [0.3, 0, -1] }),
+    b: { r: [70, 0, 0], p: [0, 0.86, -0.25], fit: null, hd: -20, bar: { c: [0, 0.435, 0.13], w: 0.25, n: [0, 0, -1] } },
+    v: { KH: { hold: 'db2', a: { bar: null, hand: { L: { p: [0.17, 0.785, 0.12], n: [0, 0, -1], t: [-1, 0, 0] } } }, b: { bar: null, hand: { L: { p: [0.17, 0.445, 0.14], n: [0, 0, -1], t: [-1, 0, 0] } } } } },
   },
   hipthrust: {
     view: 'tq', hold: 'barbell', eq: [{ m: 'bench_flat', p: [0, 0, -0.5], ry: 90 }],
@@ -198,12 +201,12 @@ export const PATTERNS = {
     a: { r: [-38, 0, 0], p: [0, 0.55, -0.05], rest: { n: [0, 0.616, 0.788], p: [0, 0.645, -0.388] },
       foot: { L: { p: [0.14, 0.67, 0.42], f: [0, 0.707, 0.707], u: [0, 0.707, -0.707] } }, lpole: [0.25, 1, 0],
       hand: { L: { p: [0.27, 0.42, -0.05], n: [-1, 0, 0], t: [0, 0, 1] } }, apole: [0.3, -1, -0.3] },
-    b: { foot: { L: { p: [0.14, 0.9, 0.65], f: [0, 0.707, 0.707], u: [0, 0.707, -0.707] } } },
+    b: { foot: { L: { p: [0.14, 0.88, 0.63], f: [0, 0.707, 0.707], u: [0, 0.707, -0.707] } } },
   },
   legext: {
     view: 'side', eq: [{ m: 'leg_ext', p: [0, 0, 0.14], arm: { ry: -0.4, rz: 0.06, at: 0.12 } }],
     a: { r: [-8, 0, 0], p: [0, 0.6, -0.05], rest: 0.51, th: [0.12, -0.2, 1, 'w'], sh: [0.03, -1, 0.05, 'w'], ft: 'rel',
-      hand: { L: { p: [0.26, 0.46, 0.08], n: [-1, 0, 0], t: [0, 0, 1] } }, apole: [0.3, -1, -0.4] },
+      hand: { L: { p: [0.26, 0.5, 0.05], n: [-1, 0, 0], t: [0, 0, 1] } }, apole: [0.3, -1, -0.4] },
     b: { sh: [0.03, 0.12, 1, 'w'] },
   },
   legcurl: {
@@ -224,12 +227,12 @@ export const PATTERNS = {
   crunch: {
     view: 'side', eq: [{ m: 'mat', p: [0, 0, 0] }],
     a: { r: [-90, 0, 0], p: [0, 0.15, 0.0], rest: 0.01, foot: { L: { p: [0.13, 0.01, 0.48], f: [0.1, 0, 1] } }, lpole: [0.2, 1, 0],
-      hand: { L: { p: [0.07, 1.63, -0.06], n: [-0.6, 0, 0.8], t: [0, 1, 0], k: 'o', fr: 'c' } }, apole: [1, 0.2, 0], hd: 12 },
+      hand: { L: { p: [0.08, 1.62, 0.02], n: [-0.3, 0, 0.95], t: [0, -1, 0], k: 'o', fr: 'c' } }, apole: [1, 0.7, 0], hd: 12 },
     b: { sp: [36, 0, 0], hd: 25 },
   },
   plank: {
     view: 'side', eq: [{ m: 'mat', p: [0, 0, -0.45] }], hold1: true,
-    a: { r: [79, 0, 0], p: [0, 0.22, -0.45], hand: { L: { p: [0.06, 0.015, 0.28], n: [0, -1, 0], t: [-0.6, 0, 0.8], k: 'o' } }, apole: [0.2, -1, -0.2],
+    a: { r: [79, 0, 0], p: [0, 0.25, -0.45], hand: { L: { p: [0.06, 0.015, 0.28], n: [0, -1, 0], t: [-0.6, 0, 0.8], k: 'o' } }, apole: [0.2, -1, -0.2],
       foot: { L: { p: [0.1, 0.01, -1.3], f: [0, -0.85, 0.5], u: [0, 0.5, 0.85], piv: 'ball' } }, hd: 5 },
   },
   hangleg: {
@@ -258,7 +261,7 @@ export const PATTERNS = {
   },
   bike: {
     view: 'side', eq: [{ m: 'bike', p: [0, 0, 0] }], crank: true, loop: true,
-    a: { r: [28, 0, 0], p: [0, 0.99, -0.3], rest: 0.925, hand: { L: { p: [0.2, 1.06, 0.38], n: [0, -1, 0.2], t: [-1, 0, 0] } }, apole: [0.6, -0.6, -0.4], lpole: [0.2, 0, 1] },
+    a: { r: [28, 0, 0], p: [0, 0.97, -0.3], rest: 0.905, hand: { L: { p: [0.2, 1.06, 0.38], n: [0, -1, 0.2], t: [-1, 0, 0] } }, apole: [0.6, -0.6, -0.4], lpole: [0.2, 0, 1] },
   },
   stretch: {
     view: 'side', eq: [{ m: 'mat', p: [0, 0, 0] }], hold1: true,
@@ -276,7 +279,7 @@ export const PATTERNS = {
       hand: { L: { p: [0.03, 1.2, 0.24], n: [-1, 0, 0], t: [0, 1, 0.3], k: 'f', fr: 'c' } }, apole: [1, -0.4, 0.3] },
   },
   swing: {
-    view: 'side', hold: 'kb',
+    view: 'side', hold: 'kb', arc: true,
     a: S({ foot: WIDE, r: [62, 0, 0], p: [0, 0.79, -0.27], fit: null, hd: -15, hand: { L: { p: [0.03, 0.5, -0.08], n: [0, 0.2, -1], t: [-1, 0, 0] } }, apole: [0.2, 0, -1] }),
     b: { r: [-4, 0, 0], p: [0, 0.92, -0.05], fit: { legs: 1, k: 0.995 }, hd: 0, hand: { L: { p: [0.03, 1.32, 0.6], n: [0, -1, 0], t: [-1, 0, 0] } } },
   },
@@ -295,14 +298,14 @@ export const PATTERNS = {
   },
   abwheel: {
     view: 'side', hold: 'abwheel', eq: [{ m: 'mat', p: [0, 0, 0.3] }],
-    a: { r: [68, 0, 0], p: [0, 0.5, -0.02], bar: { c: [0, 0.092, 0.42], w: 0.12, n: [0, -0.6, -0.8] }, apole: [0.3, 0, -1], hd: 5,
+    a: { r: [68, 0, 0], p: [0, 0.55, -0.02], bar: { c: [0, 0.092, 0.42], w: 0.12, n: [0, -0.6, -0.8] }, apole: [0.3, 0, -1], hd: 5,
       thL: [0.08, -1, -0.04, 'w'], shL: [0, -0.06, -1, 'w'], thR: [-0.08, -1, -0.04, 'w'], shR: [0, -0.06, -1, 'w'], ft: [0, -0.3, -1, 'w'] },
-    b: { r: [74, 0, 0], p: [0, 0.3, 0.33], bar: { c: [0, 0.092, 1.25], w: 0.12, n: [0, -0.95, -0.3] }, thL: [0.08, -0.38, -0.92, 'w'], thR: [-0.08, -0.38, -0.92, 'w'], apole: [0.3, -1, 0] },
+    b: { r: [74, 0, 0], p: [0, 0.35, 0.33], bar: { c: [0, 0.092, 1.25], w: 0.12, n: [0, -0.95, -0.3] }, thL: [0.08, -0.38, -0.92, 'w'], thR: [-0.08, -0.38, -0.92, 'w'], apole: [0.3, -1, 0] },
   },
   hyperext: {
     view: 'side', eq: [{ m: 'hyper', p: [0, 0, 0] }],
     a: { r: [130, 0, 0], p: [0, 0.98, 0.1], rest: { n: [0, 0.707, 0.707], p: [0, 0.935, 0.135] },
-      foot: { L: { p: [0.1, 0.39, -0.42], f: [0, -0.707, 0.707], u: [0, 0.707, 0.707] } }, lpole: [0.2, -1, 1],
+      foot: { L: { p: [0.1, 0.405, -0.405], f: [0, -0.707, 0.707], u: [0, 0.707, 0.707] } }, lpole: [0.2, -1, 1],
       hand: { L: { p: [-0.1, 1.3, 0.16], n: [0, 0, -1], t: [0, 1, 0], k: 'o', fr: 'c' } }, apole: [0.5, -1, 0.3], hd: -5 },
     b: { r: [45, 0, 0] },
   },
@@ -314,7 +317,7 @@ export const PATTERNS = {
   clean: {
     view: 'tq', hold: 'barbell',
     a: S({ r: [57, 0, 0], p: [0, 0.56, -0.17], fit: null, hd: -18, bar: { c: [0, 0.225, 0.07], w: 0.27, n: [0, 0, -1] }, apole: [0.3, 0, -1], lpole: [0.25, 0, 1] }),
-    b: { r: [8, 0, 0], p: [0, 0.74, -0.1], fit: null, hd: 0, bar: { c: [0, 1.42, 0.14], w: 0.27, n: [0, 1, -0.3], fr: 'c' }, apole: [0.3, -0.25, 1] },
+    b: { r: [8, 0, 0], p: [0, 0.74, -0.1], fit: null, hd: 0, bar: { c: [0, 1.42, 0.14], w: 0.27, n: [0, 1, -0.3], fr: 'c' }, apole: [0.3, -0.6, 1] },
   },
   stepup: {
     view: 'side', hold: 'db2', eq: [{ m: 'box', p: [0, 0, 0.36] }],
@@ -385,7 +388,8 @@ export function resolvePattern(key, eqKind) {
 function bikeDyn(P, t) {
   const a = t * 2 * Math.PI; const c = [0, 0.3, 0.0], r = 0.17;
   const ped = (ph, x) => [x, c[1] - r * Math.cos(a + ph) + 0.03, c[2] + r * Math.sin(a + ph)];
-  P.foot = { L: { p: ped(0, 0.14), f: [0.05, -0.15, 1], piv: 'ball' }, R: { p: ped(Math.PI, -0.14), f: [-0.05, -0.15, 1], piv: 'ball' } };
+  const tip = (ph) => -0.15 - 0.45 * Math.max(0, Math.cos(a + ph - 0.3)); // Fußspitze zeigt unten im Tritt nach unten (Sprunggelenk streckt)
+  P.foot = { L: { p: ped(0, 0.14), f: [0.05, tip(0), 1], piv: 'ball' }, R: { p: ped(Math.PI, -0.14), f: [-0.05, tip(Math.PI), 1], piv: 'ball' } };
 }
 
 export const PROP_OF = {};

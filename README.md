@@ -25,6 +25,11 @@ Neu bauen:
 2. Viewer + komprimierte Modelle: `cd tools/3d && npm i && node build.mjs`
 3. Vorschaubilder (Playwright/Chromium): `node thumbs.mjs`
 4. `python3 build.py` (setzt die 3D-Version für den Cache)
+5. Prüfen: `node check.mjs` (in `tools/3d`) – läuft alle Übungen mit ihren Geräte-Varianten durch und meldet
+   Hände/Füße, die ihr Ziel nicht erreichen, sprunghafte Gelenkbewegungen, Körperteile im Boden und stark abgeknickte Handgelenke.
+
+Bewegung zwischen Start- und Endpose: Hände laufen auf Bögen um die Schulter, wenn der Rumpf stillsteht (Seitheben, Curl, Bankdrücken),
+sonst auf einer Linie (Kreuzheben); Ellbogen-/Knie-Richtung, freie Gliedmaßen und die Handdrehung (relativ zum Unterarm) werden auf der Kugel gemischt.
 
 Posen je Bewegungsmuster (in Weltkoordinaten, mit Geräten und Varianten je Equipment): `tools/3d/poses.js`, IK: `tools/3d/figure.js`, Szene: `tools/3d/scene.js`. Lizenzen: `3d/CREDITS.md`.
 

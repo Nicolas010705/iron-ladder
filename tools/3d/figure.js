@@ -28,6 +28,28 @@ function signedAngle(a, b, axis) { _c.copy(a).cross(b); return Math.atan2(_c.dot
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 const bname = (n) => n.replace(/[\[\]\.:\/]/g, '');
 function basisQ(x, y, z) { const m = new THREE.Matrix4().makeBasis(x, y, z); return new THREE.Quaternion().setFromRotationMatrix(m); }
+/** Richtungen auf der Kugel mischen (gleichmäßiger Winkel, kein Durchgang durch null) */
+function slerpDir(a, b, t) {
+  const A = a.clone().normalize(), B = b.clone().normalize(); const d = clamp(A.dot(B), -1, 1);
+  if (d > 0.9995) return A.lerp(B, t).normalize();
+  let ax = A.clone().cross(B);
+  if (ax.lengthSq() < 1e-8) { ax = new THREE.Vector3(0, 1, 0).cross(A); if (ax.lengthSq() < 1e-6) ax.set(1, 0, 0).cross(A); }
+  return A.applyQuaternion(qAxis(ax.normalize(), Math.acos(d) * t));
+}
+/** Scharnierachse von Ellbogen/Knie. Bei fast gestrecktem Gelenk ist das Kreuzprodukt unbestimmt:
+ *  dann zur Ruheachse überblenden, sonst dreht sich der Unterarm/Unterschenkel ruckartig. */
+function hingeAxis(a, b, restAx) {
+  const c = a.clone().cross(b); const w = c.length();
+  const r = restAx.clone().projectOnPlane(a).normalize();
+  if (w < 1e-6) return r;
+  c.divideScalar(w); if (c.dot(r) < 0 && w < 0.35) c.negate();
+  const k = clamp(w / 0.35, 0, 1); const s = k * k * (3 - 2 * k);
+  return r.multiplyScalar(1 - s).addScaledVector(c, s).normalize();
+}
+function poleDir(a, b, t, s) {
+  const m = (v) => (v ? V3(s === 'L' ? v : mirrorVec(v)).normalize() : null);
+  const A = m(a), B = m(b); if (A && B) return slerpDir(A, B, t); return A || B;
+}
 function frameQ(t, n) { const a = t.clone().normalize(), b = n.clone().normalize(); return basisQ(a, b, a.clone().cross(b)); }
 
 /* ---------- Posen mischen ---------- */
@@ -214,9 +236,26 @@ export class Figure {
     };
     const toW = (h) => { if (!h) return null; if (!h.fr || h.fr === 'w') return { p: V3(h.p), n: V3(h.n).normalize(), t: V3(h.t).normalize(), k: h.k }; const X = frameXf(h.fr); return h.dirw ? { p: X.p(h.p), n: V3(h.n).normalize(), t: V3(h.t).normalize(), k: h.k } : { p: X.p(h.p), n: X.d(h.n).normalize(), t: X.d(h.t).normalize(), k: h.k }; };
     P.hand = {};
+    // Rumpf in a und b gleich? Dann bewegen sich Hände auf Bögen um die Schulter (wie echte Gelenke), sonst auf einer Linie (Stange am Körper entlang)
+    const still = !pat.line && V3(EA.p || [0, 0, 0]).distanceTo(V3(EB.p || [0, 0, 0])) < 0.06 && Math.max(...[0, 1, 2].map((i) => Math.abs(((EA.r || [])[i] || 0) - ((EB.r || [])[i] || 0)))) < 12;
     for (const s of SIDES) {
-      const a = toW(EA.hand && EA.hand[s]), b = toW(EB.hand && EB.hand[s]);
-      const h = a && b ? { p: a.p.lerp(b.p, t), n: a.n.lerp(b.n, t).normalize(), t: a.t.lerp(b.t, t).normalize(), k: t < 0.5 ? a.k : b.k } : (t < 0.5 ? a : b) || a || b;
+      const ha = EA.hand && EA.hand[s], hb = EB.hand && EB.hand[s];
+      const a = toW(ha), b = toW(hb);
+      let h;
+      if (a && b) {
+        const qa = frameQ(a.t.clone().addScaledVector(a.n, -a.t.dot(a.n)), a.n), qb = frameQ(b.t.clone().addScaledVector(b.n, -b.t.dot(b.n)), b.n);
+        const q = qa.clone().slerp(qb, t);
+        const arc = !pat.line && (pat.arc || still || (ha.fr === 'c' && hb.fr === 'c')) && a.p.distanceTo(b.p) > 0.05;
+        let p;
+        if (arc) {
+          const S = this.J('upperarm01.' + s); const da = a.p.clone().sub(S), db = b.p.clone().sub(S);
+          const la = da.length(), lb = db.length();
+          const RS = rig.R[s]; const reach = (RS.l1 + RS.l2) * 0.995 + RS.hand.grip.length() * 0.85; // nicht weiter als der gestreckte Arm (sonst schwebt das Gerät)
+          p = S.clone().add(slerpDir(da.divideScalar(la || 1), db.divideScalar(lb || 1), t).multiplyScalar(Math.min(reach, la + (lb - la) * t)));
+        } else p = a.p.clone().lerp(b.p, t);
+        h = { p, n: new THREE.Vector3(0, 1, 0).applyQuaternion(q), t: new THREE.Vector3(1, 0, 0).applyQuaternion(q), k: t < 0.5 ? a.k : b.k };
+      } else h = (t < 0.5 ? a : b) || a || b;
+      if (h && a && b && (pat.relHand || (!EA.bar && !EB.bar)) && !pat.line && a.p.distanceTo(b.p) > 0.05) this._relHand(h, a, b, t, s, EA, EB);
       if (h) P.hand[s] = { p: h.p.toArray(), n: h.n.toArray(), t: h.t.toArray(), k: h.k };
     }
     // Höhe so wählen, dass Arme (Hängen) bzw. Beine (Stehen) fast gestreckt sind
@@ -268,18 +307,17 @@ export class Figure {
       let u, f;
       if (wristT[s]) {
         const S = this.J('upperarm01.' + s), W = wristT[s];
-        const pole = P.apole ? V3(s === 'L' ? P.apole : mirrorVec(P.apole)).normalize() : new THREE.Vector3(sg * 0.45, -1, -0.35).applyQuaternion(Dc).normalize();
+        const pole = poleDir(EA.apole, EB.apole, t, s) || new THREE.Vector3(sg * 0.45, -1, -0.35).applyQuaternion(Dc).normalize();
         const r2 = this._ik2(S, W, RS.l1, RS.l2, pole, s, 'Arm');
         u = r2.E.clone().sub(S).normalize(); f = W.clone().sub(r2.E).normalize();
       } else {
-        u = this._dir(P, 'ua', s, 'c', Dc, Dp); f = this._dir(P, 'fa', s, 'c', Dc, Dp);
+        u = this._dir2(EA, EB, t, 'ua', s, 'c', Dc, Dp); f = this._dir2(EA, EB, t, 'fa', s, 'c', Dc, Dp);
       }
       if (u && f) {
         const carried = RS.u.clone().applyQuaternion(Dcl);
         const S = swing(carried, u).multiply(Dcl);
         const restAx = RS.elbowAx.clone().applyQuaternion(S);
-        const pole = new THREE.Vector3(0, 0, 1).applyQuaternion(Dc);
-        const ax = u.clone().cross(f); ax.add(u.clone().cross(pole).normalize().multiplyScalar(0.12)).normalize();
+        const ax = hingeAxis(u, f, restAx);
         const tw = signedAngle(restAx.clone().projectOnPlane(u).normalize(), ax.clone().projectOnPlane(u).normalize(), u);
         const Dua = qAxis(u, tw).multiply(S);
         setD('upperarm01.' + s, qAxis(u, tw * 0.5).multiply(S)); setD('upperarm02.' + s, Dua);
@@ -325,16 +363,15 @@ export class Figure {
         Qf = basisQ(up.clone().cross(fw).normalize(), up, fw); // Ruhe-Fußrahmen = Weltachsen
         const A = V3(ft.p).add((ft.piv === 'ball' ? RS.ankleOffBall : RS.ankleOffHeel).clone().applyQuaternion(Qf));
         const H = this.J('upperleg01.' + s);
-        const pole = P.lpole ? V3(s === 'L' ? P.lpole : mirrorVec(P.lpole)).normalize() : new THREE.Vector3(sg * 0.18, 0, 1).applyQuaternion(Dp).normalize();
+        const pole = poleDir(EA.lpole, EB.lpole, t, s) || new THREE.Vector3(sg * 0.18, 0, 1).applyQuaternion(Dp).normalize();
         const r2 = this._ik2(H, A, RS.lt, RS.ls, pole, s, 'Bein');
         th = r2.E.clone().sub(H).normalize(); shn = A.clone().sub(r2.E).normalize();
-      } else { th = this._dir(P, 'th', s, 'p', Dc, Dp); shn = this._dir(P, 'sh', s, 'p', Dc, Dp); }
+      } else { th = this._dir2(EA, EB, t, 'th', s, 'p', Dc, Dp); shn = this._dir2(EA, EB, t, 'sh', s, 'p', Dc, Dp); }
       if (th && shn) {
         const carried = RS.th.clone().applyQuaternion(Dp);
         const S = swing(carried, th).multiply(Dp);
         const restAx = RS.kneeAx.clone().applyQuaternion(S);
-        const pole = new THREE.Vector3(0, 0, -1).applyQuaternion(Dp);
-        const ax = th.clone().cross(shn); ax.add(th.clone().cross(pole).normalize().multiplyScalar(0.12)).normalize();
+        const ax = hingeAxis(th, shn, restAx);
         const tw = signedAngle(restAx.clone().projectOnPlane(th).normalize(), ax.clone().projectOnPlane(th).normalize(), th);
         const Dth = qAxis(th, tw).multiply(S);
         setD('upperleg01.' + s, qAxis(th, tw * 0.5).multiply(S)); setD('upperleg02.' + s, Dth);
@@ -360,13 +397,45 @@ export class Figure {
     if (!wristT.L || !wristT.R) this._fists();
   }
 
+  /** Handdrehung relativ zum Unterarm mischen (Beugen + Supination wie beim echten Curl), nicht frei im Raum */
+  _relHand(h, a, b, t, s, EA, EB) {
+    const RS = this.rig.R[s]; const S = this.J('upperarm01.' + s); const QrI = RS.hand.Qr.clone().invert();
+    const fq = (e) => frameQ(e.t.clone().addScaledVector(e.n, -e.t.dot(e.n)).normalize(), e.n);
+    const forearm = (p, Fq, pole) => {
+      const W = p.clone().sub((h.k === 'f' ? RS.hand.palm : RS.hand.grip).clone().applyQuaternion(Fq.clone().multiply(QrI)));
+      const E = this._ik2(S, W, RS.l1, RS.l2, pole, s, null).E; const f = W.sub(E).normalize(); const u = E.clone().sub(S).normalize();
+      // Rahmen am Unterarm über die Ellbogenachse (stetig); bei gestrecktem Arm über die Pol-Richtung
+      let fb = f.clone().cross(pole); if (fb.lengthSq() < 1e-6) fb = f.clone().cross(new THREE.Vector3(0, 1, 0)); if (fb.lengthSq() < 1e-6) fb.set(1, 0, 0);
+      fb.normalize(); const c = u.clone().cross(f); const w = c.length();
+      if (w > 1e-6 && c.dot(fb) < 0) fb.negate();
+      const k = clamp(w / 0.35, 0, 1), sm = k * k * (3 - 2 * k);
+      const z = (w > 1e-6 ? fb.multiplyScalar(1 - sm).addScaledVector(c.divideScalar(w), sm) : fb).projectOnPlane(f).normalize();
+      return basisQ(f, z.clone().cross(f), z);
+    };
+    const sg = s === 'L' ? 1 : -1; const def = new THREE.Vector3(sg * 0.45, -1, -0.35).normalize();
+    const pa = poleDir(EA.apole, EA.apole, 0, s) || def, pb = poleDir(EB.apole, EB.apole, 0, s) || def, pt = poleDir(EA.apole, EB.apole, t, s) || def;
+    const Qa = fq(a), Qb = fq(b);
+    const Ra = forearm(a.p, Qa, pa).invert().multiply(Qa), Rb = forearm(b.p, Qb, pb).invert().multiply(Qb);
+    const R = Ra.clone().slerp(Rb, t);
+    let Q = Qa.clone().slerp(Qb, t);
+    for (let i = 0; i < 2; i++) Q = forearm(h.p, Q, pt).multiply(R);
+    h.n = new THREE.Vector3(0, 1, 0).applyQuaternion(Q); h.t = new THREE.Vector3(1, 0, 0).applyQuaternion(Q);
+  }
+
   _ik2(S, W, a, b, pole, s, what) {
     const dv = W.clone().sub(S); let d = dv.length(); const u = dv.clone().divideScalar(d || 1);
-    if (d > a + b - 0.002) { if (d > a + b + 0.01) this.warn.push(`${what} ${s} zu kurz um ${((d - a - b) * 100).toFixed(1)} cm`); d = a + b - 0.002; }
+    if (d > a + b - 0.002) { if (what && d > a + b + 0.01) this.warn.push(`${what} ${s} zu kurz um ${((d - a - b) * 100).toFixed(1)} cm`); d = a + b - 0.002; }
     if (d < Math.abs(a - b) + 0.01) d = Math.abs(a - b) + 0.01;
     const x = (a * a - b * b + d * d) / (2 * d), h = Math.sqrt(Math.max(0, a * a - x * x));
     const pp = pole.clone().addScaledVector(u, -pole.dot(u)); if (pp.lengthSq() < 1e-8) pp.set(0, 0, 1); pp.normalize();
     return { E: S.clone().addScaledVector(u, x).addScaledVector(pp, h) };
+  }
+
+  /** Richtung einer freien Gliedmaße zwischen a und b: beide in Welt umrechnen, dann auf der Kugel mischen */
+  _dir2(EA, EB, t, key, s, def, Dc, Dp) {
+    const a = this._dir(EA, key, s, def, Dc, Dp), b = this._dir(EB, key, s, def, Dc, Dp);
+    if (a && b) return slerpDir(a, b, t);
+    return a || b;
   }
 
   _dir(P, key, s, def, Dc, Dp) {
