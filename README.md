@@ -38,8 +38,20 @@ der Kalorien- und Proteinziel trifft, rechnet die Einkaufsliste mit echten Packu
 - Jedes Rezept hat eine Schritt-für-Schritt-Anleitung mit animiertem Symbol je Arbeitsschritt (Schneiden, Braten, Kochen, Backen, Rühren, Mixen, Ruhen, Anrichten) und Tipps. Kochmodus: ein Schritt pro Seite, Mengen passend zur Portion, Timer, Bildschirm bleibt an, am Ende ins Tagebuch eintragen.
 - Rezepte: `tools/shop/recipes.js`, Logik und Oberfläche: `tools/shop/shop-ui.js` (beides in `src-artifact.html` eingebettet).
 
-## Daten
-Auf Vercel speichert die App im Browser (localStorage) – pro Gerät, ohne Synchronisierung.
-Nächster Schritt für geräteübergreifende Daten: Supabase.
+## Daten & Konto
+- Ohne Konto speichert die App im Browser (localStorage, Fotos in IndexedDB) – pro Gerät. Die installierte App bittet den Browser, diese Daten dauerhaft zu behalten.
+- Mit Konto (Supabase, `supabase/schema.sql`) werden Profil, Trainings und Ernährung automatisch abgeglichen. Row Level Security: jede Zeile gehört genau einem Konto.
+  Konfiguration in `supabase.json` (öffentlicher `anon`-Key). Fortschrittsfotos bleiben auf dem Gerät.
+- Abgleich: Profil und Ernährungstage – neuere Änderung gewinnt, Trainings werden vereinigt, gelöschte Trainings bleiben gelöscht.
+  Geleerte Tage werden als leere Liste gespeichert, damit andere Geräte sie nicht zurückholen. Fehlgeschlagene Speicherungen werden automatisch wiederholt.
+- Die lokalen Daten sind dem zuletzt angemeldeten Konto zugeordnet. Meldet sich auf dem Gerät ein anderes Konto an, fragt die App, ob die Daten übernommen oder vom Gerät entfernt werden.
+- „Backup laden“ ersetzt den Stand auch im Konto.
+
+## Offline
+Der Service Worker legt beim Installieren App, Schrift (Inter, selbst ausgeliefert aus `fonts/`, SIL OFL) und alle 3D-Dateien (ca. 2 MB) im Cache ab.
+Im Claude-Artifact wird Inter weiter von Google Fonts geladen; `build.py` ersetzt das für Vercel.
+
+## Tests
+`python3 build.py && node tests/run.mjs` – startet `index.html` in Chromium (Playwright) mit nachgebautem Supabase und prüft Ziele, Sync, Kontowechsel, Backup, Wiederholung, Fotos und Bildschirmsperre.
 
 Deployment: https://iron-ladder.vercel.app

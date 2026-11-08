@@ -2112,6 +2112,9 @@ let S={profile:null,workouts:[],food:{},draft:null,demo:false};
 let V={tab:'home',libQ:'',libM:'all',progEx:null,foodDate:today(),foodView:'diary',ob:null,histOpen:{},sync:'lokal'};
 function cacheSave(){ if(S.demo) return; try{localStorage.setItem(LS,JSON.stringify({profile:S.profile,workouts:S.workouts,food:S.food}))}catch(e){} }
 function draftSave(){ if(S.demo) return; try{ S.draft?localStorage.setItem(LS+'.draft',JSON.stringify(S.draft)):localStorage.removeItem(LS+'.draft')}catch(e){} }
+/* Wem gehören die Daten auf diesem Gerät? Verhindert, dass beim Kontowechsel fremde Daten ins neue Konto wandern. */
+function ownerGet(){ try{ return JSON.parse(localStorage.getItem(LS+'.owner')||'null'); }catch(e){ return null; } }
+function ownerSet(o){ try{ o?localStorage.setItem(LS+'.owner',JSON.stringify(o)):localStorage.removeItem(LS+'.owner'); }catch(e){} }
 function cacheLoad(){ try{const d=JSON.parse(localStorage.getItem(LS)||'null'); if(d){S.profile=d.profile;S.workouts=d.workouts||[];S.food=d.food||{}} S.draft=JSON.parse(localStorage.getItem(LS+'.draft')||'null')}catch(e){} }
 let DB=null, UID=null; const chains={};
 const pref=()=>DB.doc('data/users/'+UID+'/profile');
@@ -2119,7 +2122,7 @@ function queue(key,fn){ chains[key]=(chains[key]||Promise.resolve()).then(fn).ca
 function saveProfile(){ if(S.profile&&!S.demo) S.profile._ts=Date.now(); cacheSave(); if(SB.on&&!S.demo) return sbQueue('p',()=>sbUpsert('profiles',{data:clone(S.profile)},'user_id')); if(!DB||S.demo) return; const p=clone(S.profile); queue('p',()=>pref().set(p)); }
 function saveWorkout(w){ cacheSave(); if(SB.on&&!S.demo){ const c=clone(w); return sbQueue('w'+w.id,()=>sbUpsert('workouts',{id:c.id,data:c},'user_id,id')); } if(!DB||S.demo) return; const c=clone(w); queue('w'+w.id,()=>pref().collection('workouts').doc(w.id).set(c)); }
 function dropWorkout(id){ if(S.profile&&!S.demo){ S.profile.delW=[...new Set([...(S.profile.delW||[]),id])].slice(-500); saveProfile(); } cacheSave(); if(SB.on&&!S.demo) return sbQueue('w'+id,()=>sbReq('/rest/v1/workouts?id=eq.'+encodeURIComponent(id),{method:'DELETE'})); if(!DB||S.demo) return; queue('w'+id,()=>pref().collection('workouts').doc(id).delete()); }
-function saveDay(date){ if(!S.demo){ SB.dayTs[date]=Date.now(); sbMetaSave(); } cacheSave(); if(SB.on&&!S.demo){ const e=clone(S.food[date]||[]); return sbQueue('d'+date,()=>e.length?sbUpsert('food_days',{day:date,entries:e},'user_id,day'):sbReq('/rest/v1/food_days?day=eq.'+date,{method:'DELETE'})); } if(!DB||S.demo) return; const e=clone(S.food[date]||[]); queue('d'+date,()=>e.length?pref().collection('days').doc(date).set({entries:e}):pref().collection('days').doc(date).delete()); }
+function saveDay(date){ if(!S.demo){ SB.dayTs[date]=Date.now(); sbMetaSave(); } cacheSave(); if(SB.on&&!S.demo){ const e=clone(S.food[date]||[]); return sbQueue('d'+date,()=>sbUpsert('food_days',{day:date,entries:e},'user_id,day')); } if(!DB||S.demo) return; const e=clone(S.food[date]||[]); queue('d'+date,()=>e.length?pref().collection('days').doc(date).set({entries:e}):pref().collection('days').doc(date).delete()); }
 async function connect(){
  if(!window.claude||!window.claude.use) return;
  claude.use('mcp').then(m=>{MCP=m; if(SHEET&&SHEET.kind==='food') drawOff();}).catch(()=>{});
@@ -2172,10 +2175,23 @@ function sbUpsert(table,row,conflict){
  const rows=(Array.isArray(row)?row:[row]).map(x=>({...x,user_id:SB.sess.user.id,updated_at:new Date().toISOString()}));
  return sbReq(`/rest/v1/${table}?on_conflict=${conflict}`,{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(rows)});
 }
-function sbQueue(key,fn){ chains[key]=(chains[key]||Promise.resolve()).then(fn).then(()=>{ SB.last=Date.now(); sbMetaSave(); }).catch(e=>{ console.warn(e); SB.dirty=true; sbMetaSave(); }); }
+function sbQueue(key,fn){ chains[key]=(chains[key]||Promise.resolve()).then(fn).then(()=>{ SB.last=Date.now(); sbMetaSave(); }).catch(e=>{ console.warn(e); SB.dirty=true; sbMetaSave(); sbRetry(); }); }
+/* Erneuter Abgleich nach Fehlern: 5 s, 10 s, 20 s … bis höchstens 5 min */
+function sbRetry(){
+ if(!SB.sess||SB.retryT||SB.switchAsk) return;
+ const ms=Math.min(300000,5000*2**(SB.retryN||0)); SB.retryN=(SB.retryN||0)+1;
+ SB.retryT=setTimeout(()=>{ SB.retryT=null; if(navigator.onLine===false) return; if(SB.busy) return sbRetry(); sbSync(true); },ms);
+}
 /* Abgleich: Cloud holen, mit diesem Gerät zusammenführen, Unterschiede hochladen */
 async function sbSync(silent){
- if(!SBC||!SB.sess||SB.busy||S.demo) return; SB.busy=true;
+ if(!SBC||!SB.sess||SB.busy||S.demo) return false;
+ const me=SB.sess.user&&SB.sess.user.id; if(!me) return false;
+ const own=ownerGet();
+ if(own&&own.id&&own.id!==me&&(S.profile||S.workouts.length||Object.keys(S.food).length)){
+  SB.switchAsk={from:own.email||'einem anderen Konto'}; SB.on=false; V.sync='lokal'; render(); openSheet('account'); return false;
+ }
+ if(!own||own.id!==me){ if(!own) await phRetag('',me); ownerSet({id:me,email:SB.sess.user.email||''}); }
+ SB.busy=true;
  try{
   const [ps,ws,ds]=await Promise.all([sbReq('/rest/v1/profiles?select=data,updated_at'),sbReq('/rest/v1/workouts?select=id,data'),sbReq('/rest/v1/food_days?select=day,entries,updated_at')]);
   const cloudP=ps&&ps[0]?ps[0].data:null;
@@ -2201,20 +2217,30 @@ async function sbSync(silent){
   const upW=workouts.filter(w=>!cloudIds.has(w.id)||JSON.stringify(byId[w.id])!==JSON.stringify((ws||[]).find(r=>r.id===w.id)?.data));
   for(let i=0;i<upW.length;i+=100) jobs.push(sbUpsert('workouts',upW.slice(i,i+100).map(w=>({id:w.id,data:w})),'user_id,id'));
   const goneW=[...cloudIds].filter(id=>del.has(id)); if(goneW.length) jobs.push(sbReq('/rest/v1/workouts?id=in.('+goneW.map(encodeURIComponent).join(',')+')',{method:'DELETE'}));
-  const upD=Object.keys(S.food).filter(d=>(S.food[d]||[]).length&&(!cloudDays[d]||JSON.stringify(cloudDays[d].entries)!==JSON.stringify(S.food[d])));
+  const upD=Object.keys(S.food).filter(d=>cloudDays[d]?JSON.stringify(cloudDays[d].entries)!==JSON.stringify(S.food[d]||[]):(S.food[d]||[]).length>0);
   if(upD.length) jobs.push(sbUpsert('food_days',upD.map(d=>({day:d,entries:S.food[d]})),'user_id,day'));
   await Promise.all(jobs);
-  SB.on=true; SB.dirty=false; SB.last=Date.now(); SB.err=''; V.sync='cloud'; sbMetaSave();
+  SB.on=true; SB.dirty=false; SB.last=Date.now(); SB.err=''; SB.retryN=0; V.sync='cloud'; sbMetaSave();
   if(!silent&&!hadLocal&&S.profile) toast('Daten aus deinem Konto geladen');
- }catch(e){ console.warn(e); SB.err=e.status===404?'Die Datenbank ist noch nicht eingerichtet.':'Abgleich fehlgeschlagen. Ich versuche es später erneut.'; SB.dirty=true; sbMetaSave(); }
+ }catch(e){ console.warn(e); SB.err=e.status===404?'Die Datenbank ist noch nicht eingerichtet.':'Abgleich fehlgeschlagen. Ich versuche es später erneut.'; SB.dirty=true; sbMetaSave(); if(e.status!==404) sbRetry(); }
  finally{ SB.busy=false; render(); if(SHEET&&SHEET.kind==='account') drawSheet(); }
+ return true;
+}
+/* Kontowechsel: Daten des vorigen Kontos übernehmen oder vom Gerät entfernen */
+async function sbSwitch(keep){
+ if(!SB.switchAsk||!SB.sess) return; const me=SB.sess.user.id, own=ownerGet();
+ if(keep){ await phRetag(own&&own.id||'',me); S.profile&&(S.profile._ts=Date.now()); Object.keys(S.food).forEach(d=>SB.dayTs[d]=Date.now()); }
+ else{ S={profile:null,workouts:[],food:{},draft:null,demo:false}; SB.dayTs={}; PHOTOS=null; cacheSave(); draftSave(); }
+ ownerSet({id:me,email:SB.sess.user.email||''}); SB.switchAsk=null; sbMetaSave();
+ await sbSync(); closeSheet(); window.scrollTo(0,0); if(!S.profile){ V.ob=obDefaults(); render(); }
+ toast(keep?'Daten ins Konto übernommen':'Angemeldet');
 }
 async function sbLogin(email,pw,create){
  SB.err=''; SB.msg=''; SB.busy=true; drawSheet();
  try{
   if(create){ const j=await sbAuth('/signup',{email,password:pw}); if(!sbSetSession(j)){ SB.busy=false; SB.mode='login'; SB.msg='Fast geschafft: Bestätige den Link in der E-Mail, die wir dir geschickt haben. Danach hier anmelden.'; drawSheet(); return; } }
   else{ const j=await sbAuth('/token?grant_type=password',{email,password:pw}); sbSetSession(j); }
-  SB.busy=false; await sbSync(); closeSheet(); window.scrollTo(0,0); toast(S.profile?'Angemeldet. Deine Daten sind jetzt in deinem Konto gesichert.':'Angemeldet');
+  SB.busy=false; if(!(await sbSync())&&SB.switchAsk) return; closeSheet(); window.scrollTo(0,0); toast(S.profile?'Angemeldet. Deine Daten sind jetzt in deinem Konto gesichert.':'Angemeldet');
  }catch(e){ SB.busy=false; SB.err=sbErrText(e); drawSheet(); }
 }
 function sbErrText(e){
@@ -2227,12 +2253,15 @@ function sbErrText(e){
  if(/Failed to fetch|NetworkError|Load failed/i.test(m)) return 'Keine Verbindung. Prüfe dein Internet.';
  return 'Das hat nicht geklappt: '+m;
 }
-async function sbLogout(){ try{ await sbAuth('/logout',null,'POST',SB.sess?.access); }catch(e){} SB.sess=null; SB.on=false; V.sync='lokal'; sbMetaSave(); closeSheet(); render(); toast('Abgemeldet. Deine Daten bleiben auf diesem Gerät.'); }
+async function sbLogout(){ try{ await sbAuth('/logout',null,'POST',SB.sess?.access); }catch(e){} SB.sess=null; SB.switchAsk=null; clearTimeout(SB.retryT); SB.retryT=null; SB.on=false; V.sync='lokal'; sbMetaSave(); closeSheet(); render(); toast('Abgemeldet. Deine Daten bleiben auf diesem Gerät.'); }
 async function sbRecover(email){ SB.err=''; SB.msg=''; try{ await sbAuth('/recover?redirect_to='+encodeURIComponent(location.origin+'/'),{email}); SB.msg='Wir haben dir einen Link zum Zurücksetzen geschickt.'; }catch(e){ SB.err=sbErrText(e); } drawSheet(); }
 async function sbNewPassword(pw){ SB.err=''; try{ await sbAuth('/user',{password:pw},'PUT',await sbToken()); SB.mode='login'; closeSheet(); toast('Neues Passwort gespeichert'); sbSync(true); }catch(e){ SB.err=sbErrText(e); drawSheet(); } }
 function renderAccount(){
  const head=`<div class="row between"><h2>Konto & Sync</h2><button class="icon-btn" data-act="close" aria-label="Schließen">${I.x}</button></div>`;
  const note=`${SB.err?`<p class="acc-msg bad" role="alert">${esc(SB.err)}</p>`:''}${SB.msg?`<p class="acc-msg ok" role="status">${esc(SB.msg)}</p>`:''}`;
+ if(SB.switchAsk&&SB.sess) return head+`<p>Auf diesem Gerät sind noch Daten von <b>${esc(SB.switchAsk.from)}</b>. Du meldest dich als <b>${esc(SB.sess.user.email||'anderes Konto')}</b> an.</p>
+  <p class="muted">Übernehmen speichert Trainings, Ernährung, Profil und Fotos dieses Geräts in dein Konto. Entfernen löscht sie nur von diesem Gerät; was schon im anderen Konto gesichert ist, bleibt dort.${SB.dirty?' <b>Achtung:</b> Nicht alle Änderungen wurden hochgeladen.':''}</p>
+  <div class="stack"><button class="btn pri" data-act="sbSwitch" data-v="keep">In mein Konto übernehmen</button><button class="btn danger" data-act="sbSwitch" data-v="drop">Vom Gerät entfernen</button><button class="btn ghost" data-act="sbLogout">Abbrechen und abmelden</button></div>`;
  if(SB.mode==='newpw') return head+`<p class="muted">Lege ein neues Passwort fest.</p>${note}<div class="field"><label for="sb-pw">Neues Passwort</label><input id="sb-pw" type="password" autocomplete="new-password" minlength="8"></div><button class="btn pri" data-act="sbNewPw">Passwort speichern</button>`;
  if(SB.sess){ const t=SB.last?new Date(SB.last).toLocaleString('de-DE',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'noch nie';
   return head+`<div class="card acc-card"><span class="dot ${SB.on?'on':''}"></span><div><b>${esc(SB.sess.user.email||'Angemeldet')}</b><div class="muted">${SB.busy?'Gleiche ab …':`Zuletzt abgeglichen: ${t}`}</div></div></div>${note}
@@ -2257,7 +2286,7 @@ function sbInit(){
   return;
  }
  if(SB.sess){ SB.on=true; V.sync='cloud'; sbSync(true); }
- document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible'&&SB.sess&&Date.now()-SB.last>30000) sbSync(true); });
+ document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible'&&SB.sess&&(SB.dirty||Date.now()-SB.last>30000)) sbSync(true); });
  addEventListener('online',()=>{ if(SB.sess) sbSync(true); });
 }
 
@@ -2563,8 +2592,10 @@ const workW=(it,s)=>{ const st=it.sets.find(x=>!x.done)||it.sets[0]; return num(
 /* Fortschrittsfotos: nur auf diesem Gerät (IndexedDB) */
 const PH_DB='ironladder-photos';
 function phDb(){ return new Promise((res,rej)=>{ try{ const r=indexedDB.open(PH_DB,1); r.onupgradeneeded=()=>r.result.createObjectStore('p',{keyPath:'id'}); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);}catch(e){rej(e)} }); }
-async function phAll(){ try{ const db=await phDb(); return await new Promise(res=>{ const q=db.transaction('p').objectStore('p').getAll(); q.onsuccess=()=>res((q.result||[]).sort((a,b)=>b.date.localeCompare(a.date)||b.ts-a.ts)); q.onerror=()=>res([]); }); }catch(e){ return []; } }
+const phOwner=()=>{ const o=ownerGet(); return o&&o.id||''; };
+async function phAll(){ try{ const db=await phDb(); const me=phOwner(); return await new Promise(res=>{ const q=db.transaction('p').objectStore('p').getAll(); q.onsuccess=()=>res((q.result||[]).filter(p=>(p.uid||'')===me).sort((a,b)=>b.date.localeCompare(a.date)||b.ts-a.ts)); q.onerror=()=>res([]); }); }catch(e){ return []; } }
 async function phPut(o){ const db=await phDb(); return new Promise((res,rej)=>{ const t=db.transaction('p','readwrite'); t.objectStore('p').put(o); t.oncomplete=res; t.onerror=()=>rej(t.error); }); }
+async function phRetag(from,to){ if(from===to||!window.indexedDB) return; try{ const db=await phDb(); await new Promise(res=>{ const t=db.transaction('p','readwrite'), st=t.objectStore('p'); const q=st.getAll(); q.onsuccess=()=>(q.result||[]).forEach(p=>{ if((p.uid||'')===from) st.put({...p,uid:to}); }); t.oncomplete=res; t.onerror=res; }); PHOTOS=null; }catch(e){} }
 async function phDel(id){ const db=await phDb(); return new Promise(res=>{ const t=db.transaction('p','readwrite'); t.objectStore('p').delete(id); t.oncomplete=res; t.onerror=res; }); }
 function shrinkImage(file){ return new Promise((res,rej)=>{ const url=URL.createObjectURL(file); const img=new Image(); img.onload=()=>{ const k=Math.min(1,1080/Math.max(img.width,img.height)); const c=document.createElement('canvas'); c.width=Math.round(img.width*k); c.height=Math.round(img.height*k); c.getContext('2d').drawImage(img,0,0,c.width,c.height); URL.revokeObjectURL(url); res(c.toDataURL('image/jpeg',.82)); }; img.onerror=()=>{URL.revokeObjectURL(url); rej(new Error('Bild nicht lesbar'))}; img.src=url; }); }
 let PHOTOS=null, PH_SEL=[];
@@ -3250,8 +3281,15 @@ function exportData(){
 function importData(text){
  let d; try{ d=JSON.parse(text); }catch(e){ toast('Die Datei ist kein gültiges Backup.'); return; }
  if(!d||d.app!=='iron-ladder'||!d.profile||!Array.isArray(d.workouts)){ toast('Die Datei ist kein Iron-Ladder-Backup.'); return; }
- S.profile=d.profile; S.workouts=d.workouts; S.food=d.food||{}; S.demo=false;
- buildEx(); buildFoods(); saveProfile(); S.workouts.forEach(saveWorkout); Object.keys(S.food).forEach(saveDay); cacheSave();
+ const keep=new Set(d.workouts.map(w=>w&&w.id));
+ const gone=S.workouts.map(w=>w.id).filter(id=>!keep.has(id));
+ const food={...(d.food||{})}; Object.keys(S.food).forEach(k=>{ if(!(k in food)) food[k]=[]; });
+ S.profile=d.profile; S.workouts=d.workouts.filter(Boolean); S.food=food; S.demo=false;
+ S.profile.delW=[...new Set([...(S.profile.delW||[]).filter(id=>!keep.has(id)),...gone])].slice(-500);
+ S.profile._ts=Date.now(); Object.keys(S.food).forEach(k=>SB.dayTs[k]=Date.now()); sbMetaSave();
+ buildEx(); buildFoods(); cacheSave();
+ if(SB.sess) sbSync(true);
+ else if(DB){ saveProfile(); S.workouts.forEach(saveWorkout); Object.keys(S.food).forEach(saveDay); gone.forEach(id=>queue('w'+id,()=>pref().collection('workouts').doc(id).delete())); }
  closeSheet(); V.tab='home'; render(); toast(`Backup geladen: ${S.workouts.length} Trainings`);
 }
 
@@ -3442,6 +3480,23 @@ function finishWorkout(rating){
 }
 
 /* ============ Timer ============ */
+/* Ton am Pausenende: iOS kann nicht vibrieren. Der AudioContext wird beim Tippen freigeschaltet. */
+let AC=null;
+function audioUnlock(){ try{ if(!AC){ const C=window.AudioContext||window.webkitAudioContext; if(!C) return; AC=new C(); } if(AC.state==='suspended') AC.resume(); }catch(e){} }
+function restSignal(){
+ try{ navigator.vibrate&&navigator.vibrate([200,100,200]); }catch(e){}
+ try{ if(!AC||AC.state!=='running') return; const t=AC.currentTime;
+  [0,.22].forEach(d=>{ const o=AC.createOscillator(), g=AC.createGain(); o.type='sine'; o.frequency.value=880; g.gain.setValueAtTime(0.0001,t+d); g.gain.exponentialRampToValueAtTime(0.25,t+d+.02); g.gain.exponentialRampToValueAtTime(0.0001,t+d+.18); o.connect(g).connect(AC.destination); o.start(t+d); o.stop(t+d+.2); });
+ }catch(e){}
+}
+/* Bildschirm bleibt während eines Trainings an */
+let WAKE=null;
+function syncWake(){
+ const want=!!(S.draft&&!S.demo&&document.visibilityState==='visible');
+ if(want&&!WAKE&&navigator.wakeLock){ WAKE='pending'; navigator.wakeLock.request('screen').then(l=>{ WAKE=l; l.addEventListener('release',()=>{ if(WAKE===l) WAKE=null; }); if(!S.draft) syncWake(); }).catch(()=>{ WAKE=null; }); }
+ else if(!want&&WAKE&&WAKE!=='pending'){ const l=WAKE; WAKE=null; l.release().catch(()=>{}); }
+}
+document.addEventListener('visibilitychange',syncWake);
 function tick(){
  const el=document.querySelectorAll('[data-elapsed]');
  if(S.draft){ const s=Math.floor((Date.now()-S.draft.start)/1000); const t=`${Math.floor(s/60)}:${pad(s%60)}`; el.forEach(e=>e.textContent=t); }
@@ -3450,10 +3505,11 @@ function tick(){
   const left=Math.max(0,Math.ceil((S.rest.end-Date.now())/1000));
   if(!r){ r=document.createElement('div'); r.id='rest'; r.className='rest'; r.innerHTML=`<span>Pause</span><span class="t"></span><button data-act="restAdd">+30 s</button><button data-act="restSkip">Fertig</button>`; document.body.appendChild(r); }
   r.querySelector('.t').textContent=left?`${Math.floor(left/60)}:${pad(left%60)}`:'Los!';
-  if(!left&&!S.rest.buzzed){ S.rest.buzzed=true; try{navigator.vibrate&&navigator.vibrate(200)}catch(e){} }
+  if(!left&&!S.rest.buzzed){ S.rest.buzzed=true; restSignal(); }
  } else if(r) r.remove();
+ if(S.rest&&S.draft&&V.tab!=='train'&&!S.rest.buzzed&&Date.now()>=S.rest.end){ S.rest.buzzed=true; restSignal(); toast('Pause vorbei'); }
 }
-setInterval(tick,500);
+setInterval(()=>{ tick(); syncWake(); },500);
 
 /* ============ Demo ============ */
 function loadDemo(){
@@ -3487,6 +3543,7 @@ function loadDemo(){
 document.addEventListener('click',e=>{
  const b=e.target.closest('[data-act]'); if(!b) return;
  const a=b.dataset.act, v=b.dataset.v;
+ if(S.draft) audioUnlock();
  if(a==='overlay'&&e.target!==b) return;
  const H={
   tab:()=>{const ch=V.tab!==v; V.tab=v;closeSheet();render();window.scrollTo(0,0); if(ch) haptic(5)},
@@ -3507,6 +3564,7 @@ document.addEventListener('click',e=>{
   sbNewPw:()=>{const p=$('#sb-pw').value; if(p.length<8){SB.err='Mindestens 8 Zeichen.';drawSheet();return} sbNewPassword(p)},
   sbSyncNow:()=>{sbSync(); drawSheet()},
   sbLogout:sbLogout,
+  sbSwitch:()=>sbSwitch(v==='keep'),
   sbHint:()=>{try{localStorage.setItem(LS+'.sbhint','1')}catch(e){} render()},
   msAll:()=>{V.msAll=!V.msAll; render()},
   exportData:exportData,
@@ -3631,7 +3689,7 @@ document.addEventListener('change',e=>{
  const t=e.target;
  if(shopChange(t)) return;
  if(t.matches('[data-import]')&&t.files&&t.files[0]){ const f=t.files[0]; t.value=''; f.text().then(importData); return; }
- if(t.matches('[data-ph-file]')&&t.files&&t.files[0]){ const f=t.files[0]; t.value=''; shrinkImage(f).then(data=>phPut({id:uid(),date:today(),ts:Date.now(),data})).then(()=>{PHOTOS=null; drawPhotos(); toast('Foto gespeichert')}).catch(()=>toast('Das Foto konnte nicht gespeichert werden.')); return; }
+ if(t.matches('[data-ph-file]')&&t.files&&t.files[0]){ const f=t.files[0]; t.value=''; shrinkImage(f).then(data=>phPut({id:uid(),date:today(),ts:Date.now(),data,uid:phOwner()})).then(()=>{PHOTOS=null; drawPhotos(); toast('Foto gespeichert')}).catch(()=>toast('Das Foto konnte nicht gespeichert werden.')); return; }
  if(t.matches('[data-scan-file]')&&t.files&&t.files[0]){ const f=t.files[0]; t.value=''; const m=$('#scan-msg'); if(m) m.textContent='Lese Barcode …'; decodeImageFile(f).then(code=>{ if(code) scanFound(code); else throw 0; }).catch(()=>{ const m2=$('#scan-msg'); if(m2) m2.textContent='Kein Barcode erkannt. Versuch es näher und scharf, ohne Spiegelung.'; }); return; }
  if(t.matches('[data-food-date]')&&t.value){ V.foodDate=t.value; render(); }
  if(t.matches('[data-prog-ex]')){ V.progEx=t.value; render(); }
@@ -3647,4 +3705,7 @@ if(S.draft) S.draft.items.forEach(it=>{if(!EX[it.ex]) it.ex=null}); if(S.draft) 
 sbInit();
 render();
 connect();
+/* Browser bitten, lokale Daten und Fotos nicht bei Speicherknappheit zu löschen */
+function askPersist(){ try{ if(STANDALONE&&S.profile&&!S.demo&&navigator.storage&&navigator.storage.persist) navigator.storage.persisted().then(p=>p||navigator.storage.persist()).catch(()=>{}); }catch(e){} }
+askPersist(); document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden') askPersist(); });
 </script>
