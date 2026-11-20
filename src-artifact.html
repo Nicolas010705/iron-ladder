@@ -339,11 +339,13 @@ input:focus,select:focus{outline:2px solid var(--accent);outline-offset:0;border
 .sugg{display:flex;gap:10px;align-items:flex-start;background:var(--accent-soft);border-radius:var(--r-sm);padding:12px 14px;font-size:1rem}
 .sugg svg{flex:none;width:18px;height:18px;color:var(--accent-text);margin-top:2px}
 .sugg b{color:var(--accent-text)}
-.sets{width:100%;border-collapse:separate;border-spacing:0 4px;font-variant-numeric:tabular-nums}
-.sets th{font-size:.875rem;color:var(--muted);font-weight:600;text-align:left;padding:2px 4px}
-.sets td{padding:3px 4px}
-.sets input{padding:9px 6px;text-align:center}
-.sets .prev{font-size:.875rem;color:var(--muted);white-space:nowrap}
+.sets{width:100%;table-layout:fixed;border-collapse:separate;border-spacing:0 4px;font-variant-numeric:tabular-nums}
+.sets col.c-n{width:24px}.sets col.c-w{width:24%}.sets col.c-r{width:18%}.sets col.c-i{width:15%}.sets col.c-k{width:calc(var(--tap) + 6px)}
+.sets th{font-size:.875rem;color:var(--muted);font-weight:600;text-align:left;padding:2px 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sets td{padding:3px 3px}
+.sets input{width:100%;padding:9px 2px;text-align:center}
+@media (max-width:420px){.ex-card{padding-inline:12px}}
+.sets .prev{font-size:.8125rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sets tr td{transition:background-color .2s}
 .sets tr.done td{background:var(--teal-soft)}
 .sets tr.done td:first-child{border-radius:var(--r-sm) 0 0 var(--r-sm)}
@@ -356,6 +358,7 @@ tr.done .check svg{opacity:1}
 .wo-head{position:sticky;top:env(safe-area-inset-top, 0px);z-index:20;background:var(--bg);padding:12px 0;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
 .wo-head .timer{font-family:var(--f-display);font-variant-numeric:tabular-nums;color:var(--muted);font-size:1.25rem}
 .rest{position:fixed;z-index:35;right:max(16px, env(safe-area-inset-right, 0px));bottom:calc(20px + env(safe-area-inset-bottom, 0px));background:var(--fg);color:var(--bg);border-radius:var(--r);padding:10px 12px 10px 16px;display:flex;gap:12px;align-items:center;box-shadow:0 10px 30px rgba(0,0,0,.3)} /* taste-skill-ignore: schwebt über dem Inhalt */
+body.resting .main{padding-bottom:calc(116px + 88px)}html:has(body.resting){scroll-padding-bottom:180px}
 .rest .t{font-family:var(--f-display);font-size:1.75rem;font-variant-numeric:tabular-nums;min-width:64px}
 .rest button{all:unset;cursor:pointer;min-height:40px;display:inline-flex;align-items:center;padding:6px 12px;border-radius:var(--r-sm);background:rgba(127,127,127,.25);font-weight:600;font-size:.875rem}
 @media (max-width:860px){.rest{bottom:calc(86px + env(safe-area-inset-bottom, 0px))}}
@@ -2331,7 +2334,7 @@ const BAD_FACTORS=['Wenig Schlaf','Wenig gegessen','Stress','Schmerzen','Wenig Z
 const isBadDay=r=>!!r&&(r.feel===1||(r.feel===2&&(r.tags||[]).some(t=>BAD_FACTORS.includes(t))));
 function history(exId){ const out=[]; for(const w of sortedW()){const it=w.items.find(i=>i.ex===exId); if(it&&it.sets.length) out.push({date:w.date,sets:it.sets,best:Math.max(...it.sets.map(s=>setScore(EX[exId],s))),feel:w.rating?.feel||0,bad:isBadDay(w.rating),deload:!!w.deload})} return out; }
 function goalEval(d){
- const list=[]; for(const it of d.items){ const ex=EX[it.ex]; const done=it.sets.filter(x=>x.done&&num(x.r)>0); if(!ex||!done.length) continue;
+ const list=[]; for(const it of d.items){ const ex=EX[it.ex]; const done=it.sets.filter(x=>x.done&&num(x.r)>0&&!(ex&&ex.kind==='w'&&num(x.w)<=0)); if(!ex||!done.length) continue;
   const t=it.sugg||{n:done.length,w:0,r:0};
   const ok=x=>num(x.r)>=num(t.r)&&((ex.kind==='w'||ex.kind==='bw')&&t.w?num(x.w)>=num(t.w)-1e-9:true);
   list.push({id:it.ex,hit:done.length>=t.n&&done.every(ok)}); }
@@ -2811,12 +2814,12 @@ function renderExCard(it,i){
   <div class="sugg">${I.up}<div><b>Ziel heute: ${esc(s.head)}</b><br>${esc(s.text)}<br><span class="muted" style="font-size:.875rem">${esc(s.why)}</span></div></div>
   ${(()=>{const wu=warmups(ex,workW(it,s)); return wu.length?`<div class="warm"><span class="lbl">Aufwärmen</span>${wu.map((x,k)=>`<button class="chip ${(it.warm||[])[k]?'on':''}" data-act="warmSet" data-v="${i}.${k}" aria-pressed="${!!(it.warm||[])[k]}">${fmt(x.w,2)} kg × ${x.r}</button>`).join('')}</div>`:''})()}
   ${barOf(ex)&&ex.kind==='w'?`<div class="plates" data-plates="${i}">${platesHTML(workW(it,s),barOf(ex))}</div>`:''}
-  <div style="overflow-x:auto"><table class="sets"><thead><tr><th>Satz</th><th>Vorher</th>${isT||isC?'':`<th>${wl}</th>`}<th>${rl}</th>${isT||isC?'':'<th>RIR</th>'}<th></th></tr></thead><tbody>
+  <div><table class="sets"><colgroup><col class="c-n"><col>${isT||isC?'':'<col class="c-w">'}<col class="c-r">${isT||isC?'':'<col class="c-i">'}<col class="c-k"></colgroup><thead><tr><th aria-label="Satz">#</th><th>Vorher</th>${isT||isC?'':`<th>${wl}</th>`}<th>${rl}</th>${isT||isC?'':'<th>RIR</th>'}<th></th></tr></thead><tbody>
   ${it.sets.map((st,j)=>{const pv=last&&last.sets[j]; const prev=pv?(isT||isC?`${fmt(pv.r)}`:`${fmt(pv.w,2)}×${fmt(pv.r)}`):'–';
    return `<tr class="${st.done?'done':''}"><td class="num">${j+1}</td><td class="prev">${prev}</td>
-   ${isT||isC?'':`<td><input type="text" inputmode="decimal" aria-label="Gewicht Satz ${j+1}" value="${st.w===''?'':esc(String(st.w).replace('.',','))}" placeholder="${s.w?fmt(s.w,2):'0'}" data-set="${i}.${j}.w" style="width:70px"></td>`}
-   <td><input type="text" inputmode="numeric" aria-label="${rl} Satz ${j+1}" value="${st.r===''?'':esc(st.r)}" placeholder="${s.r}" data-set="${i}.${j}.r" style="width:60px"></td>
-   ${isT||isC?'':`<td><input type="text" inputmode="numeric" aria-label="RIR Satz ${j+1}" value="${st.rir??''}" placeholder="2" data-set="${i}.${j}.rir" style="width:48px"></td>`}
+   ${isT||isC?'':`<td><input type="text" inputmode="decimal" aria-label="Gewicht Satz ${j+1}" value="${st.w===''?'':esc(String(st.w).replace('.',','))}" placeholder="${s.w?fmt(s.w,2):ex.kind==='bw'?'0':''}" data-set="${i}.${j}.w"></td>`}
+   <td><input type="text" inputmode="numeric" aria-label="${rl} Satz ${j+1}" value="${st.r===''?'':esc(st.r)}" placeholder="${s.r}" data-set="${i}.${j}.r"></td>
+   ${isT||isC?'':`<td><input type="text" inputmode="numeric" aria-label="RIR Satz ${j+1}" value="${st.rir??''}" placeholder="2" data-set="${i}.${j}.rir"></td>`}
    <td><button class="check" data-act="toggleSet" data-v="${i}.${j}" aria-label="Satz ${j+1} abhaken" aria-pressed="${!!st.done}">${I.check}</button></td></tr>`}).join('')}
   </tbody></table></div>
   <div class="row"><button class="btn sm ghost" data-act="addSet" data-i="${i}">${I.plus.replace('<svg','<svg width="14" height="14"')} Satz</button>${i<S.draft.items.length-1?`<button class="btn sm ghost" data-act="ssToggle" data-i="${i}">${it.ss&&S.draft.items[i+1].ss===it.ss?'Supersatz lösen':'Supersatz mit nächster'}</button>`:''}${it.sets.length>1?`<button class="btn sm ghost" data-act="rmSet" data-i="${i}">Letzten Satz entfernen</button>`:''}<span class="muted" style="font-size:.875rem;margin-left:auto">Pause ${Math.round(restSec(ex)/60*10)/10} min</span></div>
@@ -3453,7 +3456,8 @@ function newDraft(name,ids,planKey){
 function makeItem(id){ const ex=EX[id]; const s=suggestion(id);
  return {ex:id,sugg:s,sets:Array.from({length:s.n},()=>({w:ex.kind==='w'||ex.kind==='bw'?(s.w||''):'',r:s.r||'',rir:'',done:false}))}; }
 function finishWorkout(rating){
- const d=S.draft; const items=d.items.map(it=>({ex:it.ex,sets:it.sets.filter(s=>s.done&&num(s.r)>0).map(s=>({w:num(s.w),r:num(s.r),rir:s.rir===''?null:num(s.rir)}))})).filter(it=>it.sets.length);
+ const d=S.draft; const valid=(it,s)=>s.done&&num(s.r)>0&&!(EX[it.ex]?.kind==='w'&&num(s.w)<=0);
+ const items=d.items.map(it=>({ex:it.ex,sets:it.sets.filter(s=>valid(it,s)).map(s=>({w:num(s.w),r:num(s.r),rir:s.rir===''?null:num(s.rir)}))})).filter(it=>it.sets.length);
  if(!items.length){ toast('Hake mindestens einen Satz ab, um das Training zu speichern.'); return; }
  const before=computeRanks().sr; const msBefore=new Set(milestones().filter(x=>x.done).map(x=>x.id));
  const goals=goalEval(d); const vd=verdict(goals,rating);
@@ -3506,7 +3510,8 @@ function tick(){
   if(!r){ r=document.createElement('div'); r.id='rest'; r.className='rest'; r.innerHTML=`<span>Pause</span><span class="t"></span><button data-act="restAdd">+30 s</button><button data-act="restSkip">Fertig</button>`; document.body.appendChild(r); }
   r.querySelector('.t').textContent=left?`${Math.floor(left/60)}:${pad(left%60)}`:'Los!';
   if(!left&&!S.rest.buzzed){ S.rest.buzzed=true; restSignal(); }
- } else if(r) r.remove();
+  document.body.classList.add('resting');
+ } else { if(r) r.remove(); document.body.classList.remove('resting'); }
  if(S.rest&&S.draft&&V.tab!=='train'&&!S.rest.buzzed&&Date.now()>=S.rest.end){ S.rest.buzzed=true; restSignal(); toast('Pause vorbei'); }
 }
 setInterval(()=>{ tick(); syncWake(); },500);
@@ -3546,13 +3551,14 @@ document.addEventListener('click',e=>{
  if(S.draft) audioUnlock();
  if(a==='overlay'&&e.target!==b) return;
  const H={
-  tab:()=>{const ch=V.tab!==v; V.tab=v;closeSheet();render();window.scrollTo(0,0); if(ch) haptic(5)},
+  tab:()=>{const ch=V.tab!==v; V.tab=v;closeSheet();render();window.scrollTo(0,0); if(ch) haptic(5);
+   if(V.tourLater&&v==='home'&&!S.draft&&S.profile&&!S.profile.tourDone){ V.tourLater=false; setTimeout(()=>{ if(V.tab==='home'&&!S.draft&&!SHEET&&!TOUR) startTour(); },500); }},
   overlay:closeSheet, close:closeSheet,
   obSet:()=>{const o=V.ob;o[b.dataset.k]=['days'].includes(b.dataset.k)?+v:v; if(b.dataset.k==='days'||b.dataset.k==='goal') o.split=recSplit(o.days,o.goal); render()},
   obBack:()=>{V.ob.step--;render()},
   obNext:()=>{const o=V.ob; if(o.step<4){o.step++;render();window.scrollTo(0,0);return}
    S.profile={name:o.name.trim(),goal:o.goal,days:o.days,split:o.split,sex:o.sex,age:o.age,height:o.height,weight:o.weight,activity:o.activity,rot:0,customEx:[],customFoods:[],weights:{[today()]:o.weight},created:today()};
-   S.profile.targets=calcTargets(S.profile); buildEx(); buildFoods(); saveProfile(); V.tab='home'; render(); window.scrollTo(0,0); setTimeout(()=>{ if(S.profile&&!S.profile.tourDone&&!TOUR) startTour(); else toast('Profil erstellt. Willkommen auf der Leiter!') },700)},
+   S.profile.targets=calcTargets(S.profile); buildEx(); buildFoods(); saveProfile(); V.tab='home'; render(); window.scrollTo(0,0); setTimeout(()=>{ if(S.profile&&!S.profile.tourDone&&!TOUR&&V.tab==='home'&&!S.draft&&!SHEET) startTour(); else if(S.profile&&!S.profile.tourDone) V.tourLater=true; else toast('Profil erstellt. Willkommen auf der Leiter!') },700)},
   demo:loadDemo,
   exitDemo:()=>{S={profile:null,workouts:[],food:{},draft:null,demo:false}; V.ob=obDefaults(); cacheLoad(); if(S.profile){buildEx();buildFoods()} render()},
   settings:()=>{V.resetAsk=false;openSheet('settings')},
@@ -3618,8 +3624,9 @@ document.addEventListener('click',e=>{
   addSet:()=>{const it=S.draft.items[+b.dataset.i]; const l=it.sets[it.sets.length-1]||{w:'',r:''}; it.sets.push({w:l.w,r:l.r,rir:'',done:false}); draftSave(); render()},
   rmSet:()=>{S.draft.items[+b.dataset.i].sets.pop(); draftSave(); render()},
   toggleSet:()=>{const [i,j]=v.split('.').map(Number); const it=S.draft.items[i], s=it.sets[j];
-   const row=b.closest('tr'); row.querySelectorAll('input').forEach(inp=>{const k=inp.dataset.set.split('.')[2]; if(inp.value===''&&inp.placeholder&&k!=='rir') {inp.value=inp.placeholder; s[k]=inp.placeholder}});
+   const row=b.closest('tr'); if(!s.done) row.querySelectorAll('input').forEach(inp=>{const k=inp.dataset.set.split('.')[2]; if(inp.value===''&&inp.placeholder) {inp.value=inp.placeholder; s[k]=inp.placeholder}});
    if(!s.done&&num(s.r)<=0){toast('Trage zuerst die Wiederholungen ein.');return}
+   if(!s.done&&EX[it.ex].kind==='w'&&num(s.w)<=0){toast('Trage zuerst das Gewicht ein.'); row.querySelector('[data-set$=".w"]')?.focus(); return}
    s.done=!s.done; row.classList.toggle('done',s.done); if(s.done) haptic(12); b.setAttribute('aria-pressed',s.done);
    if(s.done){ const ps=ssPartners(i); const next=ps.find(k=>k!==i&&S.draft.items[k].sets[j]&&!S.draft.items[k].sets[j].done);
     if(ps.length>1&&next!==undefined){ S.rest=null; toast('Weiter mit '+EX[S.draft.items[next].ex].n); const c=document.querySelectorAll('.ex-card')[next]; if(c) c.scrollIntoView({behavior:REDUCED?'auto':'smooth',block:'start'}); }

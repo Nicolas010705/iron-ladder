@@ -178,6 +178,64 @@ await test('Bildschirmsperre während des Trainings', async page => {
   await page.waitForFunction(() => window.__wl === 0, null, { timeout: 3000 });
 });
 
+/* ---- Trainingsablauf ---- */
+async function startBench(page, width = 390) {
+  await page.setViewportSize({ width, height: 800 });
+  await seed(page, { profile: profile({ tourDone: true }), workouts: [], food: {} });
+  await page.evaluate(() => newDraft('Test', ['bankdruecken', 'langhantelrudern'], null));
+}
+
+await test('Hantelsatz ohne Gewicht lässt sich nicht abhaken', async page => {
+  await startBench(page);
+  await page.click('[data-act="toggleSet"][data-v="0.0"]');
+  eq(await page.evaluate(() => S.draft.items[0].sets[0].done), false, 'Satz bleibt offen');
+  ok(/Gewicht/.test(await page.locator('.toast').innerText()), 'Hinweis auf fehlendes Gewicht');
+  await page.fill('[data-set="0.0.w"]', '60');
+  await page.click('[data-act="toggleSet"][data-v="0.0"]');
+  eq(await page.evaluate(() => { const s = S.draft.items[0].sets[0]; return [s.done, num(s.w), num(s.rir)]; }), [true, 60, 2], 'mit Gewicht abgehakt, RIR-Vorschlag übernommen');
+});
+
+await test('Leere Sätze zählen beim Speichern nicht als Ziel', async page => {
+  await startBench(page);
+  await page.evaluate(() => { const it = S.draft.items[0]; it.sets.forEach((s) => { s.w = 0; s.r = 8; s.done = true; }); const r = S.draft.items[1].sets[0]; r.w = 50; r.r = 8; r.done = true; finishWorkout({ feel: 3, rpe: 7, tags: [] }); });
+  const w = await page.evaluate(() => S.workouts[S.workouts.length - 1]);
+  eq(w.items.map((i) => i.ex), ['langhantelrudern'], 'nur das Training mit Gewicht gespeichert');
+  eq(w.goals.total, 1, 'nur eine Übung bewertet');
+});
+
+for (const width of [320, 360, 390]) {
+  await test(`Satz-Tabelle passt auf ${width} px`, async page => {
+    await startBench(page, width);
+    await page.fill('[data-set="0.0.w"]', '60');
+    await page.click('[data-act="toggleSet"][data-v="0.0"]');
+    const r = await page.evaluate(() => ({ wide: [...document.querySelectorAll('.sets, .sets *')].filter((e) => e.getBoundingClientRect().right > innerWidth + 0.5).length, shifted: [...document.querySelectorAll('*')].filter((e) => e.scrollLeft > 0).length, doc: document.scrollingElement.scrollWidth - innerWidth }));
+    eq(r, { wide: 0, shifted: 0, doc: 0 }, 'nichts ragt über den Rand, nichts verrutscht');
+  });
+}
+
+await test('Pausenleiste verdeckt die letzten Knöpfe nicht', async page => {
+  await startBench(page);
+  await page.fill('[data-set="0.0.w"]', '60');
+  await page.click('[data-act="toggleSet"][data-v="0.0"]');
+  await page.waitForSelector('#rest');
+  await page.evaluate(() => window.scrollTo(0, 1e6)); await page.waitForTimeout(100);
+  const hidden = await page.evaluate(() => { const bar = document.getElementById('rest').getBoundingClientRect(); const cards = document.querySelectorAll('.ex-card'); const btns = [...cards[cards.length - 1].querySelectorAll('.row .btn')];
+    return btns.filter((b) => { const r = b.getBoundingClientRect(); return r.bottom > bar.top && r.top < bar.bottom; }).map((b) => b.textContent.trim()); });
+  eq(hidden, [], 'Knöpfe der letzten Übung liegen über der Pausenleiste');
+});
+
+await test('Rundgang legt sich nicht über ein gerade gestartetes Training', async page => {
+  await page.setViewportSize({ width: 390, height: 800 });
+  await page.goto(BASE); await page.evaluate(() => localStorage.clear()); await page.reload();
+  // Onboarding abschließen und sofort ein Training starten (schneller als der 0,7-s-Timer des Rundgangs)
+  await page.evaluate(() => { for (let i = 0; i < 8 && document.querySelector('[data-act="obNext"]'); i++) document.querySelector('[data-act="obNext"]').click(); document.querySelector('[data-act="startPlan"]').click(); });
+  await page.waitForTimeout(1200);
+  eq(await page.evaluate(() => !!TOUR), false, 'kein Rundgang während des Trainings');
+  await page.evaluate(() => { S.draft = null; draftSave(); });
+  await page.click('[data-act="tab"][data-v="home"]');
+  await page.waitForFunction(() => !!TOUR, null, { timeout: 3000 });
+});
+
 await browser.close(); server.close();
 console.log(failed ? `\n${failed} Test(s) fehlgeschlagen` : '\nAlle Tests bestanden');
 process.exit(failed ? 1 : 0);
