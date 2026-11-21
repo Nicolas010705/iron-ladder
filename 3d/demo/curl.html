@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Iron Ladder – Kurzhantel-Curl (Blender-Demo)</title>
+<style>
+  :root{--bg:#f2f2f7;--card:#fff;--ink:#1c1c1e;--mute:#6e6e73;--line:#e5e5ea;--accent:#00a86b}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+  main{max-width:1080px;margin:0 auto;padding:24px 16px 48px}
+  h1{font-size:26px;margin:0 0 4px;letter-spacing:-.01em}
+  .sub{color:var(--mute);margin:0 0 20px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media (max-width:760px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--card);border-radius:18px;padding:14px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+  .card h2{font-size:15px;margin:2px 4px 2px}
+  .card p.k{font-size:13px;color:var(--mute);margin:0 4px 10px}
+  .tag{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px;background:#e8f7f0;color:#007a4e;margin-left:6px;vertical-align:1px}
+  .tag.old{background:#f0f0f3;color:var(--mute)}
+  .stage{position:relative;aspect-ratio:4/5;border-radius:14px;overflow:hidden;background:linear-gradient(#fbfbfd,#ececf1)}
+  .stage canvas{width:100%;height:100%;display:block;touch-action:none}
+  .bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px}
+  .pill{border:1px solid var(--line);background:#fff;border-radius:99px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer;color:var(--ink)}
+  .pill[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
+  input[type=range]{flex:1;min-width:120px;accent-color:var(--accent)}
+  .phase{font-size:12px;color:var(--mute);min-width:84px;text-align:right}
+  .mus{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--mute);align-items:center}
+  .chip{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:99px;background:#f2f2f7}
+  .chip i{width:9px;height:9px;border-radius:50%;background:var(--accent)} .chip.sec i{opacity:.45}
+  ul.notes{margin:20px 0 0;padding:16px 20px 16px 36px;background:var(--card);border-radius:18px;color:#3a3a3c;font-size:14px}
+  ul.notes li{margin:4px 0}
+  .load{position:absolute;inset:0;display:grid;place-items:center;color:var(--mute);font-size:13px}
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/"}}</script>
+</head>
+<body>
+<main>
+  <h1>Kurzhantel-Curl</h1>
+  <p class="sub">Beispiel: dieselbe Übung einmal wie bisher in der App (Posen im Code, inverse Kinematik) und einmal komplett in Blender modelliert und animiert.</p>
+  <div class="grid">
+    <section class="card">
+      <h2>Bisher <span class="tag old">Code-Animation</span></h2>
+      <p class="k">Live aus <code>3d/iron3d.js</code>, Muster <code>curl</code>, Variante Kurzhantel</p>
+      <div id="old" style="min-height:200px"><div class="stage"><div class="load">lädt …</div></div></div>
+    </section>
+    <section class="card">
+      <h2>Neu <span class="tag">Blender</span></h2>
+      <p class="k">Aus <code>3d/demo/curl.glb</code>, gebaut mit <code>tools/blender/demo_curl.py</code></p>
+      <div class="stage" id="stage"><canvas id="c" aria-label="3D-Ansicht Kurzhantel-Curl. Ziehen zum Drehen." role="img"></canvas><div class="load" id="load">lädt …</div></div>
+      <div class="bar">
+        <button class="pill" data-view="tq" aria-pressed="true">Schräg</button>
+        <button class="pill" data-view="side" aria-pressed="false">Seite</button>
+        <button class="pill" data-view="front" aria-pressed="false">Vorne</button>
+        <button class="pill" data-view="hand" aria-pressed="false">Hantel nah</button>
+      </div>
+      <div class="bar">
+        <button class="pill" id="play">Pause</button>
+        <button class="pill" id="speed">1×</button>
+        <input type="range" id="scrub" min="0" max="1000" value="0" aria-label="Bewegungsablauf">
+        <span class="phase" id="phase"></span>
+      </div>
+      <div class="mus"><span>Muskeln</span><span class="chip"><i></i>Bizeps</span><span class="chip sec"><i></i>Unterarme</span><span class="chip sec"><i></i>vordere Schulter</span></div>
+    </section>
+  </div>
+  <ul class="notes">
+    <li><b>Kurzhantel neu modelliert:</b> Sechskant-Gummiköpfe mit weichen Kanten, echte Rautenrändelung am Griff, verchromte Bünde, Stahl-Endkappe mit erhabener Gewichtsangabe, grüner Ring in App-Farbe.</li>
+    <li><b>Bewegung in Blender animiert:</b> Keyframes am Skelett der App-Figur, 2 s pro Wiederholung: 0,6 s hoch, kurz halten, 1 s kontrolliert ablassen. Ellbogen bleibt am Körper, der Unterarm dreht beim Hochkommen leicht nach außen.</li>
+    <li><b>Gleiche Figur und gleiches Licht wie in der App:</b> <code>body.glb</code>, Studio-Licht, Muskelfärbung wie in <code>figure.js</code>.</li>
+  </ul>
+</main>
+
+<script type="module">
+// ---------- Bisheriger Viewer der App ----------
+import('/3d/iron3d.js').then((m) => m.mount(document.getElementById('old'), {
+  pat: 'curl', eq: 'KH', prim: ['biceps'], sec: ['forearms', 'delt_front'],
+  names: { biceps: 'Bizeps', forearms: 'Unterarme', delt_front: 'vordere Schulter' },
+})).catch((e) => { document.querySelector('#old .load').textContent = 'Alter Viewer nicht geladen: ' + e.message; });
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+const REGIONS = ['none', 'chest_up', 'chest_mid', 'chest_low', 'lats', 'upback', 'traps', 'lower', 'delt_front', 'delt_side', 'delt_rear', 'biceps', 'triceps', 'forearms'];
+const PRIM = new Set(['biceps']), SEC = new Set(['forearms', 'delt_front']);
+const canvas = document.getElementById('c'), stage = document.getElementById('stage');
+
+// Renderer, Licht und Boden wie tools/3d/scene.js
+const r = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+r.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
+r.outputColorSpace = THREE.SRGBColorSpace; r.toneMapping = THREE.NeutralToneMapping;
+r.shadowMap.enabled = true; r.shadowMap.type = THREE.PCFShadowMap;
+const sc = new THREE.Scene();
+const pm = new THREE.PMREMGenerator(r); sc.environment = pm.fromScene(new RoomEnvironment(), 0.04).texture; sc.environmentIntensity = 0.7;
+const key = new THREE.DirectionalLight(0xffffff, 2.0); key.position.set(2.2, 4.5, 2.8); key.castShadow = true;
+key.shadow.mapSize.set(2048, 2048); key.shadow.bias = -0.0004; key.shadow.normalBias = 0.02; key.shadow.radius = 4;
+Object.assign(key.shadow.camera, { left: -1.2, right: 1.2, top: 2, bottom: -0.5 }); sc.add(key);
+const rim = new THREE.DirectionalLight(0xe6eeff, 1.1); rim.position.set(-3, 2.6, -3.2); sc.add(rim);
+const fade = (() => { const c = document.createElement('canvas'); c.width = c.height = 256; const x = c.getContext('2d');
+  const g = x.createRadialGradient(128, 128, 10, 128, 128, 128); g.addColorStop(0, '#fff'); g.addColorStop(0.35, '#fff'); g.addColorStop(0.75, '#555'); g.addColorStop(1, '#000');
+  x.fillStyle = g; x.fillRect(0, 0, 256, 256); return new THREE.CanvasTexture(c); })();
+const floor = new THREE.Mesh(new THREE.CircleGeometry(2.4, 64), new THREE.MeshStandardMaterial({ color: 0xcecfd2, roughness: 0.92, transparent: true, alphaMap: fade, depthWrite: false }));
+floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; sc.add(floor);
+const cam = new THREE.PerspectiveCamera(28, 1, 0.05, 60);
+
+// Figur-Material wie figure.js (Hervorhebung aus der Muskelregion im Farbattribut)
+function skin(mesh) {
+  const geo = mesh.geometry, col = geo.attributes.color, n = geo.attributes.position.count;
+  let hl = new Float32Array(n);
+  for (let i = 0; i < n; i++) { const reg = REGIONS[Math.round(col.getX(i) * 31)]; hl[i] = PRIM.has(reg) ? 1 : SEC.has(reg) ? 0.5 : 0; }
+  // 3× mit Nachbarn glätten (über das Index-Netz)
+  const idx = geo.index.array, nb = Array.from({ length: n }, () => new Set());
+  for (let t = 0; t < idx.length; t += 3) { const a = idx[t], b = idx[t + 1], c = idx[t + 2]; nb[a].add(b).add(c); nb[b].add(a).add(c); nb[c].add(a).add(b); }
+  for (let pass = 0; pass < 3; pass++) {
+    const tmp = new Float32Array(n);
+    for (let i = 0; i < n; i++) { let s = 0; for (const j of nb[i]) s += hl[j]; tmp[i] = nb[i].size ? 0.5 * hl[i] + 0.5 * s / nb[i].size : hl[i]; }
+    hl = tmp;
+  }
+  geo.setAttribute('hl', new THREE.BufferAttribute(hl, 1)); geo.deleteAttribute('color');
+  const uni = { uAccent: { value: new THREE.Color('#00a86b') }, uPulse: { value: 0 } };
+  const mat = new THREE.MeshPhysicalMaterial({ color: 0xb4ada6, roughness: 0.6, metalness: 0, sheen: 0.3, sheenRoughness: 0.6, sheenColor: new THREE.Color(0xffe2d2) });
+  mat.onBeforeCompile = (sh) => {
+    Object.assign(sh.uniforms, uni);
+    sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nattribute float hl;\nvarying float vHl;').replace('#include <begin_vertex>', '#include <begin_vertex>\nvHl = hl;');
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nuniform vec3 uAccent;\nuniform float uPulse;\nvarying float vHl;')
+      .replace('#include <color_fragment>', '#include <color_fragment>\nfloat hk = smoothstep(0.0, 1.0, vHl);\ndiffuseColor.rgb = mix(diffuseColor.rgb, uAccent, clamp(hk * 1.05, 0.0, 1.0));')
+      .replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\ntotalEmissiveRadiance += uAccent * hk * (0.08 + 0.18 * uPulse);');
+  };
+  mesh.material = mat; return uni;
+}
+
+const st = { playing: !matchMedia('(prefers-reduced-motion: reduce)').matches, speed: 1, yaw: 0.65, pitch: 0.12, dist: 4.2, target: new THREE.Vector3(0, 1.0, 0), view: 'tq', spin: false };
+const VIEWS = { tq: [0.65, 0.12, 4.2, [0, 1.0, 0]], side: [Math.PI / 2, 0.08, 4.2, [0, 1.0, 0]], front: [0, 0.08, 4.4, [0, 1.0, 0]], hand: [0.6, 0.15, 1.6, [0.24, 1.05, 0.12]] };
+let mixer, action, uni, clipDur = 2, dbL;
+const gltf = await new GLTFLoader().setMeshoptDecoder(MeshoptDecoder).loadAsync('./curl.glb');
+const root = gltf.scene; sc.add(root);
+root.traverse((o) => {
+  if (!o.isMesh) return; o.castShadow = o.receiveShadow = true;
+  if (o.isSkinnedMesh) { o.frustumCulled = false; uni = skin(o); }
+});
+mixer = new THREE.AnimationMixer(root); const clip = gltf.animations[0]; clipDur = clip.duration;
+action = mixer.clipAction(clip); action.play();
+document.getElementById('load').remove();
+
+// Steuerung
+const $ = (s) => document.querySelector(s);
+const views = document.querySelectorAll('[data-view]');
+const setView = (k) => { const v = VIEWS[k]; st.view = k; [st.yaw, st.pitch, st.dist] = v; st.target.set(...v[3]); views.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.view === k))); };
+views.forEach((b) => b.addEventListener('click', () => setView(b.dataset.view)));
+$('#play').addEventListener('click', () => { st.playing = !st.playing; $('#play').textContent = st.playing ? 'Pause' : 'Abspielen'; });
+if (!st.playing) $('#play').textContent = 'Abspielen';
+$('#speed').addEventListener('click', () => { st.speed = st.speed === 1 ? 0.5 : st.speed === 0.5 ? 0.25 : 1; $('#speed').textContent = String(st.speed).replace('.', ',') + '×'; });
+$('#scrub').addEventListener('input', (e) => { st.playing = false; $('#play').textContent = 'Abspielen'; action.time = (+e.target.value / 1000) * clipDur; mixer.update(0); });
+const ptr = new Map(); let pinch0 = 0, dist0 = 0;
+canvas.addEventListener('pointerdown', (e) => { ptr.set(e.pointerId, { x: e.clientX, y: e.clientY }); canvas.setPointerCapture(e.pointerId);
+  if (ptr.size === 2) { const [a, b] = [...ptr.values()]; pinch0 = Math.hypot(a.x - b.x, a.y - b.y); dist0 = st.dist; } });
+canvas.addEventListener('pointermove', (e) => { const p = ptr.get(e.pointerId); if (!p) return;
+  if (ptr.size === 2) { p.x = e.clientX; p.y = e.clientY; const [a, b] = [...ptr.values()]; st.dist = THREE.MathUtils.clamp(dist0 * pinch0 / Math.hypot(a.x - b.x, a.y - b.y), 0.8, 7); return; }
+  st.yaw -= (e.clientX - p.x) * 0.012; st.pitch = THREE.MathUtils.clamp(st.pitch + (e.clientY - p.y) * 0.008, -0.3, 1.2); p.x = e.clientX; p.y = e.clientY;
+  views.forEach((b) => b.setAttribute('aria-pressed', 'false')); });
+['pointerup', 'pointercancel'].forEach((t) => canvas.addEventListener(t, (e) => { ptr.delete(e.pointerId); pinch0 = 0; }));
+canvas.addEventListener('wheel', (e) => { e.preventDefault(); st.dist = THREE.MathUtils.clamp(st.dist * Math.exp(e.deltaY * 0.001), 0.8, 7); }, { passive: false });
+canvas.addEventListener('dblclick', () => setView('tq'));
+
+const phaseOf = (t) => t < 0.6 ? 'hoch' : t < 0.85 ? 'oben halten' : t < 1.85 ? 'ablassen' : 'unten';
+let last = performance.now();
+function loop(now) {
+  const dt = Math.min(0.1, (now - last) / 1000); last = now;
+  if (st.playing) { mixer.update(dt * st.speed); $('#scrub').value = String(Math.round(action.time / clipDur * 1000)); }
+  if (uni) uni.uPulse.value = st.playing ? 0.5 + 0.5 * Math.sin(now / 420) : 0.5;
+  $('#phase').textContent = phaseOf(action.time);
+  const w = stage.clientWidth, h = stage.clientHeight;
+  if (canvas.width !== Math.round(w * r.getPixelRatio()) || canvas.height !== Math.round(h * r.getPixelRatio())) { r.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); }
+  const cp = Math.cos(st.pitch);
+  cam.position.set(st.target.x + st.dist * cp * Math.sin(st.yaw), st.target.y + st.dist * Math.sin(st.pitch), st.target.z + st.dist * cp * Math.cos(st.yaw));
+  cam.lookAt(st.target);
+  r.render(sc, cam); requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+window.__demo = { st, action, setView };
+</script>
+</body>
+</html>

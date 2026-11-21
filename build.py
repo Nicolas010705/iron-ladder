@@ -26,7 +26,7 @@ sbjs=('window.IRON_SB='+json.dumps({'url':sbcfg.get('url',''),'key':sbcfg.get('k
 ver=hashlib.sha1((src+v3d+FONTS).encode()).hexdigest()[:8]
 # Alles, was offline gebraucht wird, landet beim Installieren im Cache (3D: ca. 2 MB)
 shell=['/','/manifest.webmanifest','/icon.svg','/icon-192.png','/fonts/inter-latin-wght-normal.woff2','/fonts/inter-latin-ext-wght-normal.woff2']
-if v3d: shell+=['/'+str(p.relative_to(out)) for p in sorted(d3.rglob('*')) if p.is_file() and p.suffix in ('.js','.glb','.webp')]
+if v3d: shell+=['/'+str(p.relative_to(out)).replace('\\','/') for p in sorted(d3.rglob('*')) if p.is_file() and p.suffix in ('.js','.glb','.webp') and 'demo' not in p.relative_to(d3).parts]
 head=f'''<!doctype html>
 <html lang="de">
 <head>
