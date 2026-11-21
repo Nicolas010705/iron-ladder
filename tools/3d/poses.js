@@ -55,9 +55,9 @@ export const PATTERNS = {
   },
   pushup: {
     view: 'side',
-    a: { r: [70, 0, 0], p: [0, 0.45, -0.42], fit: { legs: 1, k: 0.995 }, hand: { L: { p: [0.2, 0.0, 0.0], n: [0, -1, 0], t: [-1, 0, 0.3], k: 'f' } },
+    a: { r: [70, 0, 0], p: [0, 0.45, -0.42], fit: { legs: 1, k: 0.995 }, hand: { L: { p: [0.2, 0.0, 0.05], n: [0, -1, 0], t: [-1, 0, 0.3], k: 'f' } },
       foot: { L: { p: [0.09, 0, -1.25], f: [0, -0.85, 0.5], u: [0, 0.5, 0.85], piv: 'ball' } }, apole: [0.6, 0.1, -1], hd: 5 },
-    b: { r: [84, 0, 0], p: [0, 0.2, -0.36], apole: [0.8, 0.3, -1] },
+    b: { r: [82, 0, 0], p: [0, 0.25, -0.375], apole: [0.8, 0.3, -1] }, // Becken so, dass die Brust ~20 cm über dem Boden ist und die Oberschenkel frei bleiben
   },
   dip: {
     view: 'tq', eq: [{ m: 'power_tower', p: [0, 0, 0] }],
@@ -118,6 +118,9 @@ export const PATTERNS = {
       KH: { a: { hand: { L: { p: [0.24, 0.8, 0.07], n: [0, 0, 1], t: [1, 0, 0], fr: 'c' } } } },
       LH: { hold: 'barbell', a: { bar: { c: [0, 0.78, 0.13], w: 0.21, n: [0, 0, 1], t: 'out', fr: 'c' } }, b: { bar: { c: [0, 1.34, 0.27], w: 0.21, n: [0, 0.5, -0.8], t: 'out', fr: 'c' } } },
       SZ: { hold: 'ezbar', a: { bar: { c: [0, 0.78, 0.13], w: 0.16, n: [0, 0, 1], t: 'out', fr: 'c' } }, b: { bar: { c: [0, 1.34, 0.27], w: 0.16, n: [0, 0.5, -0.8], t: 'out', fr: 'c' } } },
+      // Drag Curl an der Multipresse: Stange läuft senkrecht dicht am Körper, Ellbogen gehen nach hinten
+      SM: { hold: 'smith', eq: [{ m: 'smith', p: [0, 0, 0.14] }], a: { bar: { c: [0, 0.8, 0.14], w: 0.21, n: [0, 0, 1], t: 'out' }, apole: [0.1, -0.3, -1] },
+        b: { bar: { c: [0, 1.2, 0.14], w: 0.21, n: [0, 0.3, 1], t: 'out' }, apole: [0.1, 0.2, -1] } },
       KB: { eq: [TOWER(0, 0.95, 180, 0.12)], cable: { from: FROM_TOWER(), handle: 'sbar', wide: true },
         a: { bar: { c: [0, 0.8, 0.15], w: 0.18, n: [0, 0, 1], t: 'out', fr: 'c' } }, b: { bar: { c: [0, 1.32, 0.27], w: 0.18, n: [0, 0.5, -0.8], t: 'out', fr: 'c' } } },
       MA: 'preacher',
@@ -160,7 +163,7 @@ export const PATTERNS = {
     a: S({ foot: WIDE, lpole: [0.4, 0, 1], bar: { c: [0, 1.47, -0.1], w: 0.42, n: [0, 0.3, 1], fr: 'c' }, apole: [0.3, -1, -0.5] }),
     b: { r: [42, 0, 0], p: [0, 0.52, -0.24], fit: null, hd: -28 },
     v: {
-      KH: { hold: 'dbMid', eq: [], a: { bar: { c: [0, 1.22, 0.24], w: 0.07, n: [-0.3, 0.4, 0.4], fr: 'c' }, apole: [0.4, -1, 0.3] }, b: { r: [22, 0, 0], p: [0, 0.5, -0.2], hd: -15 } },
+      KH: { hold: 'dbMid', eq: [], a: { bar: { c: [0, 1.2, 0.3], w: 0.07, n: [-0.4, -0.9, 0], fr: 'c' }, apole: [0.4, -1, 0.3] }, b: { r: [22, 0, 0], p: [0, 0.5, -0.2], hd: -15 } },
       KG: { hold: null, eq: [], a: { bar: null, hand: { L: { p: [0.2, 1.36, 0.6], n: [0, -1, 0], t: [-1, 0, 0], k: 'o', fr: 'c' } }, apole: [0.4, -0.5, -1] }, b: { r: [22, 0, 0], p: [0, 0.5, -0.22], hd: -10 } },
       MA: 'beltsquat',
     },
@@ -232,7 +235,7 @@ export const PATTERNS = {
   },
   plank: {
     view: 'side', eq: [{ m: 'mat', p: [0, 0, -0.45] }], hold1: true,
-    a: { r: [79, 0, 0], p: [0, 0.25, -0.45], hand: { L: { p: [0.06, 0.015, 0.28], n: [0, -1, 0], t: [-0.6, 0, 0.8], k: 'o' } }, apole: [0.2, -1, -0.2],
+    a: { r: [79, 0, 0], p: [0, 0.25, -0.45], hand: { L: { p: [0.06, 0.04, 0.28], n: [-1, 0, 0.2], t: [0, 1, 0], k: 'o' } }, apole: [0.2, -1, -0.2],
       foot: { L: { p: [0.1, 0.01, -1.3], f: [0, -0.85, 0.5], u: [0, 0.5, 0.85], piv: 'ball' } }, hd: 5 },
   },
   hangleg: {
@@ -299,7 +302,7 @@ export const PATTERNS = {
   abwheel: {
     view: 'side', hold: 'abwheel', eq: [{ m: 'mat', p: [0, 0, 0.3] }],
     a: { r: [68, 0, 0], p: [0, 0.55, -0.02], bar: { c: [0, 0.092, 0.42], w: 0.12, n: [0, -0.6, -0.8] }, apole: [0.3, 0, -1], hd: 5,
-      thL: [0.08, -1, -0.04, 'w'], shL: [0, -0.06, -1, 'w'], thR: [-0.08, -1, -0.04, 'w'], shR: [0, -0.06, -1, 'w'], ft: [0, -0.3, -1, 'w'] },
+      thL: [0.08, -1, -0.04, 'w'], shL: [0, -0.06, -1, 'w'], thR: [-0.08, -1, -0.04, 'w'], shR: [0, -0.06, -1, 'w'], ft: [0, -0.08, -1, 'w'] },
     b: { r: [74, 0, 0], p: [0, 0.35, 0.33], bar: { c: [0, 0.092, 1.25], w: 0.12, n: [0, -0.95, -0.3] }, thL: [0.08, -0.38, -0.92, 'w'], thR: [-0.08, -0.38, -0.92, 'w'], apole: [0.3, -1, 0] },
   },
   hyperext: {
@@ -315,9 +318,9 @@ export const PATTERNS = {
     b: { r: [70, 0, 0], p: [0, 0.86, -0.24], fit: null, hd: -30 },
   },
   clean: {
-    view: 'tq', hold: 'barbell',
+    view: 'tq', hold: 'barbell', relHand: true,
     a: S({ r: [57, 0, 0], p: [0, 0.56, -0.17], fit: null, hd: -18, bar: { c: [0, 0.225, 0.07], w: 0.27, n: [0, 0, -1] }, apole: [0.3, 0, -1], lpole: [0.25, 0, 1] }),
-    b: { r: [8, 0, 0], p: [0, 0.74, -0.1], fit: null, hd: 0, bar: { c: [0, 1.42, 0.14], w: 0.27, n: [0, 1, -0.3], fr: 'c' }, apole: [0.3, -0.6, 1] },
+    b: { r: [8, 0, 0], p: [0, 0.74, -0.1], fit: null, hd: 0, bar: { c: [0, 1.42, 0.14], w: 0.27, n: [0, 0.6, 0.8], fr: 'c' }, apole: [0.4, -1, 0.2] },
   },
   stepup: {
     view: 'side', hold: 'db2', eq: [{ m: 'box', p: [0, 0, 0.36] }],
@@ -328,7 +331,7 @@ export const PATTERNS = {
   nordic: {
     view: 'side', eq: [{ m: 'nordic', p: [0, 0, -0.02] }], gnd: 'knees', gndY: 0.105, gndZ: 0.04,
     a: { r: [0, 0, 0], th: [0.08, -1, 0.02, 'w'], sh: [0, -0.04, -1, 'w'], ft: [0, -0.4, -1, 'w'], ua: [0.25, -1, 0.15], fa: [0.15, -0.3, 1], k: 'o' },
-    b: { r: [62, 0, 0], th: [0.08, -0.48, 0.88, 'w'], ua: [0.25, -0.2, 1], fa: [0.1, -0.2, 1] },
+    b: { r: [62, 0, 0], th: [0.08, -0.48, 0.88, 'w'], ua: [0.25, -0.12, 1], fa: [0.1, -0.02, 1] },
   },
   pullover: {
     view: 'side', hold: 'dbMid', eq: [BENCH],
@@ -377,6 +380,8 @@ export function resolvePattern(key, eqKind) {
     if (eqKind === 'SZ' && ['barbell', 'barbell2'].includes(base.hold)) pat.hold = 'ezbar';
   }
   if (pat.cable && pat.cable.each && pat.cable.from2) pat.cable = Object.assign({}, pat.cable);
+  // Multipresse: von der Seite verdecken Pfosten und Scheiben die Figur
+  if (pat.view === 'side' && (pat.eq || []).some((e) => e.m === 'smith')) pat.view = 'tq';
   const DEF = { r: [0, 0, 0], sp: [0, 0, 0], hd: 0, el: 0 };
   pat._A = Object.assign({}, DEF, pat.a); pat._B = Object.assign({}, pat._A, pat.b || {});
   if (pat.crank) pat.dyn = bikeDyn;

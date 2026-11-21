@@ -89,7 +89,7 @@ class Rig {
     root.updateMatrixWorld(true);
     this.order = []; const walk = (o) => { if (o.isBone) this.order.push(o); o.children.forEach(walk); }; walk(root);
     this.rest = new Map();
-    for (const bo of this.order) { const q = new THREE.Quaternion(), p = new THREE.Vector3(); bo.getWorldQuaternion(q); bo.getWorldPosition(p); this.rest.set(bo, { q, p, lp: bo.position.clone() }); }
+    for (const bo of this.order) { const q = new THREE.Quaternion(), p = new THREE.Vector3(); bo.getWorldQuaternion(q); bo.getWorldPosition(p); this.rest.set(bo, { q, p, lp: bo.position.clone(), lq: bo.quaternion.clone() }); }
     const P = (n) => this.rest.get(this.get(n)).p.clone();
     this.R = {};
     for (const s of SIDES) {
@@ -105,7 +105,7 @@ class Rig {
       const fsign = Math.sign(ff.dot(n.clone().cross(tt)));
       const knuck = i1.clone().add(p1).multiplyScalar(0.5);
       const grip = knuck.clone().addScaledVector(n, 0.024).addScaledVector(ff, 0.012); // Stangenmitte in der geschlossenen Hand
-      const palm = knuck.clone().lerp(wr, 0.45).addScaledVector(n, -0.012);              // Handflächenmitte (flach aufgesetzt)
+      const palm = knuck.clone().lerp(wr, 0.45).addScaledVector(n, 0.016);               // Handflächenmitte auf der Haut (flach aufgesetzt)
       this.R[s] = {
         u, f, l1: sh.distanceTo(el), l2: el.distanceTo(wr), elbowAx: u.clone().cross(f).normalize(),
         th, shn, lt: hip.distanceTo(kn), ls: kn.distanceTo(an), kneeAx: new THREE.Vector3(1, 0, 0).projectOnPlane(th).normalize(),
@@ -116,6 +116,13 @@ class Rig {
     }
     // Rumpf-Vertices für Auflage auf Bank/Sitz
     const geo = mesh.geometry, si = geo.attributes.skinIndex, sw = geo.attributes.skinWeight; const bones = mesh.skeleton.bones;
+    // Zehen-Vertices (für den Bodenkontakt der Zehen)
+    this.toeVerts = {};
+    for (const s of SIDES) {
+      const bi = bones.indexOf(this.get('toe.' + s)); const ids = [];
+      if (bi >= 0) for (let i = 0; i < si.count; i++) for (let k = 0; k < 4; k++) if (si.getComponent(i, k) === bi && sw.getComponent(i, k) > 0.3) { ids.push(i); break; }
+      this.toeVerts[s] = ids;
+    }
     const torso = new Set(['root', 'spine05', 'spine04', 'spine03', 'spine02', 'spine01', 'pelvisL', 'pelvisR', 'upperleg01L', 'upperleg01R'].map(bname));
     this.torsoVerts = [];
     for (let i = 0; i < si.count; i += 2) {
@@ -174,6 +181,33 @@ export class Figure {
   }
 
   J(n) { return this.rig.get(n).getWorldPosition(new THREE.Vector3()); }
+
+  /** In Blender gebaute Animation (Skelett-Clip aus /3d/anim/*.glb) setzen; null = Bewegung per IK rechnen.
+   *  Zeit 0 … Dauer im Clip entspricht t 0 … 1 der Bewegung. */
+  setClip(clip) {
+    this.clip = null; if (!clip) return;
+    const tr = [];
+    for (const k of clip.tracks) {
+      const i = k.name.lastIndexOf('.'); const bo = this.rig.b[k.name.slice(0, i)]; const prop = k.name.slice(i + 1);
+      if (!bo || (prop !== 'quaternion' && prop !== 'position')) continue;
+      tr.push({ bo, prop, it: k.createInterpolant() });
+    }
+    if (tr.length) this.clip = { tr, dur: clip.duration || 1 };
+  }
+
+  /** Pose t ∈ [0,1] aus der Blender-Animation */
+  applyClip(t) {
+    const rig = this.rig; this.warn.length = 0;
+    for (const bo of rig.order) { const r = rig.rest.get(bo); bo.quaternion.copy(r.lq); bo.position.copy(r.lp); }
+    const time = Math.max(0, Math.min(1, t)) * this.clip.dur;
+    for (const { bo, prop, it } of this.clip.tr) { const v = it.evaluate(time); bo[prop].fromArray(v); if (prop === 'quaternion') bo.quaternion.normalize(); }
+    this.scene.updateMatrixWorld(true);
+    this.rootPos = this.J('root');
+    this._fists();
+  }
+
+  /** Pose setzen: Blender-Animation, wenn vorhanden, sonst IK */
+  pose(pat, t) { if (this.clip) this.applyClip(t); else this.apply(pat, t); }
 
   _commit(D, rootPos) {
     const rig = this.rig;
@@ -394,7 +428,55 @@ export class Figure {
     // Alte Muster ohne feste Ziele: auf den Boden stellen
     if (!P.p && (P.rest === undefined || P.rest === null)) this._ground(pat, rootPos, D);
     this.rootPos = rootPos.clone();
+    this._fingersOnFloor();
     if (!wristT.L || !wristT.R) this._fists();
+  }
+
+  /** Finger, die in den Boden ragen (flach aufgesetzte Hand), Glied für Glied auf den Boden heben */
+  _fingersOnFloor() {
+    const rig = this.rig, MIN = 0.011, up = new THREE.Vector3(0, 1, 0);
+    const wq = new THREE.Quaternion(), pq = new THREE.Quaternion(), H = new THREE.Vector3(), P = new THREE.Vector3();
+    for (const s of SIDES) {
+      if (this.J('wrist.' + s).y > 0.3) continue;
+      for (let fi = 1; fi <= 5; fi++) {
+        for (let kk = 1; kk <= 3; kk++) {
+          const bo = rig.get(`finger${fi}-${kk}.${s}`); if (!bo) continue;
+          bo.getWorldPosition(H);
+          const ch = bo.children.find((c) => c.isBone);
+          if (ch) ch.getWorldPosition(P);
+          else { const par = bo.parent; const pp = par.getWorldPosition(new THREE.Vector3()); P.copy(H).addScaledVector(H.clone().sub(pp), 0.8); } // Fingerspitze geschätzt
+          if (P.y >= MIN) continue;
+          const d = P.clone().sub(H); const L = d.length(); if (L < 1e-4) continue;
+          const ax = d.clone().cross(up); if (ax.lengthSq() < 1e-8) continue; ax.normalize();
+          // Winkel, um den P angehoben werden muss (Drehung um den Knochenkopf)
+          const want = Math.min(1, Math.max(-1, (MIN - H.y) / L)); const cur = Math.asin(Math.max(-1, Math.min(1, d.y / L)));
+          const ang = Math.asin(want) - cur; if (ang <= 0) continue;
+          bo.getWorldQuaternion(wq); bo.parent.getWorldQuaternion(pq);
+          const nw = new THREE.Quaternion().setFromAxisAngle(ax, ang).multiply(wq);
+          bo.quaternion.copy(pq.invert().multiply(nw)); bo.updateMatrixWorld(true);
+        }
+      }
+    }
+    // Zehen: auf dem Fußballen stehend knicken sie nach oben ab, statt in den Boden zu ragen
+    //    gemessen an der tiefsten Stelle der Zehen-Haut (Vertices mit Zehen-Gewicht)
+    const mesh = this.mesh, V = new THREE.Vector3();
+    for (const s of SIDES) {
+      const bo = rig.get('toe.' + s); const ids = rig.toeVerts && rig.toeVerts[s];
+      if (!bo || !ids || !ids.length || this.J('foot.' + s).y > 0.35) continue;
+      let best = -Infinity, bestQ = bo.quaternion.clone();
+      for (let it = 0; it <= 4; it++) {
+        mesh.skeleton.update(); let lo = Infinity; const L0 = new THREE.Vector3();
+        for (const i of ids) { mesh.getVertexPosition(i, V); V.applyMatrix4(mesh.matrixWorld); if (V.y < lo) { lo = V.y; L0.copy(V); } }
+        if (lo > best) { best = lo; bestQ.copy(bo.quaternion); }
+        if (lo >= 0.002 || it === 4) break;
+        bo.getWorldPosition(H); bo.getWorldQuaternion(wq);
+        const d = L0.clone().sub(H); const L = d.length(); const ax = d.clone().cross(up); if (L < 1e-4 || ax.lengthSq() < 1e-8) break; ax.normalize();
+        const ang = Math.asin(Math.min(1, Math.max(-1, (0.004 - H.y) / L))) - Math.asin(Math.max(-1, Math.min(1, d.y / L))); if (ang <= 1e-4) break;
+        bo.parent.getWorldQuaternion(pq);
+        bo.quaternion.copy(pq.invert().multiply(new THREE.Quaternion().setFromAxisAngle(ax, ang).multiply(wq))); bo.updateMatrixWorld(true);
+      }
+      bo.quaternion.copy(bestQ); bo.updateMatrixWorld(true); // beste gefundene Stellung (nie schlechter als vorher)
+    }
   }
 
   /** Handdrehung relativ zum Unterarm mischen (Beugen + Supination wie beim echten Curl), nicht frei im Raum */

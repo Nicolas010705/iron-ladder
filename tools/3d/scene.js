@@ -20,6 +20,21 @@ function loadEq(name, ver) {
   }
   return EQ_CACHE.get(name);
 }
+/* ---------- In Blender gebaute Animationen (/3d/anim/<muster>-<gerät>.glb) ---------- */
+// Liste der vorhandenen Clips setzt build.mjs beim Bauen ein; fehlt ein Clip oder lädt er nicht, rechnet die Figur per IK.
+const CLIPS = new Set(typeof __IRON_CLIPS__ !== 'undefined' ? __IRON_CLIPS__ : []);
+const CLIP_CACHE = new Map();
+export function hasClip(patKey, eqKind) { return CLIPS.has(`${patKey}-${eqKind}`); }
+function loadClip(patKey, eqKind, ver) {
+  const id = `${patKey}-${eqKind}`; if (!CLIPS.has(id)) return Promise.resolve(null);
+  if (!CLIP_CACHE.has(id)) {
+    const l = new GLTFLoader(); l.setMeshoptDecoder(MeshoptDecoder);
+    CLIP_CACHE.set(id, l.loadAsync(`${BASE}anim/${id}.glb${ver ? '?v=' + ver : ''}`).then((g) => g.animations[0] || null)
+      .catch(() => { CLIP_CACHE.delete(id); return null; }));
+  }
+  return CLIP_CACHE.get(id);
+}
+
 function instance(gltf) {
   const o = gltf.scene.clone(true);
   o.traverse((m) => { if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; } });
@@ -49,7 +64,7 @@ function fadeTexture() {
 
 export class Scene3D {
   constructor(canvas, opts = {}) {
-    this.dark = !!opts.dark; this.ver = opts.ver || '';
+    this.dark = !!opts.dark; this.ver = opts.ver || ''; this.useClips = opts.clips !== false;
     const r = this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: !!opts.preserve });
     r.setPixelRatio(Math.min(window.devicePixelRatio || 1, opts.maxDpr || 2));
     r.outputColorSpace = THREE.SRGBColorSpace; r.toneMapping = THREE.NeutralToneMapping; r.toneMappingExposure = 1.0;
@@ -84,7 +99,10 @@ export class Scene3D {
     if (pat.cable && pat.cable.handle) names.add(pat.cable.handle);
     if (pat.lever) names.add('dhandle');
     names.delete('smith-bar'); names.delete(undefined); names.delete('');
-    const loaded = {}; await Promise.all([...names].map((n) => loadEq(n, this.ver).then((g) => { loaded[n] = g; })));
+    const loaded = {}; let clip = null;
+    await Promise.all([...[...names].map((n) => loadEq(n, this.ver).then((g) => { loaded[n] = g; })),
+      (this.useClips === false ? Promise.resolve(null) : loadClip(patKey, eqKind, this.ver)).then((c) => { clip = c; })]);
+    fig.setClip(null);
     // Alte Geräte entfernen
     for (const e of this.eq) this.scene.remove(e.root);
     this.dyn.clear(); this.eq = []; this.held = {};
@@ -128,15 +146,16 @@ export class Scene3D {
       fig.apply(one, 0); pat[key] = Object.assign({}, pose, { p: fig.rootPos.toArray(), fit: null });
     }
     pat._EA = pat._EB = null;
+    fig.setClip(clip); this.clip = fig.clip ? clip : null;
     // Ausgangslängen der Kabel (für den Gewichtsblock)
     this._minCable = null;
-    const lens = []; for (const t of [0, 0.5, 1]) { fig.apply(pat, t); this._update(true); lens.push(this._cableLen); }
+    const lens = []; for (const t of [0, 0.5, 1]) { fig.pose(pat, t); this._update(true); lens.push(this._cableLen); }
     this._minCable = Math.min(...lens);
     // Kamera einpassen über die Bewegung
     const box = new THREE.Box3();
-    for (const t of [0, 0.25, 0.5, 0.75, 1]) { fig.apply(pat, t); this._update(); fig.mesh.skeleton.update(); box.expandByObject(fig.mesh, true); box.expandByObject(this.dyn); }
+    for (const t of [0, 0.25, 0.5, 0.75, 1]) { fig.pose(pat, t); this._update(); fig.mesh.skeleton.update(); box.expandByObject(fig.mesh, true); box.expandByObject(this.dyn); }
     for (const e of this.eq) e.root.traverse((o) => { if (o.isMesh && !(e.def.nofit)) box.expandByObject(o); });
-    fig.apply(pat, 0); this._update();
+    fig.pose(pat, 0); this._update();
     const ctr = box.getCenter(new THREE.Vector3()), size = box.getSize(new THREE.Vector3());
     this.box = box; this.target.copy(ctr); this.fitR = Math.max(size.y * 0.58, Math.hypot(size.x, size.z) * 0.5, 0.6);
     // Schatten-Kamera passend
@@ -219,7 +238,7 @@ export class Scene3D {
     }
   }
 
-  frame(t, pulse) { this._t = t; this.fig.apply(this.pat, t); this._update(); this.fig.uni.uPulse.value = pulse || 0; }
+  frame(t, pulse) { this._t = t; this.fig.pose(this.pat, t); this._update(); this.fig.uni.uPulse.value = pulse || 0; }
 
   fitCurrent(pad = 1) {
     const b = new THREE.Box3(); this.fig.mesh.skeleton.update(); b.expandByObject(this.fig.mesh, true); b.expandByObject(this.dyn);

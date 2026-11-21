@@ -46,6 +46,8 @@ def M():
         grip=mat('Griff', srgb('#121314'), 0.75),
         mat=mat('Matte', srgb('#2b3a44'), 0.9),
         red=mat('Markierung', srgb('#d23a32'), 0.5),
+        green=mat('App-Grün', srgb('#00a86b'), 0.45),
+        hexrubber=mat('Hantelgummi', srgb('#1a1b1e'), 0.78, 0.0, 0.05),
     )
 
 # ---------------- Geometrie-Helfer ----------------
@@ -194,6 +196,37 @@ def export(name, root):
     print('exportiert', name)
 
 # ---------------- Bauteile ----------------
+def knurl(name, x0, x1, r, m, parent, seg=48, depth=0.0005):
+    """Griff mit echter Rändelung entlang x (App = Blender): Schachbrett aus Höhen/Tiefen ergibt diagonale Rauten."""
+    x0, x1 = min(x0, x1), max(x0, x1)
+    pitch = 2 * math.pi * r / seg; rows = max(2, round((x1 - x0) / pitch / 2) * 2)
+    bm = bmesh.new(); grid = []
+    for k in range(rows + 1):
+        x = x0 + (x1 - x0) * k / rows; edge = k == 0 or k == rows; row = []
+        for i in range(seg):
+            t = 2 * math.pi * i / seg; rr = r if edge else r + (depth if (i + k) % 2 == 0 else -depth)
+            row.append(bm.verts.new((x, rr * math.cos(t), rr * math.sin(t))))
+        grid.append(row)
+    for k in range(rows):
+        a, b = grid[k], grid[k + 1]
+        for i in range(seg):
+            j = (i + 1) % seg
+            if (i + k) % 2 == 0: bm.faces.new((a[i], a[j], b[j])); bm.faces.new((a[i], b[j], b[i]))
+            else: bm.faces.new((a[i], a[j], b[i])); bm.faces.new((a[j], b[j], b[i]))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    return mesh_from_bm(bm, name, m, parent, smooth=False)
+
+def hex_prism(name, xa, xb, R, m, parent, chamfer=0.012):
+    """Sechskant-Körper entlang x von xa bis xb (flache Seiten oben/unten wie bisher), mit gebrochenen Kanten."""
+    bm = bmesh.new(); rings = []
+    for x in (min(xa, xb), max(xa, xb)):
+        rings.append([bm.verts.new(A(x, R * math.cos(math.pi / 6 + i * math.pi / 3), R * math.sin(math.pi / 6 + i * math.pi / 3))) for i in range(6)])
+    bm.faces.new(rings[0][::-1]); bm.faces.new(rings[1])
+    for i in range(6):
+        j = (i + 1) % 6; bm.faces.new((rings[0][i], rings[0][j], rings[1][j], rings[1][i]))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    return mesh_from_bm(bm, name, m, parent, smooth=True, bevel=chamfer, bseg=4)
+
 def bumper_plate(name, x, parent, m, dia=0.45, thick=0.053, hub=0.0254, y=0.0, z=0.0):
     R = dia / 2; h = thick / 2
     prof = [(hub, -h + 0.002), (0.045, -h + 0.002), (0.05, -h + 0.006), (0.07, -h + 0.006), (0.075, -h + 0.012),
@@ -201,13 +234,20 @@ def bumper_plate(name, x, parent, m, dia=0.45, thick=0.053, hub=0.0254, y=0.0, z
             (R - 0.018, h), (R - 0.03, h - 0.012), (0.075, h - 0.012), (0.07, h - 0.006), (0.05, h - 0.006), (0.045, h - 0.002), (hub, h - 0.002), (hub, -h + 0.002)]
     pl = lathe(name, prof, m['bumper'], parent, seg=64, center=(x, y, z))
     hubm = lathe(name + '_nabe', [(hub, -h - 0.001), (0.046, -h - 0.001), (0.046, h + 0.001), (hub, h + 0.001), (hub, -h - 0.001)], m['steel'], parent, seg=48, center=(x, y, z))
+    # Details: grüner Ring an der Außenlippe beider Seiten, Schraubenköpfe am Stahlkern
+    for sd in (-1, 1):
+        a = sd * (h + 0.0005)
+        lathe(name + '_ring', [(R - 0.014, a), (R - 0.008, a), (R - 0.008, a - sd * 0.0015), (R - 0.014, a - sd * 0.0015), (R - 0.014, a)], m['green'], parent, seg=64, center=(x, y, z))
+        for i in range(6):
+            t = i * math.pi / 3; rr = 0.036
+            cyl(name + '_schraube', (x + a, y + rr * math.cos(t), z + rr * math.sin(t)), (x + a + sd * 0.003, y + rr * math.cos(t), z + rr * math.sin(t)), 0.0042, m['chrome'], parent, seg=10)
     return pl
 
 def olympic_bar(parent, m, length=2.2, sleeve=0.415, plates=((0.45, 0.053),)):
     half = length / 2; inner = half - sleeve
     cyl('schaft', (-inner + 0.03, 0, 0), (inner - 0.03, 0, 0), 0.014, m['steel'], parent, seg=20)
     for s in (-1, 1):
-        cyl('rändel', (s * 0.08, 0, 0), (s * 0.42, 0, 0), 0.0143, m['knurl'], parent, seg=20)
+        cyl('rändel', (s * 0.08, 0, 0), (s * 0.42, 0, 0), 0.0143, m['knurl'], parent, seg=20)  # Rändelung als Material (Geometrie wäre auf Distanz unsichtbar und schwer)
         lathe('hülse', [(0.0, s * (inner - 0.03)), (0.016, s * (inner - 0.03)), (0.016, s * (inner - 0.005)), (0.039, s * (inner - 0.005)), (0.039, s * inner),
                         (0.026, s * inner), (0.025, s * (half - 0.004)), (0.022, s * half), (0.0, s * half)], m['chrome'], parent, seg=36)
         x = s * (inner + 0.004)
@@ -215,26 +255,31 @@ def olympic_bar(parent, m, length=2.2, sleeve=0.415, plates=((0.45, 0.053),)):
             x += s * th / 2; bumper_plate('scheibe', x, parent, m, dia, th); x += s * th / 2
         lathe('verschluss', [(0.026, x), (0.042, x), (0.042, x + s * 0.03), (0.026, x + s * 0.03), (0.026, x)], m['grip'], parent, seg=32)
 
+def weight_label(text, x, side, parent, m, size=0.034):
+    """Gewichtsangabe erhaben auf einer Endkappe (Text -> Mesh), Normale zeigt nach außen (±x)."""
+    cu = bpy.data.curves.new('kg', 'FONT'); cu.body = text; cu.size = size; cu.extrude = 0.0009
+    cu.align_x = 'CENTER'; cu.align_y = 'CENTER'
+    ob = bpy.data.objects.new('gewicht', cu); link(ob)
+    ob.matrix_world = Matrix(((0, 0, side, x), (side, 0, 0, 0), (0, 1, 0, 0), (0, 0, 0, 1)))
+    bpy.context.view_layer.objects.active = ob; ob.select_set(True)
+    bpy.ops.object.convert(target='MESH'); ob = bpy.context.view_layer.objects.active; ob.select_set(False)
+    ob.data.materials.clear(); ob.data.materials.append(m)
+    mw = ob.matrix_world.copy(); ob.parent = parent; ob.matrix_world = mw
+    return ob
+
 def dumbbell(parent, m, head=0.068, hl=0.095, grip=0.135):
-    cyl('griff', (-grip / 2 - 0.01, 0, 0), (grip / 2 + 0.01, 0, 0), 0.0165, m['chrome'], parent, seg=20)
-    cyl('rändel', (-grip / 2 + 0.01, 0, 0), (grip / 2 - 0.01, 0, 0), 0.0168, m['knurl'], parent, seg=20)
+    """Kurzhantel (wie tools/blender/demo_curl.py): Sechskant-Gummiköpfe mit weichen Kanten, Rautenrändelung,
+    verchromte Bünde, grüner Akzentring, Stahl-Endkappe mit Gewichtsangabe. Ursprung Griffmitte, Achse x."""
+    knurl('rändel', -grip / 2 + 0.012, grip / 2 - 0.012, 0.0162, m['knurl'], parent, seg=32, depth=0.0006)
     for s in (-1, 1):
-        x0 = s * (grip / 2 + 0.008)
-        lathe('ring', [(0.0165, x0), (0.03, x0), (0.03, x0 + s * 0.012), (0.0165, x0 + s * 0.012)], m['chrome'], parent, seg=24)
-        # Sechskant-Kopf
-        bm = bmesh.new(); vs = []
-        for end in (0, 1):
-            ring = []
-            for i in range(6):
-                t = math.pi / 6 + i * math.pi / 3
-                xx = x0 + s * (0.012 + end * hl)
-                ring.append(bm.verts.new(A(xx, head * math.cos(t), head * math.sin(t))))
-            vs.append(ring)
-        bm.faces.new(vs[0][::-1] if s > 0 else vs[0]); bm.faces.new(vs[1] if s > 0 else vs[1][::-1])
-        for i in range(6):
-            j = (i + 1) % 6; bm.faces.new((vs[0][i], vs[0][j], vs[1][j], vs[1][i]))
-        bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
-        mesh_from_bm(bm, 'kopf', m['bumper'], parent, smooth=False, bevel=0.009, bseg=3)
+        g0 = s * grip / 2
+        lathe('bund', [(0.0158, s * (grip / 2 - 0.014)), (0.0158, g0), (0.024, g0), (0.027, g0 + s * 0.004),
+                       (0.027, g0 + s * 0.012), (0.03, g0 + s * 0.014)], m['chrome'], parent, seg=48)
+        a = g0 + s * 0.014; b = a + s * hl
+        hex_prism('kopf', a, b, head, m['hexrubber'], parent, chamfer=0.012)
+        ra = a + s * 0.016; hex_prism('akzent', ra, ra + s * 0.007, head + 0.0012, m['green'], parent, chamfer=0.0025)
+        lathe('kappe', [(0.0, b - s * 0.002), (0.044, b - s * 0.002), (0.046, b + s * 0.002), (0.044, b + s * 0.005), (0.0, b + s * 0.006)], m['steel'], parent, seg=64)
+        weight_label('12.5', b + s * 0.0062, s, parent, m['chrome'])
 
 def kettlebell(parent, m):
     # Ursprung = Griffmitte; Kugel hängt nach unten
@@ -247,9 +292,14 @@ def kettlebell(parent, m):
         if y < cy - R * 0.86: r = max(r, 0.0); y = max(y, cy - R * 0.86)
         prof.append((max(r, 0.0001), y))
     prof = [(0.0, cy - R * 0.86)] + prof + [(0.0, cy + R)]
-    lathe('kugel', prof, m['bumper'], parent, seg=48, axis='y')
+    lathe('kugel', prof, m['hexrubber'], parent, seg=64, axis='y')
     pts = [(-0.06, cy + 0.05, 0), (-0.065, -0.02, 0), (-0.03, 0.02, 0), (0.03, 0.02, 0), (0.065, -0.02, 0), (0.06, cy + 0.05, 0)]
-    bent_tube('henkel', pts, 0.017, m['bumper'], parent)
+    bent_tube('henkel', pts, 0.017, m['hexrubber'], parent)
+    # grüner Ring um die Kugel (App-Farbe) und Standfläche aus Stahl
+    yb = cy + R * 0.18; rb = R * math.cos(math.asin(0.18)) + 0.0008
+    lathe('akzent', [(rb, yb - 0.006), (rb, yb + 0.006)], m['green'], parent, seg=64, axis='y')
+    yf = cy - R * 0.86; rf = R * math.sin(math.acos(0.86)) * 0.92
+    lathe('boden', [(0.0, yf - 0.001), (rf, yf - 0.001), (rf, yf + 0.002), (0.0, yf + 0.002)], m['steel'], parent, seg=48, axis='y')
 
 # ---------------- Geräte ----------------
 def build_all():

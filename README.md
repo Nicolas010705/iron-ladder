@@ -6,7 +6,7 @@ Gym-Tracker als PWA: Trainings mit Zielen nach Progressive Overload, Ränge pro 
 - `src-artifact.html` – Quelle (dieselbe Datei wie das Claude-Artifact)
 - `build.py` – erzeugt `index.html` für Vercel (`python3 build.py`)
 - `index.html`, `manifest.webmanifest`, `sw.js`, Icons – statische Seite, kein Build-Schritt auf Vercel
-- `3d/` – 3D-Übungsansicht: `iron3d.js` (Viewer + three.js), `body.glb` (Figur), `eq/` (Geräte), `thumbs/` (Vorschaubilder je Bewegungsmuster)
+- `3d/` – 3D-Übungsansicht: `iron3d.js` (Viewer + three.js), `body.glb` (Figur), `eq/` (Geräte), `anim/` (Bewegungen aus Blender, je Übungs-Kombination), `thumbs/` (Vorschaubilder je Bewegungsmuster)
 
 ## 3D-Übungsansicht
 In der Übungsinfo zeigt eine 3D-Figur den Bewegungsablauf mit Geräten; die trainierten Muskeln leuchten
@@ -15,18 +15,29 @@ Tempo, Bewegung per Regler, einzelne Muskeln antippen. Im Claude-Artifact bleibt
 
 Hände und Füße werden per inverser Kinematik exakt an Griff- und Standpunkte gesetzt (Stange, Kurzhantel, Pedale,
 Fußplatte …), das Schulterblatt bewegt sich mit, liegende/sitzende Körper liegen exakt auf dem Polster.
-Geräte sind in Blender modelliert (Langhantel mit Bumper-Scheiben, Kabelturm mit Gewichtsblock, Latzug, Beinpresse …);
-bewegliche Teile (Gewichtsblock, Schlitten, Hebel, Kurbel) folgen der Figur.
+Geräte sind in Blender modelliert (Kurzhantel mit Sechskant-Gummiköpfen und Rautenrändelung, Langhantel mit Bumper-Scheiben,
+Kabelturm mit Gewichtsblock, Latzug, Beinpresse …); bewegliche Teile (Gewichtsblock, Schlitten, Hebel, Kurbel) folgen der Figur.
 
-Neu bauen:
-1. Figur (Blender als Python-Modul, `pip install bpy`):
-   `sh tools/blender/fetch_sources.sh /tmp/mh && python3 tools/blender/build_model.py /tmp/mh tools/3d/body.raw.glb`
-   Geräte: `python3 tools/blender/build_equipment.py tools/3d/eq.raw`
-2. Viewer + komprimierte Modelle: `cd tools/3d && npm i && node build.mjs`
-3. Vorschaubilder (Playwright/Chromium): `node thumbs.mjs`
-4. `python3 build.py` (setzt die 3D-Version für den Cache)
-5. Prüfen: `node check.mjs` (in `tools/3d`) – läuft alle Übungen mit ihren Geräte-Varianten durch und meldet
-   Hände/Füße, die ihr Ziel nicht erreichen, sprunghafte Gelenkbewegungen, Körperteile im Boden und stark abgeknickte Handgelenke.
+**Bewegungen aus Blender:** Jede Übungs-Kombination (Muster + Gerät, 107 Stück) ist eine Blender-Aktion mit Keyframes am Skelett
+(`3d/anim/<muster>-<gerät>.glb`, ~40 KB, lädt erst beim Öffnen der Übung). Die App spielt sie ab; fehlt eine Datei (z. B. offline
+und noch nicht im Cache) oder eine eigene Übung hat eine neue Kombination, rechnet die Figur die Bewegung wie bisher per IK.
+Die Aktionen entstehen aus den IK-Posen (`bake.mjs` nimmt 121 Stellungen je Bewegung auf, `build_anims.py` baut daraus die Keyframes);
+von Hand in Blender animierte Übungen stehen in `HANDMADE` (`tools/blender/build_anims.py`), z. B. der Kurzhantel-Curl aus
+`tools/blender/demo_curl.py`. Alle Aktionen zum Bearbeiten: `tools/3d/anim.raw/anims.blend` (wird beim Bauen erzeugt).
+
+Neu bauen (Blender 5.2; unter Windows `blender` = `"C:\Program Files\Blender Foundation\Blender 5.2\blender.exe"`):
+1. Figur: aus den MakeHuman-Quellen `sh tools/blender/fetch_sources.sh /tmp/mh && python3 tools/blender/build_model.py /tmp/mh tools/3d/body.raw.glb`
+   (Blender als Python-Modul, `pip install bpy`) – oder das vorhandene Modell nachbessern: `blender -b -P tools/blender/fix_body.py`.
+   Geräte: `blender -b -P tools/blender/build_equipment.py -- tools/3d/eq.raw`
+2. Viewer + komprimierte Modelle: `cd tools/3d && npm i && npx playwright install chromium && node build.mjs`
+3. Bewegungen: `node bake.mjs`, dann (im Repo-Ordner) `blender -b -P tools/blender/build_anims.py`, dann wieder `node build.mjs`
+4. Vorschaubilder (Playwright/Chromium): `node thumbs.mjs`
+5. `python3 build.py` (setzt die 3D-Version für den Cache)
+6. Prüfen: `node check.mjs` (in `tools/3d`) – läuft alle Übungen mit ihren Geräte-Varianten durch und meldet
+   Hände/Füße, die ihr Ziel nicht erreichen, sprunghafte Gelenkbewegungen (auch Finger und Zehen), Gelenke und Haut unter dem Boden,
+   stark abgeknickte Handgelenke – und für die Blender-Bewegungen: lädt nicht, weicht mehr als 1 cm von der IK-Bewegung ab, springt zusätzlich.
+   Sichtprüfung aller Übungen: `tools/3d/gallery.html` (über einen lokalen Server im Repo-Ordner öffnen, Parameter stehen auf der Seite).
+   Werkzeuge zum Feintunen von Posen: `node tune.mjs <muster> <gerät> '<js>'`, `node diag.mjs <muster>:<gerät>`.
 
 Bewegung zwischen Start- und Endpose: Hände laufen auf Bögen um die Schulter, wenn der Rumpf stillsteht (Seitheben, Curl, Bankdrücken),
 sonst auf einer Linie (Kreuzheben); Ellbogen-/Knie-Richtung, freie Gliedmaßen und die Handdrehung (relativ zum Unterarm) werden auf der Kugel gemischt.

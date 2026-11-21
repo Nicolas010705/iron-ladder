@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Iron Ladder – 3D-Galerie (Prüfansicht)</title>
+<style>
+  body{margin:0;background:#eceef2;font:12px system-ui,sans-serif;color:#222}
+  header{padding:8px 12px;background:#fff;position:sticky;top:0;z-index:2;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  #grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--w,220px),1fr));gap:6px;padding:8px}
+  figure{margin:0;background:#fff;border-radius:8px;overflow:hidden}
+  figure img{width:100%;display:block;background:linear-gradient(#fbfbfd,#e9e9ee)}
+  figcaption{padding:3px 6px;display:flex;justify-content:space-between}
+  .bad{color:#c00;font-weight:600}
+</style>
+</head>
+<body>
+<header>
+  <b>3D-Galerie</b>
+  <span>Parameter: <code>?c=pushup:KG,plank:KG&amp;t=0,0.5,1&amp;view=side&amp;size=300&amp;clips=1</code> (ohne c: alle Kombinationen)</span>
+  <span id="st"></span>
+</header>
+<div id="grid"></div>
+<script type="module">
+// Prüfansicht für Entwicklung: rendert Übungs-Kombinationen zu festen Zeitpunkten in Einzelbilder.
+const q = new URLSearchParams(location.search);
+const m = await import('/3d/iron3d.js' + (q.get('v') ? '?v=' + q.get('v') : ''));
+const size = +(q.get('size') || 260); document.documentElement.style.setProperty('--w', size + 'px');
+const ts = (q.get('t') || '0,0.5,1').split(',').map(Number);
+let combos = (q.get('c') || '').split(',').filter(Boolean).map((s) => s.split(':'));
+if (!combos.length) {
+  const src = await (await fetch('/src-artifact.html')).text(); const set = new Set();
+  for (const x of src.matchAll(/\['[^']+','(\w+)','(KH|LH|KB|KG|MA|SM|SZ|BD|CA|KT)'/g)) set.add(x[1] + ':' + x[2]);
+  combos = [...set].sort().map((s) => s.split(':'));
+}
+const canvas = document.createElement('canvas'); canvas.width = canvas.height = size;
+const sc = new m.Scene3D(canvas, { maxDpr: 1, preserve: true, clips: q.get('clips') !== '0' });
+const model = await m.loadModel('/3d/body.glb'); const fig = new m.Figure(model); sc.setFigure(fig);
+const grid = document.getElementById('grid'), st = document.getElementById('st');
+let i = 0;
+for (const [k, eq] of combos) {
+  await sc.setExercise(k, eq, ['biceps'], [], '#00a86b');
+  if (q.get('view')) sc.setView(q.get('view'));
+  if (q.get('yaw')) sc.yaw = +q.get('yaw'); if (q.get('pitch')) sc.pitch = +q.get('pitch');
+  if (q.get('zoom')) sc.zoom = +q.get('zoom');
+  const look = q.get('at'); // Knochenname, z. B. foot.R – Kamera schaut dorthin
+  if (look) sc.frame(ts[0], 0), sc.target.copy(fig.J(look));
+  for (const t of ts) {
+    sc.frame(t, 0.5); sc.render(size, size);
+    const f = document.createElement('figure'); f.dataset.c = `${k}:${eq}:${t}`;
+    f.innerHTML = `<img src="${canvas.toDataURL('image/webp', 0.85)}" alt=""><figcaption><span>${k} ${eq} t=${t}</span><span>${sc.clip ? 'Blender' : 'IK'}${fig.warn.length ? ' <b class="bad">!</b>' : ''}</span></figcaption>`;
+    grid.appendChild(f);
+  }
+  st.textContent = `${++i}/${combos.length}`;
+}
+st.textContent += ' fertig'; window.__done = true;
+</script>
+</body>
+</html>

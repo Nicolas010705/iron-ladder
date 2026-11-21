@@ -6,3 +6,4 @@
   19 Muskelregionen als Vertex-Attribut.
 - **three.js** (`iron3d.js` enthält three.js r186) – MIT-Lizenz, © three.js authors.
 - Geräte (`eq/*.glb`): eigene Modelle, prozedural in Blender gebaut (`tools/blender/build_equipment.py`).
+- Bewegungen (`anim/*.glb`): eigene Animationen, in Blender gebaut (`tools/blender/build_anims.py`).

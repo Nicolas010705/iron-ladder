@@ -1,9 +1,9 @@
 // Rendert Vorschaubilder je Bewegungsmuster nach /3d/thumbs/<muster>.webp (transparent).
 // Aufruf (nach build.mjs): node thumbs.mjs   – braucht Playwright mit Chromium.
-import http from 'http'; import fs from 'fs'; import path from 'path'; import { createRequire } from 'module';
+import http from 'http'; import fs from 'fs'; import path from 'path'; import { createRequire } from 'module'; import { fileURLToPath } from 'url';
 const require = createRequire(import.meta.url);
 let chromium; try { ({ chromium } = require('playwright')); } catch (e) { ({ chromium } = require(path.join(process.env.NODE_PATH || '/usr/lib/node_modules', 'playwright'))); }
-const ROOT = new URL('../../', import.meta.url).pathname;
+const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const src = fs.readFileSync(ROOT + 'src-artifact.html', 'utf8');
 // Häufigstes Equipment je Muster aus der Übungsdatenbank der App
 const cnt = {}; for (const m of src.matchAll(/\['[^']+','(\w+)','(\w+)'/g)) { const [, p, e] = m; (cnt[p] ||= {})[e] = (cnt[p][e] || 0) + 1; }

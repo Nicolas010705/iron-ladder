@@ -244,6 +244,10 @@ for n, o in enumerate(used):
         ob.vertex_groups[b].add([n], w / tot, 'REPLACE')
 ob.parent = rig
 mod = ob.modifiers.new('Armature', 'ARMATURE'); mod.object = rig
+# Zehen beweglich (sonst ragen sie auf dem Fußballen in den Boden)
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from toe_weights import add_toe_weights
+add_toe_weights(ob, rig)
 
 counts = np.bincount(region, minlength=len(REGIONS))
 print({REGIONS[i]: int(c) for i, c in enumerate(counts)})

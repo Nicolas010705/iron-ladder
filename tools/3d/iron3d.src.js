@@ -7,8 +7,8 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { PATTERNS, resolvePattern } from './poses.js';
 import { Figure } from './figure.js';
-import { Scene3D, setBase } from './scene.js';
-export { PATTERNS, Figure, Scene3D, resolvePattern, setBase };
+import { Scene3D, setBase, hasClip } from './scene.js';
+export { PATTERNS, Figure, Scene3D, resolvePattern, setBase, hasClip };
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 
 /* ---------------- Modell laden (einmal pro Seite) ---------------- */
